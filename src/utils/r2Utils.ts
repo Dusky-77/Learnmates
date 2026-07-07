@@ -133,12 +133,12 @@ export async function resolveFromR2(localPath: string): Promise<string | null> {
     return localPath;
   }
 
-  // Resolve Questions/topicals assets from R2
+  // Resolve Questions/topicals assets from R2 only
   const normalizedPath = localPath.startsWith('http://') || localPath.startsWith('https://')
     ? (() => {
         try {
           const url = new URL(localPath);
-          return (url.hostname === 'www.learnmates.org' || url.hostname === 'learnmates.org')
+          return (url.hostname === 'www.learnmates.org' || url.hostname === 'learnmates.org' || url.hostname === 'assets.learnmates.org')
             ? `${url.pathname}${url.search}${url.hash}`
             : localPath;
         } catch {
@@ -156,17 +156,8 @@ export async function resolveFromR2(localPath: string): Promise<string | null> {
     return null;
   }
 
-  try {
-    // DISABLED: HEAD request checks cause CORS issues and aren't necessary
-    // R2 will be used as fallback only if local file fetch fails
-    // Just return the R2 URL without verification - actual fetch will fail safely if file doesn't exist
-    console.log(`[R2 Utils] R2 URL available (CORS checks disabled): ${r2Url}`);
-    return r2Url;
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    console.warn(`[R2 Utils] Error checking R2 for ${localPath}:`, errorMsg);
-    return null;
-  }
+  console.log(`[R2 Utils] R2 URL available (strict): ${r2Url}`);
+  return r2Url;
 }
 
 /**
@@ -262,117 +253,42 @@ export async function fetchR2AsBlob(r2Url: string): Promise<Blob | null> {
 
   const fetchPromise = (async () => {
     try {
-      // Try direct fetch first (best performance)
       console.log(`[R2 Utils] Attempting direct R2 fetch: ${r2Url}`);
-      try {
-        const response = await fetch(r2Url, {
-          method: 'GET',
-          headers: {
-            'Accept': '*/*'
-          }
-        });
+      const response = await fetch(r2Url, {
+        method: 'GET',
+        headers: {
+          'Accept': '*/*'
+        }
+      });
 
-        if (response.ok) {
-          const contentType = response.headers.get('content-type') || '';
-          const blob = await response.blob();
-          const blobType = blob.type || '';
-          const finalContentType = contentType || blobType || '';
-          
-          console.log(`[R2 Utils] Successfully fetched R2 blob: ${r2Url.substring(0, 50)}..., content-type: ${finalContentType}, blob size: ${blob.size} bytes`);
-          
-          // Validate it's actually a PDF or image, not HTML (404 page)
-          if (finalContentType.includes('text/html') || finalContentType.includes('application/json')) {
-            console.warn(`[R2 Utils] R2 returned HTML/JSON instead of PDF/image, likely 404 or error page. Content-Type: ${finalContentType}, Size: ${blob.size} bytes`);
-            // Try to read first few bytes to confirm it's HTML (without consuming the blob)
-            if (blob.size < 10000) { // Small files might be error pages
-              const firstChunk = blob.slice(0, Math.min(100, blob.size));
-              const text = await firstChunk.text();
-              if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html') || text.trim().startsWith('{')) {
-                console.error(`[R2 Utils] Confirmed: R2 returned HTML/JSON error page instead of file`);
-                // Don't return null here - try CORS proxy as fallback
-              } else {
-                return blob; // Not HTML, return it
-              }
-            } else {
-              // Don't return null here - try CORS proxy as fallback
-            }
-          } else {
-            // Additional validation: check blob size (PDFs should be > 0 bytes)
-            if (blob.size === 0) {
-              console.warn(`[R2 Utils] R2 returned empty blob`);
-              // Don't return null here - try CORS proxy as fallback
-            } else {
-              return blob; // Valid blob, return it
-            }
-          }
-        } else {
-          console.warn(`[R2 Utils] Direct fetch returned status ${response.status}, trying CORS workaround`);
-        }
-      } catch (fetchErr: any) {
-        // CORS error or network error - try CORS proxy
-        const isCorsError = fetchErr?.message?.includes('CORS') || 
-                          fetchErr?.message?.includes('Cross-Origin') ||
-                          fetchErr?.name === 'TypeError';
-        if (isCorsError) {
-          console.warn(`[R2 Utils] CORS error on direct fetch, trying CORS proxy:`, fetchErr?.message);
-        } else {
-          console.warn(`[R2 Utils] Direct fetch failed, trying CORS proxy:`, fetchErr?.message);
-        }
-      }
-      
-      // If direct fetch fails or returns invalid content, try with a CORS proxy
-      // Note: CORS proxies may not always be available, but they help when R2 CORS is not configured
-      const corsProxies = [
-        'https://api.allorigins.win/raw?url=',
-        'https://corsproxy.io/?',
-      ];
-      
-      for (const proxy of corsProxies) {
-        try {
-          const proxiedUrl = proxy + encodeURIComponent(r2Url);
-          console.log(`[R2 Utils] Attempting fetch through CORS proxy: ${proxy.substring(0, 30)}...`);
-          const proxyResponse = await fetch(proxiedUrl, {
-            method: 'GET',
-            headers: {
-              'Accept': '*/*'
-            }
-          });
-
-          if (proxyResponse.ok) {
-            const contentType = proxyResponse.headers.get('content-type') || '';
-            const blob = await proxyResponse.blob();
-            const blobType = blob.type || '';
-            const finalContentType = contentType || blobType || '';
-            
-            // Validate it's actually a PDF or image
-            if (finalContentType.includes('text/html') || finalContentType.includes('application/json')) {
-              console.warn(`[R2 Utils] CORS proxy returned HTML/JSON, trying next proxy`);
-              continue;
-            }
-            
-            if (blob.size === 0) {
-              console.warn(`[R2 Utils] CORS proxy returned empty blob, trying next proxy`);
-              continue;
-            }
-            
-            console.log(`[R2 Utils] Successfully fetched R2 blob via CORS proxy: ${proxy.substring(0, 30)}...`);
-            return blob;
-          }
-        } catch (proxyErr) {
-          console.warn(`[R2 Utils] CORS proxy fetch failed:`, proxyErr);
-          continue; // Try next proxy
-        }
+      if (!response.ok) {
+        console.error(`[R2 Utils] Direct fetch returned status ${response.status} for: ${r2Url}`);
+        return null;
       }
 
-      console.error(`[R2 Utils] All fetch attempts failed for: ${r2Url}`);
-      return null;
+      const contentType = response.headers.get('content-type') || '';
+      const blob = await response.blob();
+      const blobType = blob.type || '';
+      const finalContentType = contentType || blobType || '';
+
+      if (finalContentType.includes('text/html') || finalContentType.includes('application/json')) {
+        console.error(`[R2 Utils] R2 returned HTML/JSON instead of PDF/image: ${r2Url}`);
+        return null;
+      }
+
+      if (blob.size === 0) {
+        console.error(`[R2 Utils] R2 returned empty blob: ${r2Url}`);
+        return null;
+      }
+
+      console.log(`[R2 Utils] Successfully fetched R2 blob: ${r2Url.substring(0, 80)}..., content-type: ${finalContentType}, blob size: ${blob.size} bytes`);
+      return blob;
     } catch (err) {
       console.error(`[R2 Utils] Error fetching R2 blob:`, err);
       return null;
     }
   })();
 
-  // Cache the promise
   r2BlobCache.set(r2Url, fetchPromise);
   return fetchPromise;
 }

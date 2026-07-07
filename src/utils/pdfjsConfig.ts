@@ -17,10 +17,11 @@ export const pdfDocumentOptions: NonNullable<DocumentProps['options']> = {
 };
 
 /** Same options for direct pdfjs.getDocument() calls (MediaViewer, thumbnails, etc.). */
-export const pdfGetDocumentOptions = {
+export const pdfGetDocumentOptions: any = {
   ...pdfDocumentOptions,
   withCredentials: false,
   rangeChunkSize: 65536,
-} as const;
+  httpHeaders: undefined,
+};
 
 export { pdfjs };

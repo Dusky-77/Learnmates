@@ -208,7 +208,10 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       // Try to fetch info.json from the same directory
       const infoJsonPath = `${dirPath}/info.json`;
       const resolvedInfoUrl = shouldUseR2(fileUrl) ? await resolveFromR2(infoJsonPath) : null;
-      const response = await fetch(resolvedInfoUrl || infoJsonPath);
+      if (!resolvedInfoUrl) {
+        return;
+      }
+      const response = await fetch(resolvedInfoUrl);
       
       if (response.ok) {
         const infoData = await response.json();
@@ -229,7 +232,10 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
 
   const shouldUseR2 = (value: string) => {
     if (!value || disableR2) return false;
-    return value.includes('/Questions/') || value.includes('/topicals/');
+    const normalized = value.toLowerCase();
+    if (normalized.includes('/questions/') || normalized.includes('/topicals/')) return true;
+    if (normalized.includes('assets.learnmates.org')) return true;
+    return false;
   };
 
   // Load content (PDF or image)
@@ -276,63 +282,29 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
             pdfUrl = new URL(pdfUrl, window.location.origin).href;
           }
 
-          // Check if URL is already an R2 URL (from manifest resolution)
-          const isAlreadyR2Url = currentUrl.startsWith('https://learnmates.org');
-          
-          // For Questions directory files, proactively try R2 first to avoid CORS issues
           let pdf: any = null;
-          if (isAlreadyR2Url && !disableR2) {
-            // URL is already resolved to R2, use blob URL approach directly
-            console.log(`[MediaViewer] URL is already R2, using blob URL approach: ${currentUrl}`);
-            try {
-              const blobUrl = await fetchR2AsBlobUrl(currentUrl);
-              if (blobUrl) {
-                console.log(`[MediaViewer] Using blob URL from R2`);
-                pdf = await pdfjs.getDocument({
-                  ...pdfGetDocumentOptions,
-                  url: blobUrl,
-                }).promise;
-                console.log(`[MediaViewer] Successfully loaded PDF from R2 blob URL`);
-              } else {
-                // Blob fetch failed - don't try direct fetch (will be blocked by CORS)
-                // The fetchR2AsBlob function already tried CORS proxies, so if it failed, direct will also fail
-                console.error(`[MediaViewer] Blob URL fetch failed - CORS issue. Cannot fetch directly from R2.`);
-                throw new Error(`Failed to fetch PDF from R2 due to CORS restrictions. Please configure CORS on R2 bucket or use a CORS proxy.`);
-              }
-            } catch (r2Err) {
-              console.error(`[MediaViewer] R2 URL load failed:`, r2Err);
-              throw r2Err; // Re-throw to trigger error handling
+          if (shouldUseR2(currentUrl) && !disableR2) {
+            const r2Url = await resolveFromR2(currentUrl);
+            if (!r2Url) {
+              throw new Error(`Could not resolve managed asset URL: ${currentUrl}`);
             }
-          } else if (shouldUseR2(currentUrl)) {
-            // Local R2-managed asset path, resolve to R2 first
-            console.log(`[MediaViewer] R2-managed asset path detected, trying R2 first: ${currentUrl}`);
-            try {
-              const r2Url = await resolveFromR2(currentUrl);
-              if (r2Url && r2Url !== currentUrl) {
-                console.log(`[MediaViewer] Using R2 URL: ${r2Url}`);
-                // Use blob URL approach to avoid CORS issues
-                const blobUrl = await fetchR2AsBlobUrl(r2Url);
-                if (blobUrl) {
-                  console.log(`[MediaViewer] Using blob URL from R2`);
-                  pdf = await pdfjs.getDocument({
-                    ...pdfGetDocumentOptions,
-                    url: blobUrl,
-                  }).promise;
-                  console.log(`[MediaViewer] Successfully loaded PDF from R2 blob URL`);
-                } else {
-                  // Blob fetch failed - don't try direct fetch (will be blocked by CORS)
-                  console.error(`[MediaViewer] Blob URL fetch failed - CORS issue. Cannot fetch directly from R2.`);
-                  throw new Error(`Failed to fetch PDF from R2 due to CORS restrictions. Please configure CORS on R2 bucket or use a CORS proxy.`);
-                }
-              }
-            } catch (r2Err) {
-              console.warn(`[MediaViewer] R2 load failed, falling back to local:`, r2Err);
-            }
-          }
 
-          // If R2 didn't work, try local path (for non-Questions or if R2 failed)
-          if (!pdf) {
-            console.log(`[MediaViewer] Attempting local PDF load: ${pdfUrl}`);
+            pdfUrl = r2Url;
+            console.log(`[MediaViewer] Using assets URL only: ${pdfUrl}`);
+
+            const blobUrl = await fetchR2AsBlobUrl(pdfUrl);
+            if (blobUrl) {
+              pdf = await pdfjs.getDocument({
+                ...pdfGetDocumentOptions,
+                url: blobUrl,
+              }).promise;
+            } else {
+              pdf = await pdfjs.getDocument({
+                ...pdfGetDocumentOptions,
+                url: pdfUrl,
+              }).promise;
+            }
+          } else {
             pdf = await pdfjs.getDocument({
               ...pdfGetDocumentOptions,
               url: pdfUrl,
@@ -354,21 +326,20 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
           setImageLoadAttempt(0); // Reset attempts for new image
           imageFallbackUrlRef.current = removeExtension(currentUrl); // Store base URL without extension
           
-          if (shouldUseR2(currentUrl)) {
-            console.log(`[MediaViewer] R2-managed asset path detected for image, trying R2 first: ${currentUrl}`);
+          if (shouldUseR2(currentUrl) && !disableR2) {
+            console.log(`[MediaViewer] Using assets URL only for image: ${currentUrl}`);
             resolveFromR2(currentUrl).then(r2Url => {
-              if (r2Url && r2Url !== currentUrl && imageRef.current) {
+              if (r2Url && imageRef.current) {
                 console.log(`[MediaViewer] Using R2 URL for image: ${r2Url}`);
                 imageRef.current.src = r2Url;
               } else if (imageRef.current) {
-                // Fallback to local if R2 not available
-                imageRef.current.src = currentUrl;
+                setError('Failed to resolve image from R2 storage');
+                setLoading(false);
               }
             }).catch(err => {
-              console.warn(`[MediaViewer] R2 resolution failed for image, using local:`, err);
-              if (imageRef.current) {
-                imageRef.current.src = currentUrl;
-              }
+              console.error(`[MediaViewer] R2 resolution failed for image:`, err);
+              setError('Failed to resolve image from R2 storage');
+              setLoading(false);
             });
           } else if (imageRef.current) {
             imageRef.current.src = currentUrl;
@@ -376,38 +347,12 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
         }
       } catch (err: any) {
         if (signal.aborted) return;
-        
-        // If PDF parsing failed and we haven't tried R2 yet (for non-Questions paths), try R2 fallback
+
+        // If PDF parsing fails for a managed asset, surface the direct R2 error instead of falling back to the legacy host.
         if (currentType === 'pdf' && shouldUseR2(currentUrl)) {
-          console.warn('PDF parsing failed, attempting R2 fallback:', err?.message);
-          try {
-            const r2Url = await resolveFromR2(currentUrl);
-            if (r2Url && r2Url !== currentUrl) {
-              console.log(`[MediaViewer] Trying R2 fallback URL: ${r2Url}`);
-              
-              // Try using blob URL to avoid CORS issues
-              const blobUrl = await fetchR2AsBlobUrl(r2Url);
-              if (blobUrl) {
-                console.log(`[MediaViewer] Using blob URL from R2`);
-                const pdf = await pdfjs.getDocument({
-                  ...pdfGetDocumentOptions,
-                  url: blobUrl,
-                }).promise;
-                
-                if (signal.aborted) return;
-                pdfRef.current = pdf;
-                setNumPages(pdf.numPages);
-                if (onLoadComplete) {
-                  onLoadComplete(pdf.numPages);
-                }
-                setImageLoaded(false);
-                setError(null);
-                return;
-              }
-            }
-          } catch (r2Err) {
-            console.warn('R2 fallback also failed:', r2Err);
-          }
+          console.error('[MediaViewer] Managed asset load failed:', err?.message || err);
+          setError(`Failed to load managed asset from R2: ${err?.message || String(err)}`);
+          return;
         }
         
         // If PDF parsing fails (or R2 fallback failed), try treating it as an image instead
@@ -1139,57 +1084,21 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       
       let pdf: any;
       
-      // For R2-managed asset files, proactively try R2 first
-      if (shouldUseR2(pdfUrl)) {
-        console.log('[loadPdfPagesForModal] R2-managed asset path detected, trying R2 first:', pdfUrl);
-        try {
-          const r2Url = await resolveFromR2(pdfUrl);
-          if (r2Url && r2Url !== pdfUrl) {
-            console.log('[loadPdfPagesForModal] Using R2 URL:', r2Url);
-            
-            // Try blob URL approach to avoid CORS
-            const blobUrl = await fetchR2AsBlobUrl(r2Url);
-            if (blobUrl) {
-              console.log('[loadPdfPagesForModal] Using blob URL from R2');
-              pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: blobUrl }).promise;
-            } else {
-              // Fallback to direct R2 URL
-              console.log('[loadPdfPagesForModal] Blob URL failed, trying direct R2 URL');
-              pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: r2Url }).promise;
-            }
-          }
-        } catch (r2Err) {
-          console.warn('[loadPdfPagesForModal] R2 load failed, falling back to local:', r2Err);
+      if (shouldUseR2(pdfUrl) && !disableR2) {
+        const r2Url = await resolveFromR2(pdfUrl);
+        if (!r2Url) {
+          throw new Error(`Could not resolve managed asset URL: ${pdfUrl}`);
         }
-      }
-      
-      // If R2 didn't work or it's not a Questions path, try local
-      if (!pdf) {
-        try {
-          pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url }).promise;
-        } catch (err) {
-          // Try R2 fallback if original URL is a local /Questions/ path
-          if (shouldUseR2(pdfUrl)) {
-            console.log('[loadPdfPagesForModal] Local load failed, trying R2 fallback');
-            const r2Url = await resolveFromR2(pdfUrl);
-            if (r2Url && r2Url !== pdfUrl) {
-              console.log('[loadPdfPagesForModal] Using R2 fallback URL:', r2Url);
-              
-              // Try blob URL approach to avoid CORS
-              const blobUrl = await fetchR2AsBlobUrl(r2Url);
-              if (blobUrl) {
-                console.log('[loadPdfPagesForModal] Using blob URL from R2');
-                pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: blobUrl }).promise;
-              } else {
-                throw err;
-              }
-            } else {
-              throw err;
-            }
-          } else {
-            throw err;
-          }
+
+        console.log('[loadPdfPagesForModal] Using assets URL only:', r2Url);
+        const blobUrl = await fetchR2AsBlobUrl(r2Url);
+        if (blobUrl) {
+          pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: blobUrl }).promise;
+        } else {
+          pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: r2Url }).promise;
         }
+      } else {
+        pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url }).promise;
       }
       
       const total = Math.min(pdf.numPages, 50);
@@ -1251,57 +1160,21 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       
       let pdf: any;
       
-      // For R2-managed asset files, proactively try R2 first
-      if (shouldUseR2(pdfUrl)) {
-        console.log('[loadPdfPages] R2-managed asset path detected, trying R2 first:', pdfUrl);
-        try {
-          const r2Url = await resolveFromR2(pdfUrl);
-          if (r2Url && r2Url !== pdfUrl) {
-            console.log('[loadPdfPages] Using R2 URL:', r2Url);
-            
-            // Try blob URL approach to avoid CORS
-            const blobUrl = await fetchR2AsBlobUrl(r2Url);
-            if (blobUrl) {
-              console.log('[loadPdfPages] Using blob URL from R2');
-              pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: blobUrl }).promise;
-            } else {
-              // Fallback to direct R2 URL
-              console.log('[loadPdfPages] Blob URL failed, trying direct R2 URL');
-              pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: r2Url }).promise;
-            }
-          }
-        } catch (r2Err) {
-          console.warn('[loadPdfPages] R2 load failed, falling back to local:', r2Err);
+      if (shouldUseR2(pdfUrl) && !disableR2) {
+        const r2Url = await resolveFromR2(pdfUrl);
+        if (!r2Url) {
+          throw new Error(`Could not resolve managed asset URL: ${pdfUrl}`);
         }
-      }
-      
-      // If R2 didn't work or it's not a Questions path, try local
-      if (!pdf) {
-        try {
-          pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url }).promise;
-        } catch (err) {
-          // Try R2 fallback if original URL is a local /Questions/ path (shouldn't happen if we already tried, but keep as safety)
-          if (shouldUseR2(pdfUrl)) {
-            console.log('[loadPdfPages] Local load failed, trying R2 fallback');
-            const r2Url = await resolveFromR2(pdfUrl);
-            if (r2Url && r2Url !== pdfUrl) {
-              console.log('[loadPdfPages] Using R2 fallback URL:', r2Url);
-              
-              // Try blob URL approach to avoid CORS
-              const blobUrl = await fetchR2AsBlobUrl(r2Url);
-              if (blobUrl) {
-                console.log('[loadPdfPages] Using blob URL from R2');
-                pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: blobUrl }).promise;
-              } else {
-                throw err;
-              }
-            } else {
-              throw err; // Re-throw if no R2 fallback available
-            }
-          } else {
-            throw err;
-          }
+
+        console.log('[loadPdfPages] Using assets URL only:', r2Url);
+        const blobUrl = await fetchR2AsBlobUrl(r2Url);
+        if (blobUrl) {
+          pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: blobUrl }).promise;
+        } else {
+          pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: r2Url }).promise;
         }
+      } else {
+        pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url }).promise;
       }
       
       const total = Math.min(pdf.numPages, 50);
@@ -1892,40 +1765,9 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
                     setLoading(false);
                   }}
                   onError={() => {
-                    // Try next extension
-                    setImageLoadAttempt(prev => {
-                      const nextAttempt = prev + 1;
-                      const baseUrl = imageFallbackUrlRef.current || removeExtension(effectiveUrl);
-                      console.log(`Image load failed. Attempt ${nextAttempt}, trying base URL:`, baseUrl);
-                      if (nextAttempt < 5) { // Try up to 5 extensions
-                        tryImageWithExtensions(baseUrl, nextAttempt);
-                      } else {
-                        // After all extension attempts fail, try R2 fallback for Questions directory
-                        if (shouldUseR2(effectiveUrl)) {
-                          console.log(`[MediaViewer] Image extensions failed, attempting R2 fallback for: ${effectiveUrl}`);
-                          resolveFromR2(effectiveUrl).then(r2Url => {
-                            if (r2Url && imageRef.current) {
-                              console.log(`[MediaViewer] R2 URL found: ${r2Url}`);
-                              imageRef.current.src = r2Url;
-                              setImageLoadAttempt(0); // Reset attempts for R2 URL
-                            } else {
-                              console.error('Failed to load image with any supported extension or from R2');
-                              setError('Failed to load image from local or R2 storage');
-                              setLoading(false);
-                            }
-                          }).catch(err => {
-                            console.error('R2 fallback error:', err);
-                            setError('Failed to load image from local or R2 storage');
-                            setLoading(false);
-                          });
-                        } else {
-                          console.error('Failed to load image with any supported extension after 5 attempts');
-                          setError('Failed to load image with any supported extension');
-                          setLoading(false);
-                        }
-                      }
-                      return nextAttempt;
-                    });
+                    console.error(`[MediaViewer] Failed to load image from asset URL: ${effectiveUrl}`);
+                    setError('Failed to load image from R2 storage');
+                    setLoading(false);
                   }}
                   onMouseDown={() => startLongPress()}
                   onMouseUp={() => cancelLongPress()}
