@@ -43,7 +43,15 @@ interface QuizMenuProps {
 
 type QuizComponentProps = SingleQuizProps | QuizMenuProps;
 
+const isR2ManagedAssetUrl = (value: string) => value.includes('/Questions/') || value.includes('/topicals/');
+
 const Quiz: React.FC<QuizComponentProps> = (props) => {
+  const resolveAssetUrl = async (url: string): Promise<string> => {
+    if (!url || url.startsWith('blob:')) return url;
+    const resolvedUrl = await resolveFromR2(url);
+    return resolvedUrl || url;
+  };
+
   // helper: fetch with a short timeout (local files shouldn't take long)
   const fetchWithTimeout = (url: string, timeout = 3000): Promise<Response> => {
     return new Promise((resolve, reject) => {
@@ -75,10 +83,12 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
         }
       }
 
+      const resolvedUrl = await resolveAssetUrl(url);
+
       // Convert relative URL to absolute if needed
-      let absoluteUrl = url.startsWith('http') || url.startsWith('blob:') 
-        ? url 
-        : new URL(url, window.location.origin).href;
+      let absoluteUrl = resolvedUrl.startsWith('http') || resolvedUrl.startsWith('blob:') 
+        ? resolvedUrl 
+        : new URL(resolvedUrl, window.location.origin).href;
       
       // Attempt to fetch from the original URL
       let response: Response | null = null;
@@ -91,8 +101,8 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
         console.log(`[Quiz] Fetch failed for local file: ${(error as Error).message}`);
       }
       
-      // If local fetch failed or returned not-ok status, try R2 fallback for Questions
-      if ((!response || !response.ok) && localPath.includes('/Questions/')) {
+      // If local fetch failed or returned not-ok status, try R2 fallback for managed assets
+      if ((!response || !response.ok) && isR2ManagedAssetUrl(localPath)) {
         console.log(`[Quiz] Local file unavailable, attempting R2 fallback for: ${localPath}`);
         const r2Url = await resolveFromR2(localPath);
         if (r2Url) {
@@ -194,9 +204,10 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
     questionNumber: number
   ): Promise<void> => {
     try {
-      let absoluteUrl = imageUrl.startsWith('http') || imageUrl.startsWith('blob:')
-        ? imageUrl
-        : new URL(imageUrl, window.location.origin).href;
+      const resolvedUrl = await resolveAssetUrl(imageUrl);
+      let absoluteUrl = resolvedUrl.startsWith('http') || resolvedUrl.startsWith('blob:')
+        ? resolvedUrl
+        : new URL(resolvedUrl, window.location.origin).href;
       
       console.log(`[PDF Merge] Fetching image: ${absoluteUrl}`);
       let response = null;
@@ -207,7 +218,7 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
       }
       
       // fallback to R2 only if needed
-      if ((!response || !response.ok) && imageUrl.includes('/Questions/')) {
+      if ((!response || !response.ok) && isR2ManagedAssetUrl(imageUrl)) {
         const r2Url = await resolveFromR2(imageUrl);
         if (r2Url) {
           absoluteUrl = r2Url;
@@ -219,8 +230,8 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
         }
       }
       
-      if (!response.ok) {
-        console.error(`[PDF Merge] Failed to fetch image: ${response.statusText}`);
+      if (!response || !response.ok) {
+        console.error(`[PDF Merge] Failed to fetch image: ${response?.statusText || 'no response'}`);
         return;
       }
       
@@ -325,9 +336,10 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
       }
       
       try {
-        let absoluteUrl = fileUrl.startsWith('http') || fileUrl.startsWith('blob:')
-          ? fileUrl
-          : new URL(fileUrl, window.location.origin).href;
+        const resolvedUrl = await resolveAssetUrl(fileUrl);
+        let absoluteUrl = resolvedUrl.startsWith('http') || resolvedUrl.startsWith('blob:')
+          ? resolvedUrl
+          : new URL(resolvedUrl, window.location.origin).href;
         
         console.log(`[PDF Merge] Processing question ${questionNumber}: ${fileType} from ${absoluteUrl}`);
         
@@ -344,7 +356,7 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
           }
           
           // If local PDF fails, try R2 fallback quickly
-          if ((!response || !response.ok) && fileUrl.includes('/Questions/')) {
+          if ((!response || !response.ok) && isR2ManagedAssetUrl(fileUrl)) {
             const r2Url = await resolveFromR2(fileUrl);
             if (r2Url) {
               absoluteUrl = r2Url;
@@ -356,8 +368,8 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
             }
           }
           
-          if (!response.ok) {
-            console.error(`[PDF Merge] Failed to fetch PDF: ${response.statusText}`);
+          if (!response || !response.ok) {
+            console.error(`[PDF Merge] Failed to fetch PDF: ${response?.statusText || 'no response'}`);
             continue;
           }
           

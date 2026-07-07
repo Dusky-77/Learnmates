@@ -187,7 +187,17 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       if (!fileUrl) return;
 
       // Extract directory path from URL
-      const urlPath = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`;
+      let normalizedUrl = fileUrl;
+      if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+        try {
+          const parsedUrl = new URL(fileUrl);
+          normalizedUrl = `${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`;
+        } catch {
+          normalizedUrl = fileUrl;
+        }
+      }
+
+      const urlPath = normalizedUrl.startsWith('/') ? normalizedUrl : `/${normalizedUrl}`;
       const lastSlash = urlPath.lastIndexOf('/');
       const dirPath = urlPath.substring(0, lastSlash);
       const fileName = urlPath.substring(lastSlash + 1);
@@ -197,7 +207,8 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       
       // Try to fetch info.json from the same directory
       const infoJsonPath = `${dirPath}/info.json`;
-      const response = await fetch(infoJsonPath);
+      const resolvedInfoUrl = shouldUseR2(fileUrl) ? await resolveFromR2(infoJsonPath) : null;
+      const response = await fetch(resolvedInfoUrl || infoJsonPath);
       
       if (response.ok) {
         const infoData = await response.json();
@@ -214,6 +225,11 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
     } catch (error) {
       console.warn('Failed to load topic tags:', error);
     }
+  };
+
+  const shouldUseR2 = (value: string) => {
+    if (!value || disableR2) return false;
+    return value.includes('/Questions/') || value.includes('/topicals/');
   };
 
   // Load content (PDF or image)
@@ -287,9 +303,9 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
               console.error(`[MediaViewer] R2 URL load failed:`, r2Err);
               throw r2Err; // Re-throw to trigger error handling
             }
-          } else if (currentUrl.includes('/Questions/') && !disableR2) {
-            // Local Questions path, resolve to R2 first
-            console.log(`[MediaViewer] Questions path detected, trying R2 first: ${currentUrl}`);
+          } else if (shouldUseR2(currentUrl)) {
+            // Local R2-managed asset path, resolve to R2 first
+            console.log(`[MediaViewer] R2-managed asset path detected, trying R2 first: ${currentUrl}`);
             try {
               const r2Url = await resolveFromR2(currentUrl);
               if (r2Url && r2Url !== currentUrl) {
@@ -338,8 +354,8 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
           setImageLoadAttempt(0); // Reset attempts for new image
           imageFallbackUrlRef.current = removeExtension(currentUrl); // Store base URL without extension
           
-          if (currentUrl.includes('/Questions/') && !disableR2) {
-            console.log(`[MediaViewer] Questions path detected for image, trying R2 first: ${currentUrl}`);
+          if (shouldUseR2(currentUrl)) {
+            console.log(`[MediaViewer] R2-managed asset path detected for image, trying R2 first: ${currentUrl}`);
             resolveFromR2(currentUrl).then(r2Url => {
               if (r2Url && r2Url !== currentUrl && imageRef.current) {
                 console.log(`[MediaViewer] Using R2 URL for image: ${r2Url}`);
@@ -362,7 +378,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
         if (signal.aborted) return;
         
         // If PDF parsing failed and we haven't tried R2 yet (for non-Questions paths), try R2 fallback
-        if (currentType === 'pdf' && currentUrl.includes('/Questions/') && !disableR2) {
+        if (currentType === 'pdf' && shouldUseR2(currentUrl)) {
           console.warn('PDF parsing failed, attempting R2 fallback:', err?.message);
           try {
             const r2Url = await resolveFromR2(currentUrl);
@@ -1123,9 +1139,9 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       
       let pdf: any;
       
-      // For Questions directory files, proactively try R2 first
-      if (pdfUrl.includes('/Questions/') && !disableR2) {
-        console.log('[loadPdfPagesForModal] Questions path detected, trying R2 first:', pdfUrl);
+      // For R2-managed asset files, proactively try R2 first
+      if (shouldUseR2(pdfUrl)) {
+        console.log('[loadPdfPagesForModal] R2-managed asset path detected, trying R2 first:', pdfUrl);
         try {
           const r2Url = await resolveFromR2(pdfUrl);
           if (r2Url && r2Url !== pdfUrl) {
@@ -1153,7 +1169,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
           pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url }).promise;
         } catch (err) {
           // Try R2 fallback if original URL is a local /Questions/ path
-          if (pdfUrl.includes('/Questions/') && !disableR2) {
+          if (shouldUseR2(pdfUrl)) {
             console.log('[loadPdfPagesForModal] Local load failed, trying R2 fallback');
             const r2Url = await resolveFromR2(pdfUrl);
             if (r2Url && r2Url !== pdfUrl) {
@@ -1235,9 +1251,9 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       
       let pdf: any;
       
-      // For Questions directory files, proactively try R2 first
-      if (pdfUrl.includes('/Questions/') && !disableR2) {
-        console.log('[loadPdfPages] Questions path detected, trying R2 first:', pdfUrl);
+      // For R2-managed asset files, proactively try R2 first
+      if (shouldUseR2(pdfUrl)) {
+        console.log('[loadPdfPages] R2-managed asset path detected, trying R2 first:', pdfUrl);
         try {
           const r2Url = await resolveFromR2(pdfUrl);
           if (r2Url && r2Url !== pdfUrl) {
@@ -1265,7 +1281,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
           pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url }).promise;
         } catch (err) {
           // Try R2 fallback if original URL is a local /Questions/ path (shouldn't happen if we already tried, but keep as safety)
-          if (pdfUrl.includes('/Questions/') && !disableR2) {
+          if (shouldUseR2(pdfUrl)) {
             console.log('[loadPdfPages] Local load failed, trying R2 fallback');
             const r2Url = await resolveFromR2(pdfUrl);
             if (r2Url && r2Url !== pdfUrl) {
@@ -1885,7 +1901,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
                         tryImageWithExtensions(baseUrl, nextAttempt);
                       } else {
                         // After all extension attempts fail, try R2 fallback for Questions directory
-                        if (effectiveUrl.includes('/Questions/') && !disableR2) {
+                        if (shouldUseR2(effectiveUrl)) {
                           console.log(`[MediaViewer] Image extensions failed, attempting R2 fallback for: ${effectiveUrl}`);
                           resolveFromR2(effectiveUrl).then(r2Url => {
                             if (r2Url && imageRef.current) {
