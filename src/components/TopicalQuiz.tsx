@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import MediaViewer from './MediaViewer';
 import { deriveMarkSchemeUrl } from '../utils/quizLoader';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-// R2 logic disabled for topical quizzes to avoid CORS/proxy delays
+import { resolveFromR2 } from '../utils/r2Utils';
 
 export interface Question {
   id: string;
@@ -82,13 +82,23 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
     });
   };
 
+  const resolveAssetUrl = async (url: string): Promise<string> => {
+    if (!url) return url;
+    if (url.startsWith('blob:')) return url;
+
+    const resolvedUrl = await resolveFromR2(url);
+    return resolvedUrl || url;
+  };
+
   // Shared download functions
   const handleDownload = async (url: string, filename: string) => {
     try {
+      const resolvedUrl = await resolveAssetUrl(url);
+
       // Convert relative URL to absolute if needed
-      const absoluteUrl = url.startsWith('http') || url.startsWith('blob:')
-        ? url
-        : new URL(url, window.location.origin).href;
+      const absoluteUrl = resolvedUrl.startsWith('http') || resolvedUrl.startsWith('blob:')
+        ? resolvedUrl
+        : new URL(resolvedUrl, window.location.origin).href;
 
       // Attempt to fetch from the original URL
       let response: Response | null = null;
@@ -98,8 +108,6 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
       } catch (error) {
         console.log(`[TopicalQuiz] Fetch failed for local file: ${(error as Error).message}`);
       }
-      
-      // R2 fallback removed for topical quizzes (CORS issues may arise otherwise)
       
       if (!response || !response.ok) {
         throw new Error(`Failed to download: ${response?.statusText || 'Network error'}`);
@@ -188,9 +196,10 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
     questionNumber: number
   ): Promise<void> => {
     try {
-      const absoluteUrl = imageUrl.startsWith('http') || imageUrl.startsWith('blob:')
-        ? imageUrl
-        : new URL(imageUrl, window.location.origin).href;
+      const resolvedUrl = await resolveAssetUrl(imageUrl);
+      const absoluteUrl = resolvedUrl.startsWith('http') || resolvedUrl.startsWith('blob:')
+        ? resolvedUrl
+        : new URL(resolvedUrl, window.location.origin).href;
       
       console.log(`[PDF Merge] Fetching image: ${absoluteUrl}`);
       let response: Response | null = null;
@@ -199,8 +208,6 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
       } catch {
         response = null;
       }
-      
-      // no R2 fallback for topical quizzes
       
       if (!response || !response.ok) {
         console.error(`[PDF Merge] Failed to fetch image: ${response ? response.statusText : 'no response'}`);
@@ -308,9 +315,10 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
       }
       
       try {
-        const absoluteUrl = fileUrl.startsWith('http') || fileUrl.startsWith('blob:')
-          ? fileUrl
-          : new URL(fileUrl, window.location.origin).href;
+        const resolvedUrl = await resolveAssetUrl(fileUrl);
+        const absoluteUrl = resolvedUrl.startsWith('http') || resolvedUrl.startsWith('blob:')
+          ? resolvedUrl
+          : new URL(resolvedUrl, window.location.origin).href;
         
         console.log(`[PDF Merge] Processing question ${questionNumber}: ${fileType} from ${absoluteUrl}`);
         
@@ -325,8 +333,6 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
           } catch {
             response = null;
           }
-          
-          // R2 logic skipped here for topical quizzes
           
           if (!response || !response.ok) {
             console.error(`[PDF Merge] Failed to fetch PDF: ${response ? response.statusText : 'no response'}`);

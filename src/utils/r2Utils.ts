@@ -69,12 +69,29 @@ export function encodeR2Path(filePath: string): string {
  */
 export function getR2Url(localPath: string): string | null {
   // If already an R2 URL, return as-is (avoid double encoding)
-  if (localPath.startsWith('https://learnmates.org') || localPath.startsWith('http://')) {
+  if (localPath.startsWith('https://assets.learnmates.org') || localPath.startsWith('http://assets.learnmates.org')) {
     return localPath;
   }
-  
+
+  let pathToTransform = localPath;
+
+  // Normalize absolute LearnMates URLs to the R2 asset host
+  if (localPath.startsWith('http://') || localPath.startsWith('https://')) {
+    try {
+      const url = new URL(localPath);
+      if (url.hostname === 'www.learnmates.org' || url.hostname === 'learnmates.org') {
+        pathToTransform = `${url.pathname}${url.search}${url.hash}`;
+      } else {
+        return localPath;
+      }
+    } catch (error) {
+      console.error(`[R2 Utils] Error parsing URL for ${localPath}:`, error);
+      return localPath;
+    }
+  }
+
   // Only handle Questions/topicals asset directories
-  if (!isR2ManagedAssetPath(localPath)) {
+  if (!isR2ManagedAssetPath(pathToTransform)) {
     return null;
   }
 
@@ -85,17 +102,17 @@ export function getR2Url(localPath: string): string | null {
 
   try {
     // Remove leading slash if present
-    const cleanPath = localPath.startsWith('/') ? localPath.substring(1) : localPath;
-    
+    const cleanPath = pathToTransform.startsWith('/') ? pathToTransform.substring(1) : pathToTransform;
+
     // Encode the path
     const encodedPath = encodeR2Path(cleanPath);
-    
+
     // Construct R2 URL
     const r2Url = `${R2_BASE_URL}/${encodedPath}`;
-    
+
     // Cache the result
     r2UrlCache.set(localPath, r2Url);
-    
+
     return r2Url;
   } catch (error) {
     console.error(`[R2 Utils] Error transforming URL for ${localPath}:`, error);
@@ -112,12 +129,25 @@ export function getR2Url(localPath: string): string | null {
  */
 export async function resolveFromR2(localPath: string): Promise<string | null> {
   // If already an R2 URL, return as-is (avoid double encoding)
-  if (localPath.startsWith('https://learnmates.org') || localPath.startsWith('http://')) {
+  if (localPath.startsWith('https://assets.learnmates.org') || localPath.startsWith('http://assets.learnmates.org')) {
     return localPath;
   }
-  
+
   // Resolve Questions/topicals assets from R2
-  if (!isR2ManagedAssetPath(localPath)) {
+  const normalizedPath = localPath.startsWith('http://') || localPath.startsWith('https://')
+    ? (() => {
+        try {
+          const url = new URL(localPath);
+          return (url.hostname === 'www.learnmates.org' || url.hostname === 'learnmates.org')
+            ? `${url.pathname}${url.search}${url.hash}`
+            : localPath;
+        } catch {
+          return localPath;
+        }
+      })()
+    : localPath;
+
+  if (!isR2ManagedAssetPath(normalizedPath)) {
     return null;
   }
 
