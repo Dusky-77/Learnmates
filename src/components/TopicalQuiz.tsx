@@ -298,6 +298,47 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
       console.error(`[PDF Merge] Error adding image ${imageUrl}:`, error);
     }
   };
+// Add this helper function to get arrayBuffer directly from R2
+  const fetchR2AsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> => {
+    try {
+    // First, try to get the direct R2 URL
+    const r2Url = await resolveFromR2(url);
+    if (!r2Url) {
+      console.warn(`[R2] Could not resolve URL: ${url}`);
+      return null;
+    }
+
+    console.log(`[R2] Fetching: ${r2Url}`);
+    
+    // Fetch directly from R2
+    const response = await fetch(r2Url, {
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/pdf,image/*',
+      },
+    });
+
+    if (!response.ok) {
+      console.warn(`[R2] Fetch failed: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      console.warn(`[R2] Received HTML instead of file`);
+      return null;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    console.log(`[R2] Successfully fetched ${arrayBuffer.byteLength} bytes`);
+    return arrayBuffer;
+  } catch (error) {
+    console.error(`[R2] Error fetching:`, error);
+    return null;
+  }
+};
+
+
 
   // Merge PDFs and images with question numbers and separators
   const mergePDFsAndImages = async (
@@ -335,25 +376,29 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
                           absoluteUrl.includes('/topicals/');
         
         if (isR2Asset) {
-          // Use the same approach as MediaViewer - get blob URL and use it directly
-          const blobUrl = await fetchR2AsBlobUrl(absoluteUrl);
-          if (blobUrl) {
-            try {
-              // Fetch the blob URL to get the arrayBuffer
-              const response = await fetch(blobUrl);
-              arrayBuffer = await response.arrayBuffer();
-              // Clean up
-              URL.revokeObjectURL(blobUrl);
-            } catch (err) {
-              console.warn(`[PDF Merge] Failed to fetch blob URL for question ${questionNumber}:`, err);
-              // Try direct fetch as fallback
+          // Try to fetch directly from R2 first
+          arrayBuffer = await fetchR2AsArrayBuffer(absoluteUrl);
+
+          if (!arrayBuffer) {
+            // Fallback to blob URL approach used by MediaViewer
+            const blobUrl = await fetchR2AsBlobUrl(absoluteUrl);
+            if (blobUrl) {
               try {
-                const response = await fetch(absoluteUrl);
-                if (response.ok) {
-                  arrayBuffer = await response.arrayBuffer();
+                const response = await fetch(blobUrl);
+                arrayBuffer = await response.arrayBuffer();
+              } catch (err) {
+                console.warn(`[PDF Merge] Failed to fetch blob URL for question ${questionNumber}:`, err);
+                // Try direct fetch as fallback
+                try {
+                  const response = await fetch(absoluteUrl);
+                  if (response.ok) {
+                    arrayBuffer = await response.arrayBuffer();
+                  }
+                } catch (fallbackErr) {
+                  console.warn(`[PDF Merge] Fallback fetch also failed for question ${questionNumber}:`, fallbackErr);
                 }
-              } catch (fallbackErr) {
-                console.warn(`[PDF Merge] Fallback fetch also failed for question ${questionNumber}:`, fallbackErr);
+              } finally {
+                URL.revokeObjectURL(blobUrl);
               }
             }
           }
@@ -463,6 +508,7 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
         console.error(`[PDF Merge] Error processing question ${questionNumber}:`, error);
         // Continue with other files even if one fails
       }
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
     
     console.log(`[PDF Merge] Final PDF has ${mergedPdf.getPageCount()} pages`);
