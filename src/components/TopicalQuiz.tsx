@@ -327,101 +327,140 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
         
         console.log(`[PDF Merge] Processing question ${questionNumber}: ${fileType} from ${absoluteUrl}`);
         
-        if (fileType === 'pdf') {
-          // Add separator page before PDF
-          await createSeparatorPage(mergedPdf, questionNumber, type);
-          console.log(`[PDF Merge] Added separator page for question ${questionNumber}`);
-          
-          // After:
-          let response: Response | null = null;
-          try {
-            response = await fetchWithTimeout(absoluteUrl, 20000); // 20s — R2 downloads, not local files
-          } catch (err) {
-            console.warn(`[PDF Merge] First fetch attempt failed for question ${questionNumber}, retrying: ${(err as Error).message}`);
+        let arrayBuffer: ArrayBuffer | null = null;
+        
+        // Check if this is an R2 asset
+        const isR2Asset = absoluteUrl.includes('assets.learnmates.org') || 
+                          absoluteUrl.includes('/questions/') || 
+                          absoluteUrl.includes('/topicals/');
+        
+        if (isR2Asset) {
+          // Use the same approach as MediaViewer - get blob URL and use it directly
+          const blobUrl = await fetchR2AsBlobUrl(absoluteUrl);
+          if (blobUrl) {
             try {
-              response = await fetchWithTimeout(absoluteUrl, 20000);
-            } catch (err2) {
-              console.error(`[PDF Merge] Retry also failed for question ${questionNumber}: ${(err2 as Error).message}`);
-              response = null;
+              // Fetch the blob URL to get the arrayBuffer
+              const response = await fetch(blobUrl);
+              arrayBuffer = await response.arrayBuffer();
+              // Clean up
+              URL.revokeObjectURL(blobUrl);
+            } catch (err) {
+              console.warn(`[PDF Merge] Failed to fetch blob URL for question ${questionNumber}:`, err);
+              // Try direct fetch as fallback
+              try {
+                const response = await fetch(absoluteUrl);
+                if (response.ok) {
+                  arrayBuffer = await response.arrayBuffer();
+                }
+              } catch (fallbackErr) {
+                console.warn(`[PDF Merge] Fallback fetch also failed for question ${questionNumber}:`, fallbackErr);
+              }
             }
           }
-
-          if (!response || !response.ok) {
-            console.error(`[PDF Merge] Failed to fetch PDF for question ${questionNumber}: ${response ? response.status + ' ' + response.statusText : 'no response'} (${absoluteUrl})`);
-            continue;
+        } else {
+          // Non-R2 asset - direct fetch
+          try {
+            const response = await fetchWithTimeout(absoluteUrl, 20000);
+            if (response && response.ok) {
+              arrayBuffer = await response.arrayBuffer();
+            }
+          } catch (err) {
+            console.warn(`[PDF Merge] Fetch failed for question ${questionNumber}: ${(err as Error).message}`);
           }
+        }
+
+        if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+          console.warn(`[PDF Merge] No data received for question ${questionNumber}`);
+          continue;
+        }
+
+        console.log(`[PDF Merge] Received ${arrayBuffer.byteLength} bytes for question ${questionNumber}`);
+
+        // Check if it's actually a PDF
+        const isPDF = arrayBuffer.byteLength > 4 && 
+                      new Uint8Array(arrayBuffer.slice(0, 4))[0] === 0x25 && // '%'
+                      new Uint8Array(arrayBuffer.slice(0, 4))[1] === 0x50 && // 'P'
+                      new Uint8Array(arrayBuffer.slice(0, 4))[2] === 0x44 && // 'D'
+                      new Uint8Array(arrayBuffer.slice(0, 4))[3] === 0x46;   // 'F'
+
+        if (isPDF) {
+          // Add separator page before PDF
+          await createSeparatorPage(mergedPdf, questionNumber, type);
           
-          const arrayBuffer = await response.arrayBuffer();
-          const pdf = await PDFDocument.load(arrayBuffer);
-          const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-          
-          // Embed font once for all pages
-          const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
-          const headerText = `${type === 'questions' ? 'Question' : 'Mark Scheme'} ${questionNumber}`;
-          const headerFontSize = 14;
-          const headerHeight = 35;
-          
-          pages.forEach((page, pageIndex) => {
-            const { width, height } = page.getSize();
+          try {
+            const pdf = await PDFDocument.load(arrayBuffer);
+            const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
             
-            console.log(`[PDF Merge] Adding header to page ${pageIndex + 1}, size: ${width}x${height}`);
+            // Embed font once for all pages
+            const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
+            const headerText = `${type === 'questions' ? 'Question' : 'Mark Scheme'} ${questionNumber}`;
+            const headerFontSize = 14;
+            const headerHeight = 35;
             
-            // Draw header background (PDF coordinates: bottom-left is origin)
-            // Fill the entire header area
-            page.drawRectangle({
-              x: 0,
-              y: height - headerHeight,
-              width: width,
-              height: headerHeight,
-              color: rgb(0.85, 0.85, 0.85), // Light gray background
-            });
-            
-            // Draw a border rectangle for the header
-            page.drawRectangle({
-              x: 0,
-              y: height - headerHeight,
-              width: width,
-              height: headerHeight,
-              borderColor: rgb(0.5, 0.5, 0.5),
-              borderWidth: 1,
-            });
-            
-            // Draw header text (y position accounts for text baseline)
-            // Text baseline is at the y coordinate, so we position it in the middle of the header
-            const textY = height - headerHeight + (headerHeight / 2) - (headerFontSize / 3); // Center vertically
-            page.drawText(headerText, {
-              x: 20,
-              y: textY,
-              size: headerFontSize,
-              color: rgb(0, 0, 0),
-              font: font,
-            });
-            
-            // Draw page number if multiple pages
-            if (pages.length > 1) {
-              const pageNumText = `Page ${pageIndex + 1} of ${pages.length}`;
-              const pageNumWidth = font.widthOfTextAtSize(pageNumText, headerFontSize);
-              page.drawText(pageNumText, {
-                x: width - pageNumWidth - 20,
+            pages.forEach((page, pageIndex) => {
+              const { width, height } = page.getSize();
+              
+              // Draw header background
+              page.drawRectangle({
+                x: 0,
+                y: height - headerHeight,
+                width: width,
+                height: headerHeight,
+                color: rgb(0.85, 0.85, 0.85),
+              });
+              
+              page.drawRectangle({
+                x: 0,
+                y: height - headerHeight,
+                width: width,
+                height: headerHeight,
+                borderColor: rgb(0.5, 0.5, 0.5),
+                borderWidth: 1,
+              });
+              
+              const textY = height - headerHeight + (headerHeight / 2) - (headerFontSize / 3);
+              page.drawText(headerText, {
+                x: 20,
                 y: textY,
                 size: headerFontSize,
                 color: rgb(0, 0, 0),
                 font: font,
               });
-            }
+              
+              if (pages.length > 1) {
+                const pageNumText = `Page ${pageIndex + 1} of ${pages.length}`;
+                const pageNumWidth = font.widthOfTextAtSize(pageNumText, headerFontSize);
+                page.drawText(pageNumText, {
+                  x: width - pageNumWidth - 20,
+                  y: textY,
+                  size: headerFontSize,
+                  color: rgb(0, 0, 0),
+                  font: font,
+                });
+              }
+              
+              mergedPdf.addPage(page);
+            });
             
-            mergedPdf.addPage(page);
-            console.log(`[PDF Merge] Added page ${pageIndex + 1} with header`);
-          });
-          
-          console.log(`[PDF Merge] Added ${pages.length} pages from PDF for question ${questionNumber} with headers`);
-        } else if (fileType === 'image') {
-          // Add question number and image
-          await addImageToPdf(mergedPdf, absoluteUrl, questionNumber);
-          console.log(`[PDF Merge] Added image page for question ${questionNumber}`);
+            console.log(`[PDF Merge] Added ${pages.length} pages from PDF for question ${questionNumber}`);
+          } catch (pdfError) {
+            console.error(`[PDF Merge] Failed to load PDF for question ${questionNumber}:`, pdfError);
+            continue;
+          }
+        } else {
+          // Treat as image - create a blob URL from the arrayBuffer
+          const blob = new Blob([arrayBuffer]);
+          const imageUrl = URL.createObjectURL(blob);
+          try {
+            await addImageToPdf(mergedPdf, imageUrl, questionNumber);
+          } catch (imageError) {
+            console.error(`[PDF Merge] Failed to add image for question ${questionNumber}:`, imageError);
+          } finally {
+            URL.revokeObjectURL(imageUrl);
+          }
         }
       } catch (error) {
-        console.error(`[PDF Merge] Error processing ${fileType} ${fileUrl}:`, error);
+        console.error(`[PDF Merge] Error processing question ${questionNumber}:`, error);
         // Continue with other files even if one fails
       }
     }
