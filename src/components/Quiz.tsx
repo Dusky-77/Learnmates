@@ -316,19 +316,49 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
           await createSeparatorPage(mergedPdf, questionNumber, type);
           console.log(`[PDF Merge] Added separator page for question ${questionNumber}`);
           
-          let response = null;
-          try {
-            response = await fetchWithTimeout(absoluteUrl, 3000);
-          } catch (_) {
-            response = null;
+          let response: Response | null = null;
+          let errorMessage = 'unknown error';
+
+          for (let attempt = 1; attempt <= 2; attempt++) {
+            try {
+              response = await fetchWithTimeout(absoluteUrl, 20000);
+              if (response.ok) {
+                break;
+              }
+
+              errorMessage = `${response.status} ${response.statusText || 'no response'}`;
+              console.error(
+                `[PDF Merge] Question ${questionNumber} PDF fetch attempt ${attempt}/2 failed for ${absoluteUrl} with status ${response.status} (${response.statusText || 'no response'})`
+              );
+
+              if (attempt === 1 && (response.status >= 500 || response.status === 429)) {
+                continue;
+              }
+              break;
+            } catch (error) {
+              errorMessage = error instanceof Error ? error.message : 'unknown error';
+              console.error(
+                `[PDF Merge] Question ${questionNumber} PDF fetch attempt ${attempt}/2 threw for ${absoluteUrl}:`,
+                error
+              );
+              if (attempt === 1) {
+                continue;
+              }
+              response = null;
+              break;
+            }
           }
-          
+
           if (!response || !response.ok) {
             if (shouldUseR2(fileUrl)) {
-              console.error(`[PDF Merge] Failed to fetch managed PDF from R2: ${response?.statusText || 'no response'}`);
+              console.error(
+                `[PDF Merge] Failed to fetch managed PDF from R2 for question ${questionNumber} after 2 attempts. Status: ${response?.status ?? 'unknown'} (${response?.statusText || 'no response'}). URL: ${absoluteUrl}. Error: ${errorMessage}`
+              );
               continue;
             }
-            console.error(`[PDF Merge] Failed to fetch PDF: ${response?.statusText || 'no response'}`);
+            console.error(
+              `[PDF Merge] Failed to fetch PDF for question ${questionNumber} after 2 attempts. Status: ${response?.status ?? 'unknown'} (${response?.statusText || 'no response'}). URL: ${absoluteUrl}. Error: ${errorMessage}`
+            );
             continue;
           }
           

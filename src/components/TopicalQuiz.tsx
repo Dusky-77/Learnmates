@@ -327,15 +327,22 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
           await createSeparatorPage(mergedPdf, questionNumber, type);
           console.log(`[PDF Merge] Added separator page for question ${questionNumber}`);
           
+          // After:
           let response: Response | null = null;
           try {
-            response = await fetchWithTimeout(absoluteUrl, 3000);
-          } catch {
-            response = null;
+            response = await fetchWithTimeout(absoluteUrl, 20000); // 20s — R2 downloads, not local files
+          } catch (err) {
+            console.warn(`[PDF Merge] First fetch attempt failed for question ${questionNumber}, retrying: ${(err as Error).message}`);
+            try {
+              response = await fetchWithTimeout(absoluteUrl, 20000);
+            } catch (err2) {
+              console.error(`[PDF Merge] Retry also failed for question ${questionNumber}: ${(err2 as Error).message}`);
+              response = null;
+            }
           }
-          
+
           if (!response || !response.ok) {
-            console.error(`[PDF Merge] Failed to fetch PDF: ${response ? response.statusText : 'no response'}`);
+            console.error(`[PDF Merge] Failed to fetch PDF for question ${questionNumber}: ${response ? response.status + ' ' + response.statusText : 'no response'} (${absoluteUrl})`);
             continue;
           }
           
