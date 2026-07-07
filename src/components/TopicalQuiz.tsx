@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import MediaViewer from './MediaViewer';
 import { deriveMarkSchemeUrl } from '../utils/quizLoader';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { resolveFromR2 } from '../utils/r2Utils';
+import { fetchR2AsBlobUrl, resolveFromR2 } from '../utils/r2Utils';
 
 export interface Question {
   id: string;
@@ -94,43 +94,48 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
   const handleDownload = async (url: string, filename: string) => {
     try {
       const resolvedUrl = await resolveAssetUrl(url);
-
-      // Convert relative URL to absolute if needed
-      const absoluteUrl = resolvedUrl.startsWith('http') || resolvedUrl.startsWith('blob:')
-        ? resolvedUrl
-        : new URL(resolvedUrl, window.location.origin).href;
-
-      // Attempt to fetch from the original URL
-      let response: Response | null = null;
-
-      try {
-        response = await fetch(absoluteUrl);
-      } catch (error) {
-        console.log(`[TopicalQuiz] Fetch failed for local file: ${(error as Error).message}`);
+      
+      // Check if this is an R2 asset
+      const isR2Asset = resolvedUrl.includes('assets.learnmates.org') || 
+                        resolvedUrl.includes('/questions/') || 
+                        resolvedUrl.includes('/topicals/');
+      
+      if (isR2Asset) {
+        // Use the same approach as MediaViewer - fetch as blob URL
+        const blobUrl = await fetchR2AsBlobUrl(resolvedUrl);
+        
+        if (blobUrl) {
+          // Download using blob URL (works for R2)
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          // Clean up
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+          return;
+        }
       }
       
-      if (!response || !response.ok) {
-        throw new Error(`Failed to download: ${response?.statusText || 'Network error'}`);
-      }
-      
-      const blob = await response.blob();
-      
-      // Create a temporary link and trigger download
-      const downloadUrl = window.URL.createObjectURL(blob);
+      // Fallback: Use direct download (might work for non-R2 assets)
       const link = document.createElement('a');
-      link.href = downloadUrl;
+      link.href = resolvedUrl;
       link.download = filename;
+      link.target = '_blank';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      
     } catch (error) {
       console.error('Error downloading file:', error);
-      // Fallback: open in new tab
-      const absoluteUrl = url.startsWith('http') || url.startsWith('blob:')
-        ? url
-        : new URL(url, window.location.origin).href;
-      window.open(absoluteUrl, '_blank');
+      // Ultimate fallback: open in new tab
+      try {
+        const resolvedUrl = await resolveAssetUrl(url);
+        window.open(resolvedUrl, '_blank');
+      } catch (fallbackError) {
+        console.error('Fallback download failed:', fallbackError);
+      }
     }
   };
 
