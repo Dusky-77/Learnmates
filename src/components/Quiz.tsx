@@ -43,11 +43,16 @@ interface QuizMenuProps {
 
 type QuizComponentProps = SingleQuizProps | QuizMenuProps;
 
-const isR2ManagedAssetUrl = (value: string) => value.includes('/Questions/') || value.includes('/topicals/');
+const shouldUseR2 = (value: string) => {
+  if (!value || value.startsWith('blob:')) return false;
+  const normalized = value.toLowerCase();
+  return normalized.includes('/questions/') || normalized.includes('/topicals/') || normalized.includes('assets.learnmates.org');
+};
 
 const Quiz: React.FC<QuizComponentProps> = (props) => {
   const resolveAssetUrl = async (url: string): Promise<string> => {
     if (!url || url.startsWith('blob:')) return url;
+    if (!shouldUseR2(url)) return url;
     const resolvedUrl = await resolveFromR2(url);
     return resolvedUrl || url;
   };
@@ -71,18 +76,6 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
   // Shared download functions
   const handleDownload = async (url: string, filename: string) => {
     try {
-      // Extract local path if url is already absolute (for R2 fallback)
-      let localPath = url;
-      if (url.startsWith('http')) {
-        // Extract path from absolute URL
-        try {
-          const urlObj = new URL(url);
-          localPath = urlObj.pathname; // e.g., /Questions/alevel/...
-        } catch {
-          localPath = url;
-        }
-      }
-
       const resolvedUrl = await resolveAssetUrl(url);
 
       // Convert relative URL to absolute if needed
@@ -90,34 +83,18 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
         ? resolvedUrl 
         : new URL(resolvedUrl, window.location.origin).href;
       
-      // Attempt to fetch from the original URL
       let response: Response | null = null;
-      let lastError: Error | null = null;
 
       try {
         response = await fetch(absoluteUrl);
       } catch (error) {
-        lastError = error as Error;
-        console.log(`[Quiz] Fetch failed for local file: ${(error as Error).message}`);
-      }
-      
-      // If local fetch failed or returned not-ok status, try R2 fallback for managed assets
-      if ((!response || !response.ok) && isR2ManagedAssetUrl(localPath)) {
-        console.log(`[Quiz] Local file unavailable, attempting R2 fallback for: ${localPath}`);
-        const r2Url = await resolveFromR2(localPath);
-        if (r2Url) {
-          console.log(`[Quiz] R2 fallback found: ${r2Url}`);
-          absoluteUrl = r2Url;
-          try {
-            response = await fetch(absoluteUrl);
-          } catch (r2Error) {
-            console.warn(`[Quiz] R2 fetch also failed:`, r2Error);
-            response = null;
-          }
-        }
+        console.log(`[Quiz] Fetch failed for asset: ${(error as Error).message}`);
       }
       
       if (!response || !response.ok) {
+        if (shouldUseR2(url)) {
+          throw new Error(`Failed to download managed asset from R2: ${response?.statusText || 'Network error'}`);
+        }
         throw new Error(`Failed to download: ${response?.statusText || 'Network error'}`);
       }
       
@@ -217,20 +194,11 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
         response = null;
       }
       
-      // fallback to R2 only if needed
-      if ((!response || !response.ok) && isR2ManagedAssetUrl(imageUrl)) {
-        const r2Url = await resolveFromR2(imageUrl);
-        if (r2Url) {
-          absoluteUrl = r2Url;
-          try {
-            response = await fetchWithTimeout(absoluteUrl, 5000);
-          } catch (_) {
-            response = null;
-          }
-        }
-      }
-      
       if (!response || !response.ok) {
+        if (shouldUseR2(imageUrl)) {
+          console.error(`[PDF Merge] Failed to fetch managed image from R2: ${response?.statusText || 'no response'}`);
+          return;
+        }
         console.error(`[PDF Merge] Failed to fetch image: ${response?.statusText || 'no response'}`);
         return;
       }
@@ -355,20 +323,11 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
             response = null;
           }
           
-          // If local PDF fails, try R2 fallback quickly
-          if ((!response || !response.ok) && isR2ManagedAssetUrl(fileUrl)) {
-            const r2Url = await resolveFromR2(fileUrl);
-            if (r2Url) {
-              absoluteUrl = r2Url;
-              try {
-                response = await fetchWithTimeout(absoluteUrl, 5000);
-              } catch (_) {
-                response = null;
-              }
-            }
-          }
-          
           if (!response || !response.ok) {
+            if (shouldUseR2(fileUrl)) {
+              console.error(`[PDF Merge] Failed to fetch managed PDF from R2: ${response?.statusText || 'no response'}`);
+              continue;
+            }
             console.error(`[PDF Merge] Failed to fetch PDF: ${response?.statusText || 'no response'}`);
             continue;
           }
