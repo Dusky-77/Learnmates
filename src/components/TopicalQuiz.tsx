@@ -1099,7 +1099,7 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
                   questionList={questionsWithMarkSchemes}
                   questionIndex={currentQuestion}
                   onChangeQuestion={(i) => setCurrentQuestion(i)}
-                  disableR2={true}
+                  disableR2={false}
                   hideToolbar={true}
                   onLoadComplete={handlePageCountChange}
                   forceAnnotationMode={annotationMode}
