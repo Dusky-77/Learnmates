@@ -1,0 +1,88 @@
+{
+  "id": "biology",
+  "title": "biology",
+  "questions": [
+    {
+      "id": "q1",
+      "title": "Question 1",
+      "markScheme": "/Questions/igcse/cambridge/biology/MS1.png",
+      "markSchemeType": "image",
+      "questionContent": "/Questions/igcse/cambridge/biology/Q1.pdf",
+      "questionContentType": "pdf"
+    },
+    {
+      "id": "q2",
+      "title": "Question 2",
+      "markScheme": "/Questions/igcse/cambridge/biology/MS2.png",
+      "markSchemeType": "image",
+      "questionContent": "/Questions/igcse/cambridge/biology/Q2.pdf",
+      "questionContentType": "pdf"
+    },
+    {
+      "id": "q3",
+      "title": "Question 3",
+      "markScheme": "/Questions/igcse/cambridge/biology/MS3.png",
+      "markSchemeType": "image",
+      "questionContent": "/Questions/igcse/cambridge/biology/Q3.pdf",
+      "questionContentType": "pdf"
+    },
+    {
+      "id": "q4",
+      "title": "Question 4",
+      "markScheme": "/Questions/igcse/cambridge/biology/MS4.png",
+      "markSchemeType": "image",
+      "questionContent": "/Questions/igcse/cambridge/biology/Q4.png",
+      "questionContentType": "image"
+    },
+    {
+      "id": "q5",
+      "title": "Question 5",
+      "markScheme": "/Questions/igcse/cambridge/biology/MS5.png",
+      "markSchemeType": "image",
+      "questionContent": "/Questions/igcse/cambridge/biology/Q5.png",
+      "questionContentType": "image"
+    },
+    {
+      "id": "q6",
+      "title": "Question 6",
+      "markScheme": "/Questions/igcse/cambridge/biology/MS6.png",
+      "markSchemeType": "image",
+      "questionContent": "/Questions/igcse/cambridge/biology/Q6.pdf",
+      "questionContentType": "pdf"
+    },
+    {
+      "id": "q7",
+      "title": "Question 7",
+      "markScheme": "/Questions/igcse/cambridge/biology/MS7.png",
+      "markSchemeType": "image",
+      "questionContent": "/Questions/igcse/cambridge/biology/Q7.pdf",
+      "questionContentType": "pdf"
+    },
+    {
+      "id": "q8",
+      "title": "Question 8",
+      "markScheme": "/Questions/igcse/cambridge/biology/MS8.png",
+      "markSchemeType": "image",
+      "questionContent": "/Questions/igcse/cambridge/biology/Q8.pdf",
+      "questionContentType": "pdf"
+    },
+    {
+      "id": "q9",
+      "title": "Question 9",
+      "markScheme": "/Questions/igcse/cambridge/biology/MS9.png",
+      "markSchemeType": "image",
+      "questionContent": "/Questions/igcse/cambridge/biology/Q9.png",
+      "questionContentType": "image"
+    },
+    {
+      "id": "q10",
+      "title": "Question 10",
+      "markScheme": "/Questions/igcse/cambridge/biology/MS10.png",
+      "markSchemeType": "image",
+      "questionContent": "/Questions/igcse/cambridge/biology/Q10.pdf",
+      "questionContentType": "pdf"
+    }
+  ],
+  "lastScanned": "2026-01-22T14:27:16.192Z",
+  "autoExpand": true
+}

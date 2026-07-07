@@ -1,0 +1,1342 @@
+import { SubjectConfig } from '../utils/topicalConfig';
+
+// A code-defined list of configurations for topical pages.  Edit this file to add new
+// subjects/boards/levels/units/topics.  The UI on TopicalPages.tsx will automatically
+// build dropdown options from the data present here.
+
+export const topicalConfigs: SubjectConfig[] = [
+
+  
+  {
+    "subject": "Chemistry",
+    
+    "board": "edexcel",
+    "level": "a-level",
+    "units": [
+      {
+        "unit": "U1",
+        
+        "topics": [
+          { "topic": "1 Formulae, Equations and Amount of Substance", "search":"Formulae, Equations and Amount of Substance" },
+           { "topic": "2 Atomic Structure and the Periodic Table", "search":"Atomic Structure and the Periodic Table" },
+          {
+            "topic": "3 Bonding and strucutre",
+            "subtopics": [
+              { "subtopic": "3A Ionic Bonding", "search": "Ionic Bonding" },
+              { "subtopic": "3B Covalent Bonding", "search": "Covalent Bonding" },
+              { "subtopic": "3C Metallic Bonding", "search": "Metallic Bonding" },
+              { "subtopic": "3D Shapes of Molecules", "search": "Shapes of Molecules" },
+            ]
+          },
+          {"topic": "4 Introductory Organic Chemistry and Alkanes", "subtopics":[
+            { "subtopic": "4A Organic General Principles", "search": "Organic General Principles" },
+            { "subtopic": "4B Alkanes", "search": "Alkanes" },
+          ]
+
+           },
+          {"topic": "5 Alkenes", "search": "Alkenes"}
+        ]
+      },
+      {
+        "unit": "U2",
+       
+        "topics": [
+          { "topic": "6 Energetics", "search":"Energetics" },
+           { "topic": "7 Intermolecular Forces", "search":"Intermolecular Forces" },
+          {
+            "topic": "8 Bonding and strucutre",
+            "subtopics": [
+              { "subtopic": "8A Redox chemistry", "search": "Redox chemistry" },
+              { "subtopic": "8B Groups 1 and 2", "search": "Groups 1 and 2" },
+              { "subtopic": "8C Inorganic chemistry of Group 7", "search": "Group 7" }
+            ]
+          },
+          {"topic": "9 Introduction to Kinetics and Equilibria", "subtopics":[
+            { "subtopic": "9A Kinetics", "search": "Kinetics" },
+            { "subtopic": "9B Equilibria", "search": "Equilibria" }
+          ]
+          },
+            {"topic": "10 Organic Chemistry: Halogenoalkanes, Alcohols and Spectra", "subtopics":[
+            { "subtopic": "10A Halogenoalkanes", "search": "Halogenoalkanes" },
+            { "subtopic": "10B Alcohols", "search": "Alcohols" },
+            { "subtopic": "10C Mass spectra and IR", "search": "Mass spectra and IR" }
+          ]
+            }
+        ]
+
+      },
+      {
+        "unit": "U4",
+       
+        "topics": [
+          { "topic": "11 Kinetics", "search":"11 Kinetics" },
+           {
+            "topic": "12 Entropy and Energetics",
+            "subtopics": [
+              { "subtopic": "12A Entropy", "search": "12A Entropy" },
+              { "subtopic": "12B Lattice energy", "search": "12B Lattice energy" }
+            ]
+            },
+            {"topic": "13 Chemical Equilibria", "search": "13 Chemical Equilibria"},
+          {"topic": "Introduction to Kinetics and Equilibria", "subtopics":[
+            { "subtopic": "Kinetics", "search": "Kineticss" },
+            { "subtopic": "Equilibria", "search": "Equilibria" }
+          ]
+            },
+            {"topic": "14 Acid-base Equilibria", "search": "14 Acid-base Equilibria"},
+
+            {"topic": "15 Organic Chemistry: Carbonyls, Carboxylic Acids and Chirality", "subtopics":[
+            { "subtopic": "15A Chirality", "search": "15A Chirality" },
+            { "subtopic": "15B Carbonyl compounds", "search": "15B Carbonyl compounds" },
+            { "subtopic": "15C Carboxylic acids", "search": "15C Carboxylic acids" },
+            { "subtopic": "15D Carboxylic acid derivatives", "search": "15D Carboxylic acid derivatives" },
+            { "subtopic": "15E Spectroscopy and chromatography", "search": "15E Spectroscopy and chromatography" },
+          ]
+            },
+            
+        ]
+
+      },
+       {
+        "unit": "U5",
+        
+        "topics": [
+          { "topic": "16 Redox Equilibria", "search":"16 Redox Equilibria" },
+           { "topic": "17 Transition Metals and their Chemistry", "search":"17 Transition Metals and their Chemistry" },
+           { "topic": "18 Organic Chemistry – Arenes", "search": "18 Organic Chemistry – Arenes" },
+          { "topic": "19 Organic Nitrogen Compounds: Amines, Amides, Amino Acids and Proteins", "search": "19 Organic Nitrogen Compounds: Amines, Amides, Amino Acids and Proteins" },
+          {"topic": "20 Organic Synthesis", "search": "20 Organic Synthesis"}
+        ]
+      },
+      
+    ]
+    },
+
+
+
+
+
+    {
+    "subject": "Biology",
+    
+    "board": "edexcel",
+    "level": "a-level",
+    "units": [
+      {
+        "unit": "U1",
+        
+        "topics": [
+                    {
+            "topic": "1 Molecules, Transport and Health",
+            "subtopics": [
+              { "subtopic": "1A chemistry for biologists", "search": "1A chemistry for biologists" },
+              { "subtopic": "1B mammalian transport systems", "search": "1B mammalian transport systems" },
+              { "subtopic": "1C cardiovascular health and risk", "search": "1C cardiovascular health and risk" },
+            ]
+          },
+          {"topic": "2 Membranes, Proteins, DNA and Gene Expression", "subtopics":[
+            { "subtopic": "2A membranes and transport", "search": "2A membranes and transport" },
+            { "subtopic": "2B proteins and dna", "search": "2B proteins and dna" },
+            { "subtopic": "2C gene expressions and genetics", "search": "2C gene expressions and genetics" },
+          ]
+
+           },
+        ]
+      },
+      {
+        "unit": "U2",
+        
+        "topics": [
+                    {
+            "topic": "3 Cell Structure, Reproduction and Development",
+            "subtopics": [
+              { "subtopic": "3A cell structure", "search": "3A cell structure" },
+              { "subtopic": "3B mitosis, meiosis and reproduction", "search": "3B mitosis, meiosis and reproduction" },
+              { "subtopic": "3C development of organisms", "search": "3C development of organisms" },
+            ]
+          },
+          {"topic": "4 Plant Structure and Function, Biodiversity and Conservation", "subtopics":[
+            { "subtopic": "4A plant structure and function", "search": "4A plant structure and function" },
+            { "subtopic": "4B classification", "search": "4B classification" },
+            { "subtopic": "4C biodiversity and conservation", "search": "4C biodiversity and conservation" },
+          ]
+
+           },
+        ]
+      },
+      {
+        "unit": "U4",
+       
+        "topics": [
+            { "topic": "5 Energy Flow, Ecosystems and the Environment",
+              "subtopics": [
+                { "subtopic": "5A Photosynthesis", "search": "5A Photosynthesis" },
+                { "subtopic": "5B Ecology", "search": "5B Ecology" }, 
+                { "subtopic": "5C Environment and Climate Change", "search": "5C Environment and Climate Change" },
+              ]
+            },
+              { "topic": "6 Microbiology, Immunity and Forensics",
+              "subtopics": [
+                { "subtopic": "6A Microbiology", "search": "6A Microbiology" },
+                { "subtopic": "6B Immunity", "search": "6B Immunity" }, 
+                { "subtopic": "6C Decomposition and Forensics", "search": "6C Decomposition and Forensics" },
+              ]
+            }
+
+        ]
+
+
+
+      },
+    ]
+    },
+    
+    
+
+
+     {
+    "subject": "Physics",
+    
+    "board": "edexcel",
+    "level": "a-level",
+    "units": [
+      {
+        "unit": "U1",
+        
+        "topics": [
+                    {
+            "topic": "1 Mechanics",
+            "subtopics": [
+              { "subtopic": "1A motion", "search": "1A motion" },
+              { "subtopic": "1B energy", "search": "1B energy" },
+              { "subtopic": "1C momentum", "search": "1C momentum" },
+            ]
+          },
+          {"topic": "2 Materials", "subtopics":[
+            { "subtopic": "2A fluids", "search": "2A fluids" },
+            { "subtopic": "2B solid material properties", "search": "2B solid material properties" },
+            ]
+
+           },
+        ]
+      },
+      {
+        "unit": "U2",
+        
+        "topics": [
+                    {
+            "topic": "3 Waves and Particle Nature of Light",
+            "subtopics": [
+              { "subtopic": "3A Basic Waves", "search": "3A Basic Waves" },
+              { "subtopic": "3B The Behaviour of Waves", "search": "3B The Behaviour of Waves" },
+              { "subtopic": "3C Wave Properties of Light", "search": "3C Wave Properties of Light" },
+              { "subtopic": "3D Quantum Physics", "search": "3D Quantum Physics" },
+              
+            ]
+          },
+          {"topic": "4 Electric Circuits", "subtopics":[
+            { "subtopic": "4A Electrical Quantities", "search": "4A Electrical Quantities" },
+            { "subtopic": "4B Complete Electrical Circuits", "search": "4B Complete Electrical Circuits" },
+            ]
+
+           },
+        ]
+      },
+      {
+        "unit": "U4",
+        
+        "topics": [
+                    {
+            "topic": "5 Further Mechanics",
+            "subtopics": [
+              { "subtopic": "5A Further Momentum", "search": "1A motion" },
+              { "subtopic": "5B Circular Motion", "search": "1B energy" },
+              ]
+          },
+          {"topic": "6 Electric and Magnetic Fields", "subtopics":[
+            { "subtopic": "6A Electric Fields", "search": "6A Electric Fields" },
+            { "subtopic": "6B Capacitors", "search": "6B Capacitors" },
+            { "subtopic": "6C Electromagnetic Effects", "search": "6C Electromagnetic Effects" },     
+            ]
+
+           },
+           {"topic": "7 Nuclear and Particle Physics", "subtopics":[
+            { "subtopic": "7A Probing Matter", "search": "7A Probing Matter" },
+            { "subtopic": "7B Particle Accelerators and Detectors", "search": "7B Particle Accelerators and Detectors" },
+            { "subtopic": "7C The Particle Zoo", "search": "7C The Particle Zoo" },
+            ]
+           },
+        ]
+      },
+      {
+        "unit": "U5",
+        
+        "topics": [
+                    {
+            "topic": "8 Thermodynamics", "search": "8 Heat and Temperature"
+            
+          },
+          {"topic": "9 Nuclear Decay", "search": "9 Radioactivity"},
+          
+             {"topic": "10 Oscillations", "search": "10 Oscillations"
+
+           },
+            {"topic": "11 Astrophysics and Cosmology", "subtopics":[
+            { "subtopic": "11A Gravitational Fields", "search": "11A Gravitational Fields" },
+            { "subtopic": "11B Space", "search": "11B Space" },
+            ]
+
+           },
+        ]
+      },
+      
+    ]
+    },
+
+
+
+
+
+
+    {
+    "subject": "Physics",
+    
+    "board": "cambridge",
+    "level": "igcse",
+
+    "units": [
+      {
+        "unit": "Physics",
+        
+        "topics": [
+  {
+    "topic": "1 Motion, forces and energy",
+    "subtopics": [
+      { "subtopic": "1.1 Physical quantities and measurement techniques", "search": "1.1 Physical quantities and measurement techniques" },
+      { "subtopic": "1.2 Motion", "search": "1.2 Motion" },
+      { "subtopic": "1.3 Mass and weight", "search": "1.3 Mass and weight" },
+      { "subtopic": "1.4 Density", "search": "1.4 Density" },
+      { "subtopic": "1.5 Forces", "search": "1.5 Forces" },
+      { "subtopic": "1.6 Momentum", "search": "1.6 Momentum" },
+      { "subtopic": "1.7 Energy, work and power", "search": "1.7 Energy, work and power" },
+      { "subtopic": "1.8 Pressure", "search": "1.8 Pressure" }
+    ]
+  },
+  {
+    "topic": "2 Thermal physics",
+    "subtopics": [
+      { "subtopic": "2.1 Kinetic particle model of matter", "search": "2.1 Kinetic particle model of matter" },
+      { "subtopic": "2.2 Thermal properties and temperature", "search": "2.2 Thermal properties and temperature" },
+      { "subtopic": "2.3 Transfer of thermal energy", "search": "2.3 Transfer of thermal energy" }
+    ]
+  },
+  {
+    "topic": "3 Waves",
+    "subtopics": [
+      { "subtopic": "3.1 General properties of waves", "search": "3.1 General properties of waves" },
+      { "subtopic": "3.2 Light", "search": "3.2 Light" },
+      { "subtopic": "3.3 Electromagnetic spectrum", "search": "3.3 Electromagnetic spectrum" },
+      { "subtopic": "3.4 Sound", "search": "3.4 Sound" }
+    ]
+  },
+  {
+    "topic": "4 Electricity and magnetism",
+    "subtopics": [
+      { "subtopic": "4.1 Simple phenomena of magnetism", "search": "4.1 Simple phenomena of magnetism" },
+      { "subtopic": "4.2 Electrical quantities", "search": "4.2 Electrical quantities" },
+      { "subtopic": "4.3 Electric circuits", "search": "4.3 Electric circuits" },
+      { "subtopic": "4.4 Electrical safety", "search": "4.4 Electrical safety" },
+      { "subtopic": "4.5 Electromagnetic effects", "search": "4.5 Electromagnetic effects" }
+    ]
+  },
+  {
+    "topic": "5 Nuclear physics",
+    "subtopics": [
+      { "subtopic": "5.1 The nuclear model of the atom", "search": "5.1 The nuclear model of the atom" },
+      { "subtopic": "5.2 Radioactivity", "search": "5.2 Radioactivity" }
+    ]
+  },
+  {
+    "topic": "6 Space physics",
+    "subtopics": [
+      { "subtopic": "6.1 The Earth and the Solar System", "search": "6.1 The Earth and the Solar System" },
+      { "subtopic": "6.2 Stars and the Universe", "search": "6.2 Stars and the Universe" }
+    ]
+  }
+]
+  }]
+},
+
+
+{
+  "subject": "Biology",
+    
+    "board": "cambridge",
+    "level": "igcse",
+
+    "units": [
+      {
+        "unit": "Biology",    
+        "topics": [
+  {
+    "topic": "1 Characteristics and classification of living organisms",
+    "subtopics": [
+      { "subtopic": "1.1 Characteristics of living organisms", "search": "1.1 Characteristics of living organisms" },
+      { "subtopic": "1.2 Concept and uses of classification systems", "search": "1.2 Concept and uses of classification systems" },
+      { "subtopic": "1.3 Features of organisms", "search": "1.3 Features of organisms" }
+    ]
+  },
+  {
+    "topic": "2 Organisation of the organism",
+    "subtopics": [
+      { "subtopic": "2.1 Cell structure", "search": "2.1 Cell structure" },
+      { "subtopic": "2.2 Size of specimens", "search": "2.2 Size of specimens" }
+    ]
+  },
+  {
+    "topic": "3 Movement into and out of cells",
+    "subtopics": [
+      { "subtopic": "3.1 Diffusion", "search": "3.1 Diffusion" },
+      { "subtopic": "3.2 Osmosis", "search": "3.2 Osmosis" },
+      { "subtopic": "3.3 Active transport", "search": "3.3 Active transport" }
+    ]
+  },
+  {
+    "topic": "4 Biological molecules",
+    "subtopics": [
+      { "subtopic": "4.1 Biological molecules", "search": "4.1 Biological molecules" }
+    ]
+  },
+  {
+    "topic": "5 Enzymes",
+    "subtopics": [
+      { "subtopic": "5.1 Enzymes", "search": "5.1 Enzymes" }
+    ]
+  },
+  {
+    "topic": "6 Plant nutrition",
+    "subtopics": [
+      { "subtopic": "6.1 Photosynthesis", "search": "6.1 Photosynthesis" },
+      { "subtopic": "6.2 Leaf structure", "search": "6.2 Leaf structure" }
+    ]
+  },
+  {
+    "topic": "7 Human nutrition",
+    "subtopics": [
+      { "subtopic": "7.1 Diet", "search": "7.1 Diet" },
+      { "subtopic": "7.2 Digestive system", "search": "7.2 Digestive system" },
+      { "subtopic": "7.3 Physical digestion", "search": "7.3 Physical digestion" },
+      { "subtopic": "7.4 Chemical digestion", "search": "7.4 Chemical digestion" },
+      { "subtopic": "7.5 Absorption", "search": "7.5 Absorption" }
+    ]
+  },
+  {
+    "topic": "8 Transport in plants",
+    "subtopics": [
+      { "subtopic": "8.1 Xylem and phloem", "search": "8.1 Xylem and phloem" },
+      { "subtopic": "8.2 Water uptake", "search": "8.2 Water uptake" },
+      { "subtopic": "8.3 Transpiration", "search": "8.3 Transpiration" },
+      { "subtopic": "8.4 Translocation", "search": "8.4 Translocation" }
+    ]
+  },
+  {
+    "topic": "9 Transport in animals",
+    "subtopics": [
+      { "subtopic": "9.1 Circulatory systems", "search": "9.1 Circulatory systems" },
+      { "subtopic": "9.2 Heart", "search": "9.2 Heart" },
+      { "subtopic": "9.3 Blood vessels", "search": "9.3 Blood vessels" },
+      { "subtopic": "9.4 Blood", "search": "9.4 Blood" }
+    ]
+  },
+  {
+    "topic": "10 Diseases and immunity",
+    "subtopics": [
+      { "subtopic": "10.1 Diseases and immunity", "search": "10.1 Diseases and immunity" }
+    ]
+  },
+  {
+    "topic": "11 Gas exchange in humans",
+    "subtopics": [
+      { "subtopic": "11.1 Gas exchange in humans", "search": "11.1 Gas exchange in humans" }
+    ]
+  },
+  {
+    "topic": "12 Respiration",
+    "subtopics": [
+      { "subtopic": "12.1 Respiration", "search": "12.1 Respiration" },
+      { "subtopic": "12.2 Aerobic respiration", "search": "12.2 Aerobic respiration" },
+      { "subtopic": "12.3 Anaerobic respiration", "search": "12.3 Anaerobic respiration" }
+    ]
+  },
+  {
+    "topic": "13 Excretion in humans",
+    "subtopics": [
+      { "subtopic": "13.1 Excretion in humans", "search": "13.1 Excretion in humans" }
+    ]
+  },
+  {
+    "topic": "14 Coordination and response",
+    "subtopics": [
+      { "subtopic": "14.1 Coordination and response", "search": "14.1 Coordination and response" },
+      { "subtopic": "14.2 Sense organs", "search": "14.2 Sense organs" },
+      { "subtopic": "14.3 Hormones", "search": "14.3 Hormones" },
+      { "subtopic": "14.4 Homeostasis", "search": "14.4 Homeostasis" },
+      { "subtopic": "14.5 Tropic responses", "search": "14.5 Tropic responses" }
+    ]
+  },
+  {
+    "topic": "15 Drugs",
+    "subtopics": [
+      { "subtopic": "15.1 Drugs", "search": "15.1 Drugs" }
+    ]
+  },
+  {
+    "topic": "16 Reproduction",
+    "subtopics": [
+      { "subtopic": "16.1 Asexual reproduction", "search": "16.1 Asexual reproduction" },
+      { "subtopic": "16.2 Sexual reproduction", "search": "16.2 Sexual reproduction" },
+      { "subtopic": "16.3 Sexual reproduction in plants", "search": "16.3 Sexual reproduction in plants" },
+      { "subtopic": "16.4 Sexual reproduction in humans", "search": "16.4 Sexual reproduction in humans" },
+      { "subtopic": "16.5 Sex hormones in humans", "search": "16.5 Sex hormones in humans" },
+      { "subtopic": "16.6 Sexually transmitted infections", "search": "16.6 Sexually transmitted infections" }
+    ]
+  },
+  {
+    "topic": "17 Inheritance",
+    "subtopics": [
+      { "subtopic": "17.1 Chromosomes, genes and proteins", "search": "17.1 Chromosomes, genes and proteins" },
+      { "subtopic": "17.2 Mitosis", "search": "17.2 Mitosis" },
+      { "subtopic": "17.3 Meiosis", "search": "17.3 Meiosis" },
+      { "subtopic": "17.4 Monohybrid inheritance", "search": "17.4 Monohybrid inheritance" }
+    ]
+  },
+  {
+    "topic": "18 Variation and selection",
+    "subtopics": [
+      { "subtopic": "18.1 Variation", "search": "18.1 Variation" },
+      { "subtopic": "18.2 Adaptive features", "search": "18.2 Adaptive features" },
+      { "subtopic": "18.3 Selection", "search": "18.3 Selection" }
+    ]
+  },
+  {
+    "topic": "19 Organisms and their environment",
+    "subtopics": [
+      { "subtopic": "19.1 Energy flow", "search": "19.1 Energy flow" },
+      { "subtopic": "19.2 Food chains and food webs", "search": "19.2 Food chains and food webs" },
+      { "subtopic": "19.3 Nutrient cycles", "search": "19.3 Nutrient cycles" },
+      { "subtopic": "19.4 Populations", "search": "19.4 Populations" }
+    ]
+  },
+  {
+    "topic": "20 Human influences on ecosystems",
+    "subtopics": [
+      { "subtopic": "20.1 Food supply", "search": "20.1 Food supply" },
+      { "subtopic": "20.2 Habitat destruction", "search": "20.2 Habitat destruction" },
+      { "subtopic": "20.3 Pollution", "search": "20.3 Pollution" },
+      { "subtopic": "20.4 Conservation", "search": "20.4 Conservation" }
+    ]
+  },
+  {
+    "topic": "21 Biotechnology and genetic modification",
+    "subtopics": [
+      { "subtopic": "21.1 Biotechnology and genetic modification", "search": "21.1 Biotechnology and genetic modification" },
+      { "subtopic": "21.2 Biotechnology", "search": "21.2 Biotechnology" },
+      { "subtopic": "21.3 Genetic modification", "search": "21.3 Genetic modification" }
+    ]
+  }
+]
+}]
+}
+,
+
+{
+  "subject": "Chemistry",
+    
+    "board": "cambridge",
+    "level": "igcse",
+
+    "units": [
+      {
+        "unit": "Chemistry",
+        
+        "topics": [
+  {
+    "topic": "1 States of matter",
+    "subtopics": [
+      { "subtopic": "1.1 Solids, liquids and gases", "search": "1.1 Solids, liquids and gases" },
+      { "subtopic": "1.2 Diffusion", "search": "1.2 Diffusion" }
+    ]
+  },
+  {
+    "topic": "2 Atoms, elements and compounds",
+    "subtopics": [
+      { "subtopic": "2.1 Elements, compounds and mixtures", "search": "2.1 Elements, compounds and mixtures" },
+      { "subtopic": "2.2 Atomic structure and the Periodic Table", "search": "2.2 Atomic structure and the Periodic Table" },
+      { "subtopic": "2.3 Isotopes", "search": "2.3 Isotopes" },
+      { "subtopic": "2.4 Ions and ionic bonds", "search": "2.4 Ions and ionic bonds" },
+      { "subtopic": "2.5 Simple molecules and covalent bonds", "search": "2.5 Simple molecules and covalent bonds" },
+      { "subtopic": "2.6 Giant covalent structures", "search": "2.6 Giant covalent structures" },
+      { "subtopic": "2.7 Metallic bonding", "search": "2.7 Metallic bonding" }
+    ]
+  },
+  {
+    "topic": "3 Stoichiometry",
+    "subtopics": [
+      { "subtopic": "3.1 Formulae", "search": "3.1 Formulae" },
+      { "subtopic": "3.2 Relative masses of atoms and molecules", "search": "3.2 Relative masses of atoms and molecules" },
+      { "subtopic": "3.3 The mole and the Avogadro constant", "search": "3.3 The mole and the Avogadro constant" }
+    ]
+  },
+  {
+    "topic": "4 Electrochemistry",
+    "subtopics": [
+      { "subtopic": "4.1 Electrolysis", "search": "4.1 Electrolysis" },
+      { "subtopic": "4.2 Hydrogen-oxygen fuel cells", "search": "4.2 Hydrogen-oxygen fuel cells" }
+    ]
+  },
+  {
+    "topic": "5 Chemical energetics",
+    "subtopics": [
+      { "subtopic": "5.1 Exothermic and endothermic reactions", "search": "5.1 Exothermic and endothermic reactions" }
+    ]
+  },
+  {
+    "topic": "6 Chemical reactions",
+    "subtopics": [
+      { "subtopic": "6.1 Physical and chemical changes", "search": "6.1 Physical and chemical changes" },
+      { "subtopic": "6.2 Rate of reaction", "search": "6.2 Rate of reaction" },
+      { "subtopic": "6.3 Reversible reactions and equilibrium", "search": "6.3 Reversible reactions and equilibrium" },
+      { "subtopic": "6.4 Redox", "search": "6.4 Redox" }
+    ]
+  },
+  {
+    "topic": "7 Acids, bases and salts",
+    "subtopics": [
+      { "subtopic": "7.1 The characteristic properties of acids and bases", "search": "7.1 The characteristic properties of acids and bases" },
+      { "subtopic": "7.2 Oxides", "search": "7.2 Oxides" },
+      { "subtopic": "7.3 Preparation of salts", "search": "7.3 Preparation of salts" }
+    ]
+  },
+  {
+    "topic": "8 The Periodic Table",
+    "subtopics": [
+      { "subtopic": "8.1 Arrangement of elements", "search": "8.1 Arrangement of elements" },
+      { "subtopic": "8.2 Group I properties", "search": "8.2 Group I properties" },
+      { "subtopic": "8.3 Group VII properties", "search": "8.3 Group VII properties" },
+      { "subtopic": "8.4 Transition elements", "search": "8.4 Transition elements" },
+      { "subtopic": "8.5 Noble gases", "search": "8.5 Noble gases" }
+    ]
+  },
+  {
+    "topic": "9 Metals",
+    "subtopics": [
+      { "subtopic": "9.1 Properties of metals", "search": "9.1 Properties of metals" },
+      { "subtopic": "9.2 Uses of metals", "search": "9.2 Uses of metals" },
+      { "subtopic": "9.3 Alloys and their properties", "search": "9.3 Alloys and their properties" },
+      { "subtopic": "9.4 Reactivity series", "search": "9.4 Reactivity series" },
+      { "subtopic": "9.5 Corrosion of metals", "search": "9.5 Corrosion of metals" },
+      { "subtopic": "9.6 Extraction of metals", "search": "9.6 Extraction of metals" }
+    ]
+  },
+  {
+    "topic": "10 Chemistry of the environment",
+    "subtopics": [
+      { "subtopic": "10.1 Water", "search": "10.1 Water" },
+      { "subtopic": "10.2 Fertilisers", "search": "10.2 Fertilisers" },
+      { "subtopic": "10.3 Air quality and climate", "search": "10.3 Air quality and climate" }
+    ]
+  },
+  {
+    "topic": "11 Organic chemistry",
+    "subtopics": [
+      { "subtopic": "11.1 Formulae, functional groups and terminology", "search": "11.1 Formulae, functional groups and terminology" },
+      { "subtopic": "11.2 Naming organic compounds", "search": "11.2 Naming organic compounds" },
+      { "subtopic": "11.3 Fuels", "search": "11.3 Fuels" },
+      { "subtopic": "11.4 Alkanes", "search": "11.4 Alkanes" },
+      { "subtopic": "11.5 Alkenes", "search": "11.5 Alkenes" },
+      { "subtopic": "11.6 Alcohols", "search": "11.6 Alcohols" },
+      { "subtopic": "11.7 Carboxylic acids", "search": "11.7 Carboxylic acids" },
+      { "subtopic": "11.8 Polymers", "search": "11.8 Polymers" }
+    ]
+  },
+  {
+    "topic": "12 Experimental techniques and chemical analysis",
+    "subtopics": [
+      { "subtopic": "12.1 Experimental design", "search": "12.1 Experimental design" },
+      { "subtopic": "12.2 Acid-base titrations", "search": "12.2 Acid-base titrations" },
+      { "subtopic": "12.3 Chromatography", "search": "12.3 Chromatography" },
+      { "subtopic": "12.4 Separation and purification", "search": "12.4 Separation and purification" },
+      { "subtopic": "12.5 Identification of ions and gases", "search": "12.5 Identification of ions and gases" }
+    ]
+  }
+]}]},
+
+{
+  "subject": "Chemistry",
+    
+    "board": "cambridge",
+    "level": "a-level",
+
+    "units": [  
+      {
+        "unit": "AS",
+        
+        "topics": [
+  {
+    "topic": "1 Atomic Structure",
+    "subtopics": [
+      { "subtopic": "1.1 Particles in the atom and atomic radius", "search": "1.1 Particles in the atom and atomic radius" },
+      { "subtopic": "1.2 Isotopes", "search": "1.2 Isotopes" },
+      { "subtopic": "1.3 Electrons, energy levels and atomic orbitals", "search": "1.3 Electrons, energy levels and atomic orbitals" },
+      { "subtopic": "1.4 Ionisation energy", "search": "1.4 Ionisation energy" }
+    ]
+  },
+  {
+    "topic": "2 Atoms, Molecules and Stoichiometry",
+    "subtopics": [
+      { "subtopic": "2.1 Relative masses of atoms and molecules", "search": "2.1 Relative masses of atoms and molecules" },
+      { "subtopic": "2.2 The mole and the Avogadro constant", "search": "2.2 The mole and the Avogadro constant" },
+      { "subtopic": "2.3 Formulas", "search": "2.3 Formulas" },
+      { "subtopic": "2.4 Reacting masses and volumes (of solutions and gases)", "search": "2.4 Reacting masses and volumes (of solutions and gases)" }
+    ]
+  },
+  {
+    "topic": "3 Chemical Bonding",
+    "subtopics": [
+      { "subtopic": "3.1 Electronegativity and bonding", "search": "3.1 Electronegativity and bonding" },
+      { "subtopic": "3.2 Ionic bonding", "search": "3.2 Ionic bonding" },
+      { "subtopic": "3.3 Metallic bonding", "search": "3.3 Metallic bonding" },
+      { "subtopic": "3.4 Covalent bonding and coordinate (dative covalent) bonding", "search": "3.4 Covalent bonding and coordinate (dative covalent) bonding" },
+      { "subtopic": "3.5 Shapes of molecules", "search": "3.5 Shapes of molecules" },
+      { "subtopic": "3.6 Intermolecular forces, electronegativity and bond properties", "search": "3.6 Intermolecular forces, electronegativity and bond properties" },
+      { "subtopic": "3.7 Dot-and-cross diagrams", "search": "3.7 Dot-and-cross diagrams" }
+    ]
+  },
+  {
+    "topic": "4 States of Matter",
+    "subtopics": [
+      { "subtopic": "4.1 The gaseous state: ideal and real gases and pV = nRT", "search": "4.1 The gaseous state: ideal and real gases and pV = nRT" },
+      { "subtopic": "4.2 Bonding and structure", "search": "4.2 Bonding and structure" }
+    ]
+  },
+  {
+    "topic": "5 Chemical Energetics",
+    "subtopics": [
+      { "subtopic": "5.1 Enthalpy change, ΔH", "search": "5.1 Enthalpy change, ΔH" },
+      { "subtopic": "5.2 Hess's law", "search": "5.2 Hess's law" }
+    ]
+  },
+  {
+    "topic": "6 Electrochemistry",
+    "subtopics": [
+      { "subtopic": "6.1 Redox processes: electron transfer and changes in oxidation number (oxidation state)", "search": "6.1 Redox processes: electron transfer and changes in oxidation number (oxidation state)" }
+    ]
+  },
+  {
+    "topic": "7 Equilibria",
+    "subtopics": [
+      { "subtopic": "7.1 Chemical equilibria: reversible reactions, dynamic equilibrium", "search": "7.1 Chemical equilibria: reversible reactions, dynamic equilibrium" },
+      { "subtopic": "7.2 Brønsted-Lowry theory of acids and bases", "search": "7.2 Brønsted-Lowry theory of acids and bases" }
+    ]
+  },
+  {
+    "topic": "8 Reaction Kinetics",
+    "subtopics": [
+      { "subtopic": "8.1 Rate of reaction", "search": "8.1 Rate of reaction" },
+      { "subtopic": "8.2 Effect of temperature on reaction rates and the concept of activation energy", "search": "8.2 Effect of temperature on reaction rates and the concept of activation energy" },
+      { "subtopic": "8.3 Homogeneous and heterogeneous catalysts", "search": "8.3 Homogeneous and heterogeneous catalysts" }
+    ]
+  },
+  {
+    "topic": "9 The Periodic Table: Chemical Periodicity",
+    "subtopics": [
+      { "subtopic": "9.1 Periodicity of physical properties of the elements in Period 3", "search": "9.1 Periodicity of physical properties of the elements in Period 3" },
+      { "subtopic": "9.2 Periodicity of chemical properties of the elements in Period 3", "search": "9.2 Periodicity of chemical properties of the elements in Period 3" },
+      { "subtopic": "9.3 Chemical periodicity of other elements", "search": "9.3 Chemical periodicity of other elements" }
+    ]
+  },
+  {
+    "topic": "10 Group 2",
+    "subtopics": [
+      { "subtopic": "10.1 Similarities and trends in the properties of the Group 2 metals, magnesium to barium, and their compounds", "search": "10.1 Similarities and trends in the properties of the Group 2 metals, magnesium to barium, and their compounds" }
+    ]
+  },
+  {
+    "topic": "11 Group 17",
+    "subtopics": [
+      { "subtopic": "11.1 Physical properties of the Group 17 elements", "search": "11.1 Physical properties of the Group 17 elements" },
+      { "subtopic": "11.2 The chemical properties of the halogen elements and the hydrogen halides", "search": "11.2 The chemical properties of the halogen elements and the hydrogen halides" },
+      { "subtopic": "11.3 Some reactions of the halide ions", "search": "11.3 Some reactions of the halide ions" },
+      { "subtopic": "11.4 The reactions of chlorine", "search": "11.4 The reactions of chlorine" }
+    ]
+  },
+  {
+    "topic": "12 Nitrogen and Sulfur",
+    "subtopics": [
+      { "subtopic": "12.1 Nitrogen and sulfur", "search": "12.1 Nitrogen and sulfur" }
+    ]
+  },
+  {
+    "topic": "13 An Introduction to Organic Chemistry",
+    "subtopics": [
+      { "subtopic": "13.1 Formulas, functional groups and the naming of organic compounds", "search": "13.1 Formulas, functional groups and the naming of organic compounds" },
+      { "subtopic": "13.2 Characteristic organic reactions", "search": "13.2 Characteristic organic reactions" },
+      { "subtopic": "13.3 Shapes of organic molecules; σ and π bonds", "search": "13.3 Shapes of organic molecules; σ and π bonds" },
+      { "subtopic": "13.4 Isomerism: structural isomerism and stereoisomerism", "search": "13.4 Isomerism: structural isomerism and stereoisomerism" }
+    ]
+  },
+  {
+    "topic": "14 Hydrocarbons",
+    "subtopics": [
+      { "subtopic": "14.1 Alkanes", "search": "14.1 Alkanes" },
+      { "subtopic": "14.2 Alkenes", "search": "14.2 Alkenes" }
+    ]
+  },
+  {
+    "topic": "15 Halogen Compounds",
+    "subtopics": [
+      { "subtopic": "15.1 Halogenoalkanes", "search": "15.1 Halogenoalkanes" }
+    ]
+  },
+  {
+    "topic": "16 Hydroxy Compounds",
+    "subtopics": [
+      { "subtopic": "16.1 Alcohols", "search": "16.1 Alcohols" }
+    ]
+  },
+  {
+    "topic": "17 Carbonyl Compounds",
+    "subtopics": [
+      { "subtopic": "17.1 Aldehydes and ketones", "search": "17.1 Aldehydes and ketones" }
+    ]
+  },
+  {
+    "topic": "18 Carboxylic Acids and Derivatives",
+    "subtopics": [
+      { "subtopic": "18.1 Carboxylic acids", "search": "18.1 Carboxylic acids" },
+      { "subtopic": "18.2 Esters", "search": "18.2 Esters" }
+    ]
+  },
+  {
+    "topic": "19 Nitrogen Compounds",
+    "subtopics": [
+      { "subtopic": "19.1 Primary amines", "search": "19.1 Primary amines" },
+      { "subtopic": "19.2 Nitriles and hydroxynitriles", "search": "19.2 Nitriles and hydroxynitriles" }
+    ]
+  },
+  {
+    "topic": "20 Polymerisation",
+    "subtopics": [
+      { "subtopic": "20.1 Addition polymerisation", "search": "20.1 Addition polymerisation" }
+    ]
+  },
+  {
+    "topic": "21 Organic Synthesis",
+    "subtopics": [
+      { "subtopic": "21.1 Organic synthesis", "search": "21.1 Organic synthesis" }
+    ]
+  },{
+    "topic": "22 Analytical Techniques",
+    "subtopics": [
+      { "subtopic": "22.1 Infrared spectroscopy", "search": "22.1 Infrared spectroscopy" },
+      { "subtopic": "22.2 Mass spectrometry", "search": "22.2 Mass spectrometry" }
+    ]
+  },]},
+  {
+  "unit": "A2",
+  "topics": [
+  
+  {
+    "topic": "23 Chemical Energetics",
+    "subtopics": [
+      { "subtopic": "23.1 Lattice energy and Born-Haber cycles", "search": "23.1 Lattice energy and Born-Haber cycles" },
+      { "subtopic": "23.2 Enthalpies of solution and hydration", "search": "23.2 Enthalpies of solution and hydration" },
+      { "subtopic": "23.3 Entropy change", "search": "23.3 Entropy change" },
+      { "subtopic": "23.4 Gibbs free energy change", "search": "23.4 Gibbs free energy change" }
+    ]
+  },
+  {
+    "topic": "24 Electrochemistry",
+    "subtopics": [
+      { "subtopic": "24.1 Electrolysis", "search": "24.1 Electrolysis" },
+      { "subtopic": "24.2 Standard electrode potentials, standard cell potentials and the Nernst equation", "search": "24.2 Standard electrode potentials, standard cell potentials and the Nernst equation" }
+    ]
+  },
+  {
+    "topic": "25 Equilibria",
+    "subtopics": [
+      { "subtopic": "25.1 Acids and bases", "search": "25.1 Acids and bases" },
+      { "subtopic": "25.2 Partition coefficients", "search": "25.2 Partition coefficients" }
+    ]
+  },
+  {
+    "topic": "26 Reaction Kinetics",
+    "subtopics": [
+      { "subtopic": "26.1 Simple rate equations, orders of reaction and rate constants", "search": "26.1 Simple rate equations, orders of reaction and rate constants" },
+      { "subtopic": "26.2 Homogeneous and heterogeneous catalysts", "search": "26.2 Homogeneous and heterogeneous catalysts" }
+    ]
+  },
+  {
+    "topic": "27 Group 2",
+    "subtopics": [
+      { "subtopic": "27.1 Similarities and trends in the properties of the Group 2 metals, magnesium to barium, and their compounds", "search": "27.1 Similarities and trends in the properties of the Group 2 metals, magnesium to barium, and their compounds" }
+    ]
+  },
+  {
+    "topic": "28 Chemistry of Transition Elements",
+    "subtopics": [
+      { "subtopic": "28.1 General physical and chemical properties of the first row of transition elements, titanium to copper", "search": "28.1 General physical and chemical properties of the first row of transition elements, titanium to copper" },
+      { "subtopic": "28.2 General characteristic chemical properties of the first set of transition elements, titanium to copper", "search": "28.2 General characteristic chemical properties of the first set of transition elements, titanium to copper" },
+      { "subtopic": "28.3 Colour of complexes", "search": "28.3 Colour of complexes" },
+      { "subtopic": "28.4 Stereoisomerism in transition element complexes", "search": "28.4 Stereoisomerism in transition element complexes" },
+      { "subtopic": "28.5 Stability constants", "search": "28.5 Stability constants" }
+    ]
+  },
+  {
+    "topic": "29 Organic Chemistry",
+    "subtopics": [
+      { "subtopic": "29.1 Formulas, functional groups and the naming of organic compounds", "search": "29.1 Formulas, functional groups and the naming of organic compounds" },
+      { "subtopic": "29.2 Characteristic organic reactions", "search": "29.2 Characteristic organic reactions" },
+      { "subtopic": "29.3 Shapes of aromatic organic molecules", "search": "29.3 Shapes of aromatic organic molecules" },
+      { "subtopic": "29.4 Isomerism: optical", "search": "29.4 Isomerism: optical" }
+    ]
+  },
+  {
+    "topic": "30 Hydrocarbons",
+    "subtopics": [
+      { "subtopic": "30.1 Arenes", "search": "30.1 Arenes" }
+    ]
+  },
+  {
+    "topic": "31 Halogen Compounds",
+    "subtopics": [
+      { "subtopic": "31.1 Halogen compounds", "search": "31.1 Halogen compounds" }
+    ]
+  },
+  {
+    "topic": "32 Hydroxy Compounds",
+    "subtopics": [
+      { "subtopic": "32.1 Alcohols", "search": "32.1 Alcohols" },
+      { "subtopic": "32.2 Phenol", "search": "32.2 Phenol" }
+    ]
+  },
+  {
+    "topic": "33 Carboxylic Acids and Derivatives",
+    "subtopics": [
+      { "subtopic": "33.1 Carboxylic acids", "search": "33.1 Carboxylic acids" },
+      { "subtopic": "33.2 Esters", "search": "33.2 Esters" },
+      { "subtopic": "33.3 Acyl chlorides", "search": "33.3 Acyl chlorides" }
+    ]
+  },
+  {
+    "topic": "34 Nitrogen Compounds",
+    "subtopics": [
+      { "subtopic": "34.1 Primary and secondary amines", "search": "34.1 Primary and secondary amines" },
+      { "subtopic": "34.2 Phenylamine and azo compounds", "search": "34.2 Phenylamine and azo compounds" },
+      { "subtopic": "34.3 Amides", "search": "34.3 Amides" },
+      { "subtopic": "34.4 Amino acids", "search": "34.4 Amino acids" }
+    ]
+  },
+  {
+    "topic": "35 Polymerisation",
+    "subtopics": [
+      { "subtopic": "35.1 Condensation polymerisation", "search": "35.1 Condensation polymerisation" },
+      { "subtopic": "35.2 Predicting polymerisation type", "search": "35.2 Predicting polymerisation type" },
+      { "subtopic": "35.3 Degradable polymers", "search": "35.3 Degradable polymers" }
+    ]
+  },
+  {
+    "topic": "36 Organic Synthesis",
+    "subtopics": [
+      { "subtopic": "36.1 Organic synthesis", "search": "36.1 Organic synthesis" }
+    ]
+  },
+  {
+    "topic": "37 Analytical Techniques",
+    "subtopics": [
+      { "subtopic": "37.1 Thin-layer chromatography", "search": "37.1 Thin-layer chromatography" },
+      { "subtopic": "37.2 Gas-liquid chromatography", "search": "37.2 Gas-liquid chromatography" },
+      { "subtopic": "37.3 Carbon-13 NMR spectroscopy", "search": "37.3 Carbon-13 NMR spectroscopy" },
+      { "subtopic": "37.4 Proton NMR spectroscopy", "search": "37.4 Proton NMR spectroscopy" }
+    ]
+  }
+]}]},
+
+
+{
+  "subject": "Physics",
+  "board": "cambridge",
+  "level": "a-level",
+  "units": [
+    {
+      "unit": "AS",
+      "topics": [
+        {
+          "topic": "1 Physical quantities and units",
+          "subtopics": [
+            { "subtopic": "1.1 Physical quantities", "search": "1.1 Physical quantities" },
+            { "subtopic": "1.2 SI units", "search": "1.2 SI units" },
+            { "subtopic": "1.3 Errors and uncertainties", "search": "1.3 Errors and uncertainties" },
+            { "subtopic": "1.4 Scalars and vectors", "search": "1.4 Scalars and vectors" }
+          ]
+        },
+        {
+          "topic": "2 Kinematics",
+          "subtopics": [
+            { "subtopic": "2.1 Equations of motion", "search": "2.1 Equations of motion" }
+          ]
+        },
+        {
+          "topic": "3 Dynamics",
+          "subtopics": [
+            { "subtopic": "3.1 Momentum and Newton's laws of motion", "search": "3.1 Momentum and Newton's laws of motion" },
+            { "subtopic": "3.2 Non-uniform motion", "search": "3.2 Non-uniform motion" },
+            { "subtopic": "3.3 Linear momentum and its conservation", "search": "3.3 Linear momentum and its conservation" }
+          ]
+        },
+        {
+          "topic": "4 Forces, density and pressure",
+          "subtopics": [
+            { "subtopic": "4.1 Turning effects of forces", "search": "4.1 Turning effects of forces" },
+            { "subtopic": "4.2 Equilibrium of forces", "search": "4.2 Equilibrium of forces" },
+            { "subtopic": "4.3 Density and pressure", "search": "4.3 Density and pressure" }
+          ]
+        },
+        {
+          "topic": "5 Work, energy and power",
+          "subtopics": [
+            { "subtopic": "5.1 Energy conservation", "search": "5.1 Energy conservation" },
+            { "subtopic": "5.2 Gravitational potential energy and kinetic energy", "search": "5.2 Gravitational potential energy and kinetic energy" }
+          ]
+        },
+        {
+          "topic": "6 Deformation of solids",
+          "subtopics": [
+            { "subtopic": "6.1 Stress and strain", "search": "6.1 Stress and strain" },
+            { "subtopic": "6.2 Elastic and plastic behaviour", "search": "6.2 Elastic and plastic behaviour" }
+          ]
+        },
+        {
+          "topic": "7 Waves",
+          "subtopics": [
+            { "subtopic": "7.1 Progressive waves", "search": "7.1 Progressive waves" },
+            { "subtopic": "7.2 Transverse and longitudinal waves", "search": "7.2 Transverse and longitudinal waves" },
+            { "subtopic": "7.3 Doppler effect for sound waves", "search": "7.3 Doppler effect for sound waves" },
+            { "subtopic": "7.4 Electromagnetic spectrum", "search": "7.4 Electromagnetic spectrum" },
+            { "subtopic": "7.5 Polarisation", "search": "7.5 Polarisation" }
+          ]
+        },
+        {
+          "topic": "8 Superposition",
+          "subtopics": [
+            { "subtopic": "8.1 Stationary waves", "search": "8.1 Stationary waves" },
+            { "subtopic": "8.2 Diffraction", "search": "8.2 Diffraction" },
+            { "subtopic": "8.3 Interference", "search": "8.3 Interference" },
+            { "subtopic": "8.4 The diffraction grating", "search": "8.4 The diffraction grating" }
+          ]
+        },
+        {
+          "topic": "9 Electricity",
+          "subtopics": [
+            { "subtopic": "9.1 Electric current", "search": "9.1 Electric current" },
+            { "subtopic": "9.2 Potential difference and power", "search": "9.2 Potential difference and power" },
+            { "subtopic": "9.3 Resistance and resistivity", "search": "9.3 Resistance and resistivity" }
+          ]
+        },
+        {
+          "topic": "10 D.C. circuits",
+          "subtopics": [
+            { "subtopic": "10.1 Practical circuits", "search": "10.1 Practical circuits" },
+            { "subtopic": "10.2 Kirchhoff's laws", "search": "10.2 Kirchhoff's laws" },
+            { "subtopic": "10.3 Potential dividers", "search": "10.3 Potential dividers" }
+          ]
+        },
+        {
+          "topic": "11 Particle physics",
+          "subtopics": [
+            { "subtopic": "11.1 Atoms, nuclei and radiation", "search": "11.1 Atoms, nuclei and radiation" },
+            { "subtopic": "11.2 Fundamental particles", "search": "11.2 Fundamental particles" }
+          ]
+        }]},
+        {
+        "unit": "A2",
+        "topics": [
+        {
+          "topic": "12 Motion in a circle",
+          "subtopics": [
+            { "subtopic": "12.1 Kinematics of uniform circular motion", "search": "12.1 Kinematics of uniform circular motion" },
+            { "subtopic": "12.2 Centripetal acceleration", "search": "12.2 Centripetal acceleration" }
+          ]
+        },
+        {
+          "topic": "13 Gravitational fields",
+          "subtopics": [
+            { "subtopic": "13.1 Gravitational field", "search": "13.1 Gravitational field" },
+            { "subtopic": "13.2 Gravitational force between point masses", "search": "13.2 Gravitational force between point masses" },
+            { "subtopic": "13.3 Gravitational field of a point mass", "search": "13.3 Gravitational field of a point mass" },
+            { "subtopic": "13.4 Gravitational potential", "search": "13.4 Gravitational potential" }
+          ]
+        },
+        {
+          "topic": "14 Temperature",
+          "subtopics": [
+            { "subtopic": "14.1 Thermal equilibrium", "search": "14.1 Thermal equilibrium" },
+            { "subtopic": "14.2 Temperature scales", "search": "14.2 Temperature scales" },
+            { "subtopic": "14.3 Specific heat capacity and specific latent heat", "search": "14.3 Specific heat capacity and specific latent heat" }
+          ]
+        },
+        {
+          "topic": "15 Ideal gases",
+          "subtopics": [
+            { "subtopic": "15.1 The mole", "search": "15.1 The mole" },
+            { "subtopic": "15.2 Equation of state", "search": "15.2 Equation of state" },
+            { "subtopic": "15.3 Kinetic theory of gases", "search": "15.3 Kinetic theory of gases" }
+          ]
+        },
+        {
+          "topic": "16 Thermodynamics",
+          "subtopics": [
+            { "subtopic": "16.1 Internal energy", "search": "16.1 Internal energy" },
+            { "subtopic": "16.2 The first law of thermodynamics", "search": "16.2 The first law of thermodynamics" }
+          ]
+        },
+        {
+          "topic": "17 Oscillations",
+          "subtopics": [
+            { "subtopic": "17.1 Simple harmonic oscillations", "search": "17.1 Simple harmonic oscillations" },
+            { "subtopic": "17.2 Energy in simple harmonic motion", "search": "17.2 Energy in simple harmonic motion" },
+            { "subtopic": "17.3 Damped and forced oscillations, resonance", "search": "17.3 Damped and forced oscillations, resonance" }
+          ]
+        },
+        {
+          "topic": "18 Electric fields",
+          "subtopics": [
+            { "subtopic": "18.1 Electric fields and field lines", "search": "18.1 Electric fields and field lines" },
+            { "subtopic": "18.2 Uniform electric fields", "search": "18.2 Uniform electric fields" },
+            { "subtopic": "18.3 Electric force between point charges", "search": "18.3 Electric force between point charges" },
+            { "subtopic": "18.4 Electric field of a point charge", "search": "18.4 Electric field of a point charge" },
+            { "subtopic": "18.5 Electric potential", "search": "18.5 Electric potential" }
+          ]
+        },
+        {
+          "topic": "19 Capacitance",
+          "subtopics": [
+            { "subtopic": "19.1 Capacitors and capacitance", "search": "19.1 Capacitors and capacitance" },
+            { "subtopic": "19.2 Energy stored in a capacitor", "search": "19.2 Energy stored in a capacitor" },
+            { "subtopic": "19.3 Discharging a capacitor", "search": "19.3 Discharging a capacitor" }
+          ]
+        },
+        {
+          "topic": "20 Magnetic fields",
+          "subtopics": [
+            { "subtopic": "20.1 Concept of a magnetic field", "search": "20.1 Concept of a magnetic field" },
+            { "subtopic": "20.2 Force on a current-carrying conductor", "search": "20.2 Force on a current-carrying conductor" },
+            { "subtopic": "20.3 Force on a moving charge", "search": "20.3 Force on a moving charge" },
+            { "subtopic": "20.4 Magnetic fields due to currents", "search": "20.4 Magnetic fields due to currents" },
+            { "subtopic": "20.5 Electromagnetic induction", "search": "20.5 Electromagnetic induction" }
+          ]
+        },
+        {
+          "topic": "21 Alternating currents",
+          "subtopics": [
+            { "subtopic": "21.1 Characteristics of alternating currents", "search": "21.1 Characteristics of alternating currents" },
+            { "subtopic": "21.2 Rectification and smoothing", "search": "21.2 Rectification and smoothing" }
+          ]
+        },
+        {
+          "topic": "22 Quantum physics",
+          "subtopics": [
+            { "subtopic": "22.1 Energy and momentum of a photon", "search": "22.1 Energy and momentum of a photon" },
+            { "subtopic": "22.2 Photoelectric effect", "search": "22.2 Photoelectric effect" },
+            { "subtopic": "22.3 Wave-particle duality", "search": "22.3 Wave-particle duality" },
+            { "subtopic": "22.4 Energy levels in atoms and line spectra", "search": "22.4 Energy levels in atoms and line spectra" }
+          ]
+        },
+        {
+          "topic": "23 Nuclear physics",
+          "subtopics": [
+            { "subtopic": "23.1 Mass defect and nuclear binding energy", "search": "23.1 Mass defect and nuclear binding energy" },
+            { "subtopic": "23.2 Radioactive decay", "search": "23.2 Radioactive decay" }
+          ]
+        },
+        {
+          "topic": "24 Medical physics",
+          "subtopics": [
+            { "subtopic": "24.1 Production and use of ultrasound", "search": "24.1 Production and use of ultrasound" },
+            { "subtopic": "24.2 Production and use of X-rays", "search": "24.2 Production and use of X-rays" },
+            { "subtopic": "24.3 PET scanning", "search": "24.3 PET scanning" }
+          ]
+        },
+        {
+          "topic": "25 Astronomy and cosmology",
+          "subtopics": [
+            { "subtopic": "25.1 Standard candles", "search": "25.1 Standard candles" },
+            { "subtopic": "25.2 Stellar radii", "search": "25.2 Stellar radii" },
+            { "subtopic": "25.3 Hubble's law and the Big Bang theory", "search": "25.3 Hubble's law and the Big Bang theory" }
+          ]
+        }
+      ]
+    }
+  ]
+},
+{
+  "subject": "Biology",
+  "board": "cambridge",
+  "level": "a-level",
+  "units": [
+    {
+      "unit": "AS",
+      "topics": [
+        {
+          "topic": "1 Cell structure",
+          "subtopics": [
+            { "subtopic": "1.1 The microscope in cell studies", "search": "1.1 The microscope in cell studies" },
+            { "subtopic": "1.2 Cells as the basic units of living organisms", "search": "1.2 Cells as the basic units of living organisms" }
+          ]
+        },
+        {
+          "topic": "2 Biological molecules",
+          "subtopics": [
+            { "subtopic": "2.1 Testing for biological molecules", "search": "2.1 Testing for biological molecules" },
+            { "subtopic": "2.2 Carbohydrates and lipids", "search": "2.2 Carbohydrates and lipids" },
+            { "subtopic": "2.3 Proteins", "search": "2.3 Proteins" },
+            { "subtopic": "2.4 Water", "search": "2.4 Water" }
+          ]
+        },
+        {
+          "topic": "3 Enzymes",
+          "subtopics": [
+            { "subtopic": "3.1 Mode of action of enzymes", "search": "3.1 Mode of action of enzymes" },
+            { "subtopic": "3.2 Factors that affect enzyme action", "search": "3.2 Factors that affect enzyme action" }
+          ]
+        },
+        {
+          "topic": "4 Cell membranes and transport",
+          "subtopics": [
+            { "subtopic": "4.1 Fluid mosaic membranes", "search": "4.1 Fluid mosaic membranes" },
+            { "subtopic": "4.2 Movement into and out of cells", "search": "4.2 Movement into and out of cells" }
+          ]
+        },
+        {
+          "topic": "5 The mitotic cell cycle",
+          "subtopics": [
+            { "subtopic": "5.1 Replication and division of nuclei and cells", "search": "5.1 Replication and division of nuclei and cells" },
+            { "subtopic": "5.2 Chromosome behaviour in mitosis", "search": "5.2 Chromosome behaviour in mitosis" }
+          ]
+        },
+        {
+          "topic": "6 Nucleic acids and protein synthesis",
+          "subtopics": [
+            { "subtopic": "6.1 Structure of nucleic acids and replication of DNA", "search": "6.1 Structure of nucleic acids and replication of DNA" },
+            { "subtopic": "6.2 Protein synthesis", "search": "6.2 Protein synthesis" }
+          ]
+        },
+        {
+          "topic": "7 Transport in plants",
+          "subtopics": [
+            { "subtopic": "7.1 Structure of transport tissues", "search": "7.1 Structure of transport tissues" },
+            { "subtopic": "7.2 Transport mechanisms", "search": "7.2 Transport mechanisms" }
+          ]
+        },
+        {
+          "topic": "8 Transport in mammals",
+          "subtopics": [
+            { "subtopic": "8.1 The circulatory system", "search": "8.1 The circulatory system" },
+            { "subtopic": "8.2 Transport of oxygen and carbon dioxide", "search": "8.2 Transport of oxygen and carbon dioxide" },
+            { "subtopic": "8.3 The heart", "search": "8.3 The heart" }
+          ]
+        },
+        {
+          "topic": "9 Gas exchange",
+          "subtopics": [
+            { "subtopic": "9.1 The gas exchange system", "search": "9.1 The gas exchange system" }
+          ]
+        },
+        {
+          "topic": "10 Infectious diseases",
+          "subtopics": [
+            { "subtopic": "10.1 Infectious diseases", "search": "10.1 Infectious diseases" },
+            { "subtopic": "10.2 Antibiotics", "search": "10.2 Antibiotics" }
+          ]
+        },
+        {
+          "topic": "11 Immunity",
+          "subtopics": [
+            { "subtopic": "11.1 The immune system", "search": "11.1 The immune system" },
+            { "subtopic": "11.2 Antibodies and vaccination", "search": "11.2 Antibodies and vaccination" }
+          ]
+        },
+        {
+          "topic": "12 Energy and respiration",
+          "subtopics": [
+            { "subtopic": "12.1 Energy", "search": "12.1 Energy" },
+            { "subtopic": "12.2 Respiration", "search": "12.2 Respiration" }
+          ]
+        }]},
+        {
+      "unit": "A2",
+      "topics": [
+        {
+          "topic": "13 Photosynthesis",
+          "subtopics": [
+            { "subtopic": "13.1 Photosynthesis as an energy transfer process", "search": "13.1 Photosynthesis as an energy transfer process" },
+            { "subtopic": "13.2 Investigation of limiting factors", "search": "13.2 Investigation of limiting factors" }
+          ]
+        },
+        {
+          "topic": "14 Homeostasis",
+          "subtopics": [
+            { "subtopic": "14.1 Homeostasis in mammals", "search": "14.1 Homeostasis in mammals" },
+            { "subtopic": "14.2 Homeostasis in plants", "search": "14.2 Homeostasis in plants" }
+          ]
+        },
+        {
+          "topic": "15 Control and coordination",
+          "subtopics": [
+            { "subtopic": "15.1 Control and coordination in mammals", "search": "15.1 Control and coordination in mammals" },
+            { "subtopic": "15.2 Control and coordination in plants", "search": "15.2 Control and coordination in plants" }
+          ]
+        },
+        {
+          "topic": "16 Inheritance",
+          "subtopics": [
+            { "subtopic": "16.1 Passage of information from parents to offspring", "search": "16.1 Passage of information from parents to offspring" },
+            { "subtopic": "16.2 The roles of genes in determining the phenotype", "search": "16.2 The roles of genes in determining the phenotype" },
+            { "subtopic": "16.3 Gene control", "search": "16.3 Gene control" }
+          ]
+        },
+        {
+          "topic": "17 Selection and evolution",
+          "subtopics": [
+            { "subtopic": "17.1 Variation", "search": "17.1 Variation" },
+            { "subtopic": "17.2 Natural and artificial selection", "search": "17.2 Natural and artificial selection" },
+            { "subtopic": "17.3 Evolution", "search": "17.3 Evolution" }
+          ]
+        },
+        {
+          "topic": "18 Classification, biodiversity and conservation",
+          "subtopics": [
+            { "subtopic": "18.1 Classification", "search": "18.1 Classification" },
+            { "subtopic": "18.2 Biodiversity", "search": "18.2 Biodiversity" },
+            { "subtopic": "18.3 Conservation", "search": "18.3 Conservation" }
+          ]
+        },
+        {
+          "topic": "19 Genetic technology",
+          "subtopics": [
+            { "subtopic": "19.1 Principles of genetic technology", "search": "19.1 Principles of genetic technology" },
+            { "subtopic": "19.2 Genetic technology applied to medicine", "search": "19.2 Genetic technology applied to medicine" },
+            { "subtopic": "19.3 Genetically modified organisms in agriculture", "search": "19.3 Genetically modified organisms in agriculture" }
+          ]
+        }
+      ]
+    }
+  ]
+},
+
+  // additional config objects can be added here
+];
+
+
+  
+

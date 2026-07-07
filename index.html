@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Favicons and touch icon (served from /logos/) -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/logos/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/logos/favicon-16x16.png" />
+    <link rel="shortcut icon" href="/logos/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/logos/logo-192x192.png" />
+      <!-- Structured Data for Organization with logo (use absolute URL to public logo) -->
+      <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Learnmates",
+        "url": "https://www.learnmates.org",
+        "logo": "https://www.learnmates.org/logos/logo-512x512.png"
+      }
+      </script>
+      <!-- Open Graph defaults for social shares -->
+      <meta property="og:title" content="Learnmates | IGCSE & A-Level study resources" />
+      <meta property="og:description" content="Learnmates offers IGCSE and A-Level videos, notes, quizzes and topical question generators for self-paced exam prep." />
+      <meta property="og:url" content="https://www.learnmates.org" />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content="https://www.learnmates.org/logos/og-image.png" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Learnmates | IGCSE & A-Level study resources" />
+      <meta name="twitter:description" content="Learnmates offers IGCSE and A-Level videos, notes, quizzes and topical question generators for self-paced exam prep." />
+      <meta name="twitter:image" content="https://www.learnmates.org/logos/og-image.png" />
+
+      <!-- Page-specific metadata injector (for JS-enabled clients) -->
+      <script>
+        async function updatePageMeta() {
+          try {
+            const res = await fetch('/metadata.json');
+            if (!res.ok) return;
+            const data = await res.json();
+            const path = window.location.pathname;
+
+            // try exact match first, then normalized path fallback
+            let meta = data?.topics?.[path] || data?.topics?.[decodeURIComponent(path)];
+            if (!meta && path.startsWith('/curriculum')) {
+              // When a subject page path ends with /type/board/subject or /type/board/subject/title
+              meta = data?.topics?.[path];
+            }
+
+            if (!meta) return;
+
+            const title = meta.title || document.title;
+            const description = meta.description || document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+            const keywords = meta.keywords || document.querySelector('meta[name="keywords"]')?.getAttribute('content') || '';
+            const url = (meta.url ? new URL(meta.url, window.location.origin).href : window.location.href);
+            const image = (meta.ogImage || 'https://www.learnmates.org/logos/og-image.png');
+
+            document.title = title;
+            const updateMetaTag = (selector, attr, value) => {
+              let tag = document.querySelector(selector);
+              if (!tag) {
+                tag = document.createElement('meta');
+                const [nameProp, nameVal] = selector.match(/\[([^=]+)=\"([^\"]+)\"]/).slice(1,3);
+                tag.setAttribute(nameProp, nameVal);
+                document.head.appendChild(tag);
+              }
+              tag.setAttribute(attr, value);
+            };
+
+            updateMetaTag('meta[name="description"]', 'content', description);
+            updateMetaTag('meta[name="keywords"]', 'content', keywords);
+            updateMetaTag('meta[property="og:title"]', 'content', title);
+            updateMetaTag('meta[property="og:description"]', 'content', description);
+            updateMetaTag('meta[property="og:url"]', 'content', url);
+            updateMetaTag('meta[property="og:image"]', 'content', image);
+            updateMetaTag('meta[name="twitter:title"]', 'content', title);
+            updateMetaTag('meta[name="twitter:description"]', 'content', description);
+            updateMetaTag('meta[name="twitter:image"]', 'content', image);
+          } catch (err) {
+            console.warn('Failed to update metadata from metadata.json', err);
+          }
+        }
+
+        updatePageMeta();
+      </script>
+      <!-- Google Tag Manager -->
+      <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-KKPR7L2K');</script>
+      <!-- End Google Tag Manager -->
+  </head>
+  <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KKPR7L2K"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

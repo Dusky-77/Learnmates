@@ -1,0 +1,50 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables (contains sensitive tokens)
+.env.local
+.env.*.local
+
+# Vercel
+.vercel
+
+# Large static files stored in Vercel Blob (not in Git)
+# These files are uploaded to Blob storage and referenced via blob-mapping.json
+# Exclude question files (PDFs, PNGs, etc.) but keep manifest/index JSON files
+public/Questions/**/*.pdf
+public/Questions/**/*.png
+public/Questions/**/*.jpg
+public/Questions/**/*.jpeg
+public/Questions/**/*.gif
+public/Questions/**/*.webp
+# Ignore topical question assets as well since they are served from R2
+public/topicals/
+public/topicals/**
+# Optionally exclude documents folder if it's also too large:
+# public/documents/**/*.pdf
+# public/documents/**/*.png
+public/Questions.zip
+*.zip
+Learnmates.git/

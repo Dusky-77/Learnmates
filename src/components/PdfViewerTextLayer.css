@@ -1,0 +1,25 @@
+/* Text layer spans are for selection only — PDF canvas shows the glyphs. */
+.pdf-viewer-page .textLayer :is(span, br) {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.pdf-viewer-page .textLayer ::selection,
+.pdf-viewer-page .textLayer :is(span, br)::selection {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  background-color: rgba(59, 130, 246, 0.45);
+}
+
+.pdf-viewer-page .textLayer ::-moz-selection,
+.pdf-viewer-page .textLayer :is(span, br)::-moz-selection {
+  color: transparent;
+  background-color: rgba(59, 130, 246, 0.45);
+}
+
+@media screen and (forced-colors: active) {
+  .pdf-viewer-page .textLayer ::selection,
+  .pdf-viewer-page .textLayer :is(span, br)::selection {
+    background-color: Highlight;
+  }
+}

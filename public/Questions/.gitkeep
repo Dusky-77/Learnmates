@@ -1,0 +1,15 @@
+# Questions Folder
+# 
+# This folder is excluded from Git (.gitignore) because files are too large.
+# 
+# Files in this folder are:
+# 1. Stored locally for development
+# 2. Uploaded to Vercel Blob via: npm run upload:blob
+# 3. Referenced via public/blob-mapping.json (which IS committed to Git)
+#
+# Workflow:
+# - Add new question files here locally
+# - Run: npm run upload:blob
+# - Commit: public/blob-mapping.json (contains Blob URLs)
+# - Files are served from Blob in production, local in development
+
