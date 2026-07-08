@@ -458,16 +458,23 @@ export const mergeTopicalPDFs = async (
   const fetchTasks: FetchTask[] = [];
   for (let i = 0; i < questions.length; i++) {
     const question = questions[i];
+
+    // For mark scheme exports, an MCQ answer letter (from mcq_ans.json) takes
+    // priority over question.markScheme. markScheme is a *derived* path built
+    // by string-substitution on the question file name - for MCQ questions it
+    // often points at a mark scheme PDF that was never generated, so treating
+    // it as authoritative causes real 404s. We already know the real answer,
+    // so skip the fetch entirely whenever mcqAnswer is available.
+    if (type === 'markschemes' && question.mcqAnswer) {
+      fetchTasks.push({ questionIndex: i, question, url: '', fileType: 'mcqAnswer' });
+      continue;
+    }
+
     const fileUrl = type === 'questions' ? question.questionContent : question.markScheme;
     const fileType = type === 'questions' ? question.questionContentType : question.markSchemeType;
 
     if (!fileUrl) {
-      if (type === 'markschemes' && question.mcqAnswer) {
-        // No mark scheme file for this MCQ question — we'll render the answer letter instead of a file.
-        fetchTasks.push({ questionIndex: i, question, url: '', fileType: 'mcqAnswer' });
-      } else {
-        console.warn(`Skipping question ${i + 1}: no file URL`);
-      }
+      console.warn(`Skipping question ${i + 1}: no file URL`);
       continue;
     }
 
@@ -695,13 +702,12 @@ export const downloadMergedTopicalPDFs = async (
   }
 
   const validQuestions = questions.filter(q => {
+    // MCQ answer takes priority over markScheme for mark scheme exports —
+    // see the matching comment in mergeTopicalPDFs for why.
+    if (type === 'markschemes' && q.mcqAnswer) return true;
     const fileUrl = type === 'questions' ? q.questionContent : q.markScheme;
     const fileType = type === 'questions' ? q.questionContentType : q.markSchemeType;
-    if (fileUrl && (fileType === 'pdf' || fileType === 'image')) return true;
-    // MCQ practice questions often have no separate mark scheme file — just an answer letter.
-    // Still include them in the mark scheme export so we can print "Answer: X" instead of skipping.
-    if (type === 'markschemes' && !fileUrl && q.mcqAnswer) return true;
-    return false;
+    return fileUrl && (fileType === 'pdf' || fileType === 'image');
   });
 
   if (validQuestions.length === 0) {
