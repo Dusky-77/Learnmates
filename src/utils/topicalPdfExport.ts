@@ -1,4 +1,4 @@
-// topicalPdfExport.ts - Updated version with R2 support
+// topicalPdfExport.ts - Full version with R2 support
 import { PDFDocument, rgb, StandardFonts, PDFFont } from 'pdf-lib';
 import { Question } from '../components/TopicalQuiz';
 import { fetchR2AsBlobUrl, resolveFromR2 } from '../utils/r2Utils';
@@ -47,7 +47,37 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
         try {
           const response = await fetch(blobUrl);
           if (response.ok) {
+            const contentType = response.headers.get('content-type') || '';
+            
+            // Check if we got HTML instead of a file
+            if (contentType.includes('text/html') || contentType.includes('text/plain')) {
+              console.warn(`[PDF Export] Received HTML instead of file from blob URL`);
+              // Try direct fetch as fallback
+              const directResponse = await fetch(r2Url, {
+                mode: 'cors',
+                headers: {
+                  'Accept': 'application/pdf,image/*,*/*',
+                },
+              });
+              if (directResponse.ok) {
+                const directContentType = directResponse.headers.get('content-type') || '';
+                if (!directContentType.includes('text/html')) {
+                  const arrayBuffer = await directResponse.arrayBuffer();
+                  if (arrayBuffer.byteLength > 0) {
+                    console.log(`[PDF Export] Successfully fetched ${arrayBuffer.byteLength} bytes via direct fetch`);
+                    return arrayBuffer;
+                  }
+                }
+              }
+              return null;
+            }
+            
             const arrayBuffer = await response.arrayBuffer();
+            if (arrayBuffer.byteLength === 0) {
+              console.warn(`[PDF Export] Empty response from blob URL`);
+              return null;
+            }
+            
             console.log(`[PDF Export] Successfully fetched ${arrayBuffer.byteLength} bytes via blob URL`);
             return arrayBuffer;
           }
@@ -58,18 +88,31 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
         }
       }
       
-      // Fallback: direct fetch
+      // Fallback: direct fetch with proper headers
       try {
-        const response = await fetch(r2Url, {
+        const directResponse = await fetch(r2Url, {
           mode: 'cors',
           headers: {
             'Accept': 'application/pdf,image/*,*/*',
           },
         });
-        if (response.ok) {
-          const arrayBuffer = await response.arrayBuffer();
-          console.log(`[PDF Export] Successfully fetched ${arrayBuffer.byteLength} bytes via direct fetch`);
-          return arrayBuffer;
+        
+        if (directResponse.ok) {
+          const directContentType = directResponse.headers.get('content-type') || '';
+          
+          // Check if we got HTML instead of a file
+          if (directContentType.includes('text/html') || directContentType.includes('text/plain')) {
+            console.warn(`[PDF Export] Received HTML instead of file from direct fetch: ${r2Url}`);
+            return null;
+          }
+          
+          const arrayBuffer = await directResponse.arrayBuffer();
+          if (arrayBuffer.byteLength > 0) {
+            console.log(`[PDF Export] Successfully fetched ${arrayBuffer.byteLength} bytes via direct fetch`);
+            return arrayBuffer;
+          }
+        } else {
+          console.warn(`[PDF Export] Direct fetch failed with status: ${directResponse.status}`);
         }
       } catch (err) {
         console.warn('[PDF Export] Direct fetch failed:', err);
@@ -84,6 +127,13 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
       console.warn(`[PDF Export] Fetch failed: ${response.status}`);
       return null;
     }
+    
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('text/html') || contentType.includes('text/plain')) {
+      console.warn(`[PDF Export] Received HTML instead of file from: ${url}`);
+      return null;
+    }
+    
     return await response.arrayBuffer();
   } catch (error) {
     console.error(`[PDF Export] Error fetching file:`, error);
