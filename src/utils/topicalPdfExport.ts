@@ -1,9 +1,7 @@
-// All the "turn a list of matched questions into a downloadable merged PDF"
-// logic that used to live inline in TopicalPages.tsx. Nothing here touches
-// React state directly — progress is reported via the onProgress callback so
-// the caller can decide what to do with it (e.g. setExportProgress).
+// topicalPdfExport.ts - Updated version with R2 support
 import { PDFDocument, rgb, StandardFonts, PDFFont } from 'pdf-lib';
 import { Question } from '../components/TopicalQuiz';
+import { fetchR2AsBlobUrl, resolveFromR2 } from '../utils/r2Utils';
 
 export type ExportType = 'questions' | 'markschemes';
 
@@ -11,6 +9,87 @@ export interface ExportProgress {
   current: number;
   total: number;
 }
+
+// Helper function to check if URL is an R2 asset
+const isR2Asset = (url: string): boolean => {
+  return url.includes('assets.learnmates.org') || 
+         url.includes('/questions/') || 
+         url.includes('/topicals/');
+};
+
+// Helper function to fetch file as ArrayBuffer with R2 support
+const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> => {
+  try {
+    console.log(`[PDF Export] Fetching: ${url}`);
+    
+    // Check if this is an R2 asset
+    if (isR2Asset(url)) {
+      // Use the same approach as MediaViewer - fetch via blob URL
+      let r2Url = url;
+      
+      // If it's a relative path, resolve it
+      if (!url.startsWith('http')) {
+        const resolved = await resolveFromR2(url);
+        if (resolved) {
+          r2Url = resolved;
+        } else {
+          // Try constructing R2 URL directly
+          const path = url.split('/').filter(p => p).join('/');
+          r2Url = `https://assets.learnmates.org/${path}`;
+        }
+      }
+      
+      console.log(`[PDF Export] Using R2 URL: ${r2Url}`);
+      
+      // Try blob URL approach (same as MediaViewer)
+      const blobUrl = await fetchR2AsBlobUrl(r2Url);
+      if (blobUrl) {
+        try {
+          const response = await fetch(blobUrl);
+          if (response.ok) {
+            const arrayBuffer = await response.arrayBuffer();
+            console.log(`[PDF Export] Successfully fetched ${arrayBuffer.byteLength} bytes via blob URL`);
+            return arrayBuffer;
+          }
+        } catch (err) {
+          console.warn('[PDF Export] Blob URL fetch failed:', err);
+        } finally {
+          if (blobUrl) URL.revokeObjectURL(blobUrl);
+        }
+      }
+      
+      // Fallback: direct fetch
+      try {
+        const response = await fetch(r2Url, {
+          mode: 'cors',
+          headers: {
+            'Accept': 'application/pdf,image/*,*/*',
+          },
+        });
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          console.log(`[PDF Export] Successfully fetched ${arrayBuffer.byteLength} bytes via direct fetch`);
+          return arrayBuffer;
+        }
+      } catch (err) {
+        console.warn('[PDF Export] Direct fetch failed:', err);
+      }
+      
+      return null;
+    }
+    
+    // Non-R2 asset - direct fetch
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn(`[PDF Export] Fetch failed: ${response.status}`);
+      return null;
+    }
+    return await response.arrayBuffer();
+  } catch (error) {
+    console.error(`[PDF Export] Error fetching file:`, error);
+    return null;
+  }
+};
 
 // ---------------------------------------------------------------------------
 // Cover page
@@ -235,8 +314,7 @@ export const createCoverPage = async (
 };
 
 // ---------------------------------------------------------------------------
-// Per-question header page (kept as its own tiny page so the original PDF's
-// crop/size is left completely untouched)
+// Per-question header page
 // ---------------------------------------------------------------------------
 
 export const createHeaderPage = async (
@@ -339,21 +417,32 @@ export const mergeTopicalPDFs = async (
     error: string | null;
   }
 
-  // These are public static files, so there's no need to throttle in
-  // sequential batches — fire every request concurrently and let the
-  // browser's own connection management handle it. Progress is reported
-  // as each individual fetch completes rather than once per batch.
   let completedCount = 0;
 
   const allResults: FetchResult[] = await Promise.all(
     fetchTasks.map(async task => {
       try {
-        const response = await fetch(task.url);
-        if (!response.ok) {
-          return { task, arrayBuffer: null, contentType: '', error: `HTTP ${response.status}` };
+        // Use the R2-aware fetch function
+        const arrayBuffer = await fetchFileAsArrayBuffer(task.url);
+        
+        if (!arrayBuffer) {
+          return { task, arrayBuffer: null, contentType: '', error: 'Failed to fetch file' };
         }
-        const arrayBuffer = await response.arrayBuffer();
-        const contentType = response.headers.get('content-type') || '';
+        
+        // Try to detect content type from the URL or file extension
+        let contentType = '';
+        if (task.fileType === 'pdf') {
+          contentType = 'application/pdf';
+        } else if (task.fileType === 'image') {
+          // Try to detect from URL extension
+          const ext = task.url.split('.').pop()?.toLowerCase();
+          if (ext === 'png') contentType = 'image/png';
+          else if (ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg';
+          else if (ext === 'gif') contentType = 'image/gif';
+          else if (ext === 'webp') contentType = 'image/webp';
+          else contentType = 'image/png'; // Default
+        }
+        
         return { task, arrayBuffer, contentType, error: null };
       } catch (err) {
         return { task, arrayBuffer: null, contentType: '', error: String(err) };
@@ -485,7 +574,7 @@ export const mergeTopicalPDFs = async (
 };
 
 // ---------------------------------------------------------------------------
-// Top-level "download" action — fetches, merges, triggers the browser download
+// Top-level "download" action
 // ---------------------------------------------------------------------------
 
 export const downloadMergedTopicalPDFs = async (
@@ -532,10 +621,11 @@ export const downloadMergedTopicalPDFs = async (
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(downloadUrl);
+    
+    callbacks.onDone?.();
   } catch (error) {
     console.error('Error merging PDFs:', error);
     callbacks.onError?.('Failed to merge PDFs. Please try again.');
-  } finally {
     callbacks.onDone?.();
   }
 };
