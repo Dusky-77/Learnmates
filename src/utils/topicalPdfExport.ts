@@ -12,11 +12,15 @@ export interface ExportProgress {
 
 // Helper function to check if URL is an R2 asset
 const isR2Asset = (url: string): boolean => {
-  return url.includes('assets.learnmates.org') || 
+    return url.includes('assets.learnmates.org') || 
+         url.includes('/Questions/') || 
          url.includes('/questions/') || 
-         url.includes('/topicals/');
+         url.includes('/topicals/') ||
+         url.includes('topicals/') ||
+         url.includes('Questions/');
 };
 
+// Helper function to fetch file as ArrayBuffer with R2 support
 // Helper function to fetch file as ArrayBuffer with R2 support
 const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> => {
   try {
@@ -34,9 +38,18 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
           r2Url = resolved;
         } else {
           // Try constructing R2 URL directly
-          const path = url.split('/').filter(p => p).join('/');
-          r2Url = `https://assets.learnmates.org/${path}`;
+          // Remove leading slash if present
+          const cleanPath = url.startsWith('/') ? url.substring(1) : url;
+          r2Url = `https://assets.learnmates.org/${cleanPath}`;
         }
+      }
+      
+      // If the URL is still on www.learnmates.org, convert it to assets.learnmates.org
+      if (r2Url.includes('www.learnmates.org') || r2Url.includes('learnmates.org')) {
+        // Extract the path from the URL
+        const urlObj = new URL(r2Url);
+        r2Url = `https://assets.learnmates.org${urlObj.pathname}`;
+        console.log(`[PDF Export] Converted to assets URL: ${r2Url}`);
       }
       
       console.log(`[PDF Export] Using R2 URL: ${r2Url}`);
