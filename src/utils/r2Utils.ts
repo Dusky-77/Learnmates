@@ -23,8 +23,11 @@ const r2UrlCache = new Map<string, string>();
 // Cache for fetched R2 blobs to avoid re-fetching
 const r2BlobCache = new Map<string, Promise<Blob | null>>();
 
-const isR2ManagedAssetPath = (localPath: string) => localPath.includes('/Questions/') || localPath.includes('/topicals/');
-
+const isR2ManagedAssetPath = (localPath: string) => {
+  const stripped = localPath.replace(/^\/+/, ''); // remove any leading slashes
+  return stripped.startsWith('Questions/') || stripped.includes('/Questions/') ||
+         stripped.startsWith('topicals/') || stripped.includes('/topicals/');
+};
 /**
  * Encode URL path according to specification:
  * - Ampersand (&) → %26

@@ -375,6 +375,11 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
                           absoluteUrl.includes('/questions/') || 
                           absoluteUrl.includes('/topicals/');
         
+        if (isR2Asset && !absoluteUrl.startsWith('https://assets.learnmates.org')) {
+          console.error(`[PDF Merge] Question ${questionNumber}: expected R2 URL but got same-origin fallback (${absoluteUrl}) — likely a resolveFromR2 failure. Skipping.`);
+          continue;
+        }
+
         if (isR2Asset) {
           // Try to fetch directly from R2 first
           arrayBuffer = await fetchR2AsArrayBuffer(absoluteUrl);
