@@ -6,6 +6,7 @@ import {
   getPaperNumberFromFileName,
   getPaperKeyFromFileName,
   getYearFromFileName,
+  sortQuestionsByRecency,
 } from '../utils/topicalHelpers';
 import { deriveMarkSchemeUrl } from '../utils/quizLoader';
 import { resolveFromR2 } from '../utils/r2Utils';
@@ -285,7 +286,7 @@ export function useTopicalMatches() {
               currentCount++;
               if (currentCount % 5 === 0 || currentCount === totalQuestions) {
                 setLoadingProgress({ current: currentCount, total: totalQuestions, isLoading: true });
-                setTopicalQuiz([...newQuestions]);
+                setTopicalQuiz(sortQuestionsByRecency(newQuestions));
               }
             } else {
               currentCount++;
@@ -299,8 +300,9 @@ export function useTopicalMatches() {
     }
 
     setLoadingProgress({ current: currentCount, total: totalQuestions, isLoading: false });
-    setTopicalQuiz(newQuestions);
-    return newQuestions;
+    const sortedQuestions = sortQuestionsByRecency(newQuestions);
+    setTopicalQuiz(sortedQuestions);
+    return sortedQuestions;
   };
 
   const resetResults = () => {

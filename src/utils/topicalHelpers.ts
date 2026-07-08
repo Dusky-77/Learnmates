@@ -50,5 +50,75 @@ export const getYearFromFileName = (fileName: string | undefined | null): number
   return null;
 };
 
+// ---------------------------------------------------------------------------
+// Recency ordering (newest -> oldest), driven purely by the exam session
+// embedded in the file name/title, e.g. "Jun 2028 P44 Q1" (Cambridge) or
+// "Jan 2020 Q1" (Edexcel). Works regardless of paper numbers/labels since it
+// never needs to know the board's paper-numbering convention to do the sort -
+// it only needs the month name + year that every board writes somewhere in
+// the file name.
+// ---------------------------------------------------------------------------
+
+const MONTH_NAME_TO_INDEX: Record<string, number> = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+};
+
+const monthIndexFromWord = (word: string): number | null => {
+  const key = word.toLowerCase().slice(0, 3);
+  return key in MONTH_NAME_TO_INDEX ? MONTH_NAME_TO_INDEX[key] : null;
+};
+
+// Returns a single sortable integer (larger = more recent) derived from the
+// "<Month> <Year>" session written in a file name/title, or null if no
+// recognizable month+year pair is present.
+export const getSessionSortKeyFromFileName = (fileName: string | undefined | null): number | null => {
+  if (!fileName) return null;
+  const match = fileName.match(/([A-Za-z]{3,9})\.?\s+((?:19|20)\d{2})\b/);
+  if (!match) return null;
+
+  const monthIndex = monthIndexFromWord(match[1]);
+  if (monthIndex === null) return null;
+
+  const year = parseInt(match[2], 10);
+  if (isNaN(year)) return null;
+
+  return year * 12 + monthIndex;
+};
+
+export const getQuestionNumberFromFileName = (fileName: string | undefined | null): number | null => {
+  if (!fileName) return null;
+  const match = fileName.match(/Q(\d+)\b/i);
+  return match ? parseInt(match[1], 10) : null;
+};
+
+// Compares two questions purely by "how recent is this paper", newest first.
+// Falls back to grouping by paper number, then question number, when two
+// entries share the same session - this keeps Q1, Q2, Q3... in order within
+// a paper instead of leaving them in whatever order they were discovered.
+// Entries whose file name/title doesn't contain a recognizable month+year are
+// sent to the end rather than disrupting the ordering of everything else.
+export const compareByRecency = (a: { title?: string }, b: { title?: string }): number => {
+  const aKey = getSessionSortKeyFromFileName(a.title);
+  const bKey = getSessionSortKeyFromFileName(b.title);
+
+  if (aKey === null && bKey === null) return 0;
+  if (aKey === null) return 1;
+  if (bKey === null) return -1;
+  if (aKey !== bKey) return bKey - aKey; // newer (larger key) first
+
+  const aPaper = getPaperNumberFromFileName(a.title) ?? 0;
+  const bPaper = getPaperNumberFromFileName(b.title) ?? 0;
+  if (aPaper !== bPaper) return aPaper - bPaper;
+
+  const aQNum = getQuestionNumberFromFileName(a.title) ?? 0;
+  const bQNum = getQuestionNumberFromFileName(b.title) ?? 0;
+  return aQNum - bQNum;
+};
+
+// Non-mutating: returns a new array sorted newest -> oldest.
+export const sortQuestionsByRecency = <T extends { title?: string }>(questions: T[]): T[] =>
+  [...questions].sort(compareByRecency);
+
 export const makeKey = (level: string, board: string, subject: string, unit: string, name: string) =>
   `${level}||${board}||${subject}||${unit}||${name}`;

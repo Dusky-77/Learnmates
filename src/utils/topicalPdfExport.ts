@@ -462,7 +462,12 @@ export const mergeTopicalPDFs = async (
     const fileType = type === 'questions' ? question.questionContentType : question.markSchemeType;
 
     if (!fileUrl) {
-      console.warn(`Skipping question ${i + 1}: no file URL`);
+      if (type === 'markschemes' && question.mcqAnswer) {
+        // No mark scheme file for this MCQ question — we'll render the answer letter instead of a file.
+        fetchTasks.push({ questionIndex: i, question, url: '', fileType: 'mcqAnswer' });
+      } else {
+        console.warn(`Skipping question ${i + 1}: no file URL`);
+      }
       continue;
     }
 
@@ -484,6 +489,12 @@ export const mergeTopicalPDFs = async (
 
   const allResults: FetchResult[] = await Promise.all(
     fetchTasks.map(async task => {
+      if (task.fileType === 'mcqAnswer') {
+        // No file to fetch — we just need the question data to draw an "Answer: X" page.
+        completedCount++;
+        onProgress?.({ current: completedCount, total: fetchTasks.length });
+        return { task, arrayBuffer: new ArrayBuffer(0), contentType: 'mcq-answer', error: null };
+      }
       try {
         // Use the R2-aware fetch function
         const arrayBuffer = await fetchFileAsArrayBuffer(task.url);
@@ -626,6 +637,32 @@ export const mergeTopicalPDFs = async (
         const imageY = height - headerHeight - 20 - scaledHeight;
 
         page.drawImage(image, { x: imageX, y: imageY, width: scaledWidth, height: scaledHeight });
+      } else if (task.fileType === 'mcqAnswer') {
+        // Keep this as small as the per-question header strip (not a full page) —
+        // there's no mark scheme file, just a single answer letter to show.
+        const headerHeight = 50;
+        const page = mergedPdf.addPage([612, headerHeight]);
+        const { width, height } = page.getSize();
+
+        page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(0.95, 0.95, 0.95) });
+        page.drawLine({ start: { x: 0, y: height - 1 }, end: { x: width, y: height - 1 }, thickness: 1, color: rgb(0.7, 0.7, 0.7) });
+        page.drawLine({ start: { x: 0, y: 0 }, end: { x: width, y: 0 }, thickness: 1, color: rgb(0.7, 0.7, 0.7) });
+
+        const titleText = task.question.title || `Question ${questionNumber}`;
+        const titleSize = 12;
+        page.drawText(titleText, { x: 10, y: height / 2 + 4, size: titleSize, color: rgb(0, 0, 0), font: boldFont });
+        page.drawText('Mark Scheme (MCQ)', { x: 10, y: height / 2 - 14, size: 8, color: rgb(0.45, 0.45, 0.45), font: regularFont });
+
+        const answerText = `Answer: ${task.question.mcqAnswer || '?'}`;
+        const answerSize = 22;
+        const answerWidth = boldFont.widthOfTextAtSize(answerText, answerSize);
+        page.drawText(answerText, {
+          x: width - answerWidth - 20,
+          y: height / 2 - answerSize / 2 + 2,
+          size: answerSize,
+          font: boldFont,
+          color: rgb(0, 0.4, 0.2),
+        });
       }
     } catch (error) {
       console.error(`Error processing question ${questionNumber}:`, error);
@@ -660,7 +697,11 @@ export const downloadMergedTopicalPDFs = async (
   const validQuestions = questions.filter(q => {
     const fileUrl = type === 'questions' ? q.questionContent : q.markScheme;
     const fileType = type === 'questions' ? q.questionContentType : q.markSchemeType;
-    return fileUrl && (fileType === 'pdf' || fileType === 'image');
+    if (fileUrl && (fileType === 'pdf' || fileType === 'image')) return true;
+    // MCQ practice questions often have no separate mark scheme file — just an answer letter.
+    // Still include them in the mark scheme export so we can print "Answer: X" instead of skipping.
+    if (type === 'markschemes' && !fileUrl && q.mcqAnswer) return true;
+    return false;
   });
 
   if (validQuestions.length === 0) {
