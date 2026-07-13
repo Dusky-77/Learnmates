@@ -1,0 +1,21 @@
+name = "learnmates-asset-worker"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# Comma-separated list of frontend origins allowed to fetch assets.
+# Add your local dev origin too so testing doesn't 403.
+[vars]
+ALLOWED_ORIGINS = "https://learnmates.org,https://www.learnmates.org,http://localhost:5173"
+
+# Binds this Worker directly to the R2 bucket — no access keys needed.
+[[r2_buckets]]
+binding = "TOPICALS_BUCKET"
+bucket_name = "learnmates-assits"
+
+# After first deploy, attach this Worker to the assets.learnmates.org custom
+# domain from the Cloudflare dashboard (Workers & Pages -> this worker ->
+# Settings -> Domains & Routes), then remove the bucket's public access.
+#
+# ASSET_SHARED_KEY is a secret, not a var — set it with:
+#   wrangler secret put ASSET_SHARED_KEY
+# then put the SAME value in your frontend's env as VITE_ASSET_SHARED_KEY.

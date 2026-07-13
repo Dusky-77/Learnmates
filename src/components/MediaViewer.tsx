@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Pen } from 'lucide-react';
 import { pdfjs, pdfGetDocumentOptions } from '../utils/pdfjsConfig';
-import { resolveFromR2, fetchR2AsBlobUrl } from '../utils/r2Utils';
+import { resolveFromR2, fetchR2AsBlobUrl, getAssetAuthHeaders } from '../utils/r2Utils';
 
 interface MediaViewerProps {
   url: string;
@@ -211,7 +211,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       if (!resolvedInfoUrl) {
         return;
       }
-      const response = await fetch(resolvedInfoUrl);
+      const response = await fetch(resolvedInfoUrl, { headers: getAssetAuthHeaders() });
       
       if (response.ok) {
         const infoData = await response.json();

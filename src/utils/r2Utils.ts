@@ -6,16 +6,26 @@
  */
 
 // Configuration for R2
+// This now points at the asset-worker (Cloudflare Worker) gateway, not the
+// bucket directly. The bucket is private; the Worker validates the headers
+// below and streams the object, with edge caching. See /worker-assets.
 const R2_BASE_URL = 'https://assets.learnmates.org';
 const R2_BUCKET_URL = (import.meta as any).env?.VITE_R2_BUCKET_URL || 'https://learnmates-cdn.r2.cloudflarestorage.com';
 
-// CORS proxy options - use one of these if R2 CORS is not configured
-// Currently using direct R2 URL - configure these if needed:
-const CORS_PROXIES = {
-  'cors-anywhere': 'https://cors-anywhere.herokuapp.com/',
-  'allorigins': 'https://api.allorigins.win/raw?url=',
-  'corsfix': 'https://corsfix.com/?',
-};
+// Shared secret the asset-worker checks (X-Asset-Key). Must match the
+// ASSET_SHARED_KEY secret set on the Worker via `wrangler secret put`.
+// This is "basic protection" against casual hotlinking/scraping, not real
+// per-user auth — it's visible in the shipped JS bundle like any VITE_ var.
+const ASSET_SHARED_KEY = (import.meta as any).env?.VITE_ASSET_SHARED_KEY || '';
+
+/**
+ * Headers required by the asset-worker for every request to assets.learnmates.org.
+ * Import and reuse this anywhere a raw fetch() hits an R2-managed asset URL,
+ * so there's a single place to update if the auth scheme ever changes.
+ */
+export function getAssetAuthHeaders(): HeadersInit {
+  return ASSET_SHARED_KEY ? { 'X-Asset-Key': ASSET_SHARED_KEY } : {};
+}
 
 // Cache for R2 URL transformation results
 const r2UrlCache = new Map<string, string>();
@@ -260,7 +270,8 @@ export async function fetchR2AsBlob(r2Url: string): Promise<Blob | null> {
       const response = await fetch(r2Url, {
         method: 'GET',
         headers: {
-          'Accept': '*/*'
+          'Accept': '*/*',
+          ...getAssetAuthHeaders(),
         }
       });
 

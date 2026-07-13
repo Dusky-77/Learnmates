@@ -48,3 +48,7 @@ public/topicals/**
 public/Questions.zip
 *.zip
 Learnmates.git/
+# Wrangler (Cloudflare Workers) local state and secrets
+.wrangler/
+.dev.vars
+.dev.vars.*

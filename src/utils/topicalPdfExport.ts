@@ -1,7 +1,7 @@
 // topicalPdfExport.ts - Full version with R2 support
 import { PDFDocument, rgb, StandardFonts, PDFFont } from 'pdf-lib';
 import { Question } from '../components/TopicalQuiz';
-import { fetchR2AsBlobUrl, resolveFromR2 } from '../utils/r2Utils';
+import { fetchR2AsBlobUrl, resolveFromR2, getAssetAuthHeaders } from '../utils/r2Utils';
 
 export type ExportType = 'questions' | 'markschemes';
 
@@ -31,17 +31,16 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
       // Use the same approach as MediaViewer - fetch via blob URL
       let r2Url = url;
       
-      // If it's a relative path, resolve it
+      // If it's a relative path, resolve it via r2Utils (never construct the
+      // URL by hand here — the bucket is private, r2Utils is the single
+      // source of truth for how asset URLs are built).
       if (!url.startsWith('http')) {
         const resolved = await resolveFromR2(url);
-        if (resolved) {
-          r2Url = resolved;
-        } else {
-          // Try constructing R2 URL directly
-          // Remove leading slash if present
-          const cleanPath = url.startsWith('/') ? url.substring(1) : url;
-          r2Url = `https://assets.learnmates.org/${cleanPath}`;
+        if (!resolved) {
+          console.error(`[PDF Export] Could not resolve R2 URL for: ${url}`);
+          return null;
         }
+        r2Url = resolved;
       }
       
       // If the URL is still on www.learnmates.org, convert it to assets.learnmates.org
@@ -70,6 +69,7 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
                 mode: 'cors',
                 headers: {
                   'Accept': 'application/pdf,image/*,*/*',
+                  ...getAssetAuthHeaders(),
                 },
               });
               if (directResponse.ok) {
@@ -107,6 +107,7 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
           mode: 'cors',
           headers: {
             'Accept': 'application/pdf,image/*,*/*',
+            ...getAssetAuthHeaders(),
           },
         });
         
