@@ -18,7 +18,7 @@ const R2_BUCKET_URL = (import.meta as any).env?.VITE_R2_BUCKET_URL || 'https://l
 // per-user auth — it's visible in the shipped JS bundle like any VITE_ var.
 // Keep a fallback matching the local dev secret so requests continue to work
 // even if the deployment environment does not inject VITE_ASSET_SHARED_KEY.
-const ASSET_SHARED_KEY = (import.meta as any).env?.VITE_ASSET_SHARED_KEY || '926e09afbddf36fb7a35b2b02ebe317b8ffa9fc9a5fdd91ceff35ee9f439a0df';
+const ASSET_SHARED_KEY = (import.meta as any).env?.VITE_ASSET_SHARED_KEY || '';
 
 /**
  * Headers required by the asset-worker for every request to assets.learnmates.org.

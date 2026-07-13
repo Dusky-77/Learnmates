@@ -7,17 +7,22 @@
 // <paper><variant>, e.g. 11, 12, 13 => Paper 1; 21, 22, 23 => Paper 2;
 // 31, 32, 33 => Paper 3; 41, 42, 43 => Paper 4. For Cambridge A-level science
 // subjects we keep the same workflow but limit the available options to papers 1, 2 and 4.
-export const PAPER_FILTER_SUBJECTS = ['Biology', 'Physics', 'Chemistry', 'Mathematics'];
+const normalizeSubject = (subject: string) => subject.trim().toLowerCase();
+
+export const PAPER_FILTER_SUBJECTS = ['Biology', 'Physics', 'Chemistry', 'Mathematics', 'Maths', 'Math'];
 export const CAMBRIDGE_SCIENCE_MCQ_SUBJECTS = ['Biology', 'Physics', 'Chemistry'];
 
 export const isPaperFilterSubject = (level: string, board: string, subject: string) =>
-  ['igcse', 'a-level'].includes(level) && board === 'cambridge' && PAPER_FILTER_SUBJECTS.includes(subject);
+  ['igcse', 'a-level'].includes(level) && board === 'cambridge' &&
+  PAPER_FILTER_SUBJECTS.some(candidate => normalizeSubject(candidate) === normalizeSubject(subject));
 
 export const isCambridgeScienceMcqSubject = (level: string, board: string, subject: string) =>
-  ['igcse', 'a-level'].includes(level) && board === 'cambridge' && CAMBRIDGE_SCIENCE_MCQ_SUBJECTS.includes(subject);
+  ['igcse', 'a-level'].includes(level) && board === 'cambridge' &&
+  CAMBRIDGE_SCIENCE_MCQ_SUBJECTS.some(candidate => normalizeSubject(candidate) === normalizeSubject(subject));
 
 export const getDefaultPaperOptions = (level: string, board: string, subject: string): number[] => {
-  if (level === 'a-level' && board === 'cambridge' && PAPER_FILTER_SUBJECTS.includes(subject)) {
+  if (level === 'a-level' && board === 'cambridge' &&
+      CAMBRIDGE_SCIENCE_MCQ_SUBJECTS.some(candidate => normalizeSubject(candidate) === normalizeSubject(subject))) {
     return [1, 2, 4];
   }
   return [1, 2, 3, 4];

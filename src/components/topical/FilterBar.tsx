@@ -107,7 +107,7 @@ const PaperFilterDropdown: React.FC<{
                 onChange={() => onToggle(paperNum)}
                 className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
               />
-              <span>Paper {paperNum}</span>
+              <span>P{paperNum}</span>
             </label>
           ))}
         </div>

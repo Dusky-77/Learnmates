@@ -1336,12 +1336,12 @@ export const topicalConfigs: SubjectConfig[] = [
 
 
 {
-  "subject": "Mathematics",
+  "subject": "Math",
   "board": "cambridge",
   "level": "igcse",
   "units": [
     {
-      "unit": "MATH",
+      "unit": "Math",
       
   "topics": [
     {

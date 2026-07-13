@@ -9,7 +9,7 @@ import {
   sortQuestionsByRecency,
 } from '../utils/topicalHelpers';
 import { deriveMarkSchemeUrl } from '../utils/quizLoader';
-import { resolveFromR2 } from '../utils/r2Utils';
+import { resolveFromR2, getAssetAuthHeaders } from '../utils/r2Utils';
 
 interface LoadingProgress {
   current: number;
@@ -88,7 +88,7 @@ export function useTopicalMatches() {
     try {
       const infoUrl = `${basePath}/info.json`;
       const resolvedInfoUrl = await resolveFromR2(infoUrl);
-      const res = await fetch(resolvedInfoUrl || infoUrl, { signal: abortControllerRef.current.signal });
+      const res = await fetch(resolvedInfoUrl || infoUrl, { signal: abortControllerRef.current.signal, headers: getAssetAuthHeaders() });
       if (res.ok) {
         const text = await res.text();
         try {
@@ -212,7 +212,7 @@ export function useTopicalMatches() {
             }
             
             const resolvedMcqAnswersUrl = await resolveFromR2(mcqAnswersUrl);
-            const res = await fetch(resolvedMcqAnswersUrl || mcqAnswersUrl, { signal: abortControllerRef.current.signal });
+            const res = await fetch(resolvedMcqAnswersUrl || mcqAnswersUrl, { signal: abortControllerRef.current.signal, headers: getAssetAuthHeaders() });
             
             if (res.ok) {
               const data = await res.json();
