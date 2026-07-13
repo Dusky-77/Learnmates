@@ -33,23 +33,44 @@ function isOriginAllowed(request: Request, allowedOrigins: string[]): boolean {
   return allowedOrigins.some((allowed) => candidate.startsWith(allowed));
 }
 
+function corsHeaders(request: Request, allowedOrigins: string[]): Headers {
+  const headers = new Headers();
+  const origin = request.headers.get('Origin');
+  if (origin && allowedOrigins.some((allowed) => origin.startsWith(allowed))) {
+    headers.set('Access-Control-Allow-Origin', origin);
+    headers.set('Vary', 'Origin');
+  }
+  headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', 'X-Asset-Key');
+  headers.set('Access-Control-Max-Age', '86400');
+  return headers;
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const allowedOrigins = env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean);
+
+    // Browsers send this automatically before a GET that carries a custom
+    // header (X-Asset-Key). It must succeed with the right CORS headers, or
+    // the browser blocks the real request before it's even sent.
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders(request, allowedOrigins) });
+    }
+
     if (request.method !== 'GET' && request.method !== 'HEAD') {
-      return new Response('Method Not Allowed', { status: 405 });
+      return new Response('Method Not Allowed', { status: 405, headers: corsHeaders(request, allowedOrigins) });
     }
 
     const url = new URL(request.url);
     const key = decodeURIComponent(url.pathname.replace(/^\/+/, ''));
     if (!key) {
-      return new Response('Not Found', { status: 404 });
+      return new Response('Not Found', { status: 404, headers: corsHeaders(request, allowedOrigins) });
     }
 
-    const allowedOrigins = env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean);
     const providedKey = request.headers.get('X-Asset-Key');
 
     if (!isOriginAllowed(request, allowedOrigins) || providedKey !== env.ASSET_SHARED_KEY) {
-      return new Response('Forbidden', { status: 403 });
+      return new Response('Forbidden', { status: 403, headers: corsHeaders(request, allowedOrigins) });
     }
 
     // Edge cache check — a hit here never touches R2 at all, for any user.
@@ -62,15 +83,13 @@ export default {
 
     const object = await env.TOPICALS_BUCKET.get(key);
     if (!object) {
-      return new Response('Not Found', { status: 404 });
+      return new Response('Not Found', { status: 404, headers: corsHeaders(request, allowedOrigins) });
     }
 
-    const headers = new Headers();
+    const headers = corsHeaders(request, allowedOrigins);
     object.writeHttpMetadata(headers); // sets Content-Type etc. from upload metadata
     headers.set('etag', object.httpEtag);
     headers.set('Cache-Control', CACHE_CONTROL);
-    headers.set('Access-Control-Allow-Origin', request.headers.get('Origin') || '*');
-    headers.set('Vary', 'Origin');
 
     const response = new Response(object.body, { headers, status: 200 });
 
