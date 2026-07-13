@@ -1334,6 +1334,138 @@ export const topicalConfigs: SubjectConfig[] = [
   ]
 },
 
+
+{
+  "subject": "Mathematics",
+  "board": "cambridge",
+  "level": "igcse",
+  "units": [
+    {
+      "unit": "MATH",
+      
+  "topics": [
+    {
+      "topic": "1 Number",
+      "subtopics": [
+        { "subtopic": "1.1 Types of number", "search": "1.1 Types of number" },
+        { "subtopic": "1.2 Sets", "search": "1.2 Sets" },
+        { "subtopic": "1.3 Powers and roots", "search": "1.3 Powers and roots" },
+        { "subtopic": "1.4 Fractions, decimals and percentages", "search": "1.4 Fractions decimals and percentages" },
+        { "subtopic": "1.5 Ordering", "search": "1.5 Ordering" },
+        { "subtopic": "1.6 The four operations", "search": "1.6 Four operations" },
+        { "subtopic": "1.7 Indices I", "search": "1.7 Indices I" },
+        { "subtopic": "1.8 Standard form", "search": "1.8 Standard form" },
+        { "subtopic": "1.9 Estimation", "search": "1.9 Estimation" },
+        { "subtopic": "1.10 Limits of accuracy", "search": "1.10 Limits of accuracy" },
+        { "subtopic": "1.11 Ratio and proportion", "search": "1.11 Ratio and proportion" },
+        { "subtopic": "1.12 Rates", "search": "1.12 Rates" },
+        { "subtopic": "1.13 Percentages", "search": "1.13 Percentages" },
+        { "subtopic": "1.14 Using a calculator", "search": "1.14 Using a calculator" },
+        { "subtopic": "1.15 Time", "search": "1.15 Time" },
+        { "subtopic": "1.16 Money", "search": "1.16 Money" },
+        { "subtopic": "1.17 Exponential growth and decay", "search": "1.17 Exponential growth and decay" },
+        { "subtopic": "1.18 Surds", "search": "1.18 Surds" }
+      ]
+    },
+    {
+      "topic": "2 Algebra and graphs",
+      "subtopics": [
+        { "subtopic": "2.1 Introduction to algebra", "search": "2.1 Introduction to algebra" },
+        { "subtopic": "2.2 Algebraic manipulation", "search": "2.2 Algebraic manipulation" },
+        { "subtopic": "2.3 Algebraic fractions", "search": "2.3 Algebraic fractions" },
+        { "subtopic": "2.4 Indices II", "search": "2.4 Indices II" },
+        { "subtopic": "2.5 Equations", "search": "2.5 Equations" },
+        { "subtopic": "2.6 Inequalities", "search": "2.6 Inequalities" },
+        { "subtopic": "2.7 Sequences", "search": "2.7 Sequences" },
+        { "subtopic": "2.8 Proportion", "search": "2.8 Proportion" },
+        { "subtopic": "2.9 Graphs in practical situations", "search": "2.9 Graphs in practical situations" },
+        { "subtopic": "2.10 Graphs of functions", "search": "2.10 Graphs of functions" },
+        { "subtopic": "2.11 Sketching curves", "search": "2.11 Sketching curves" },
+        { "subtopic": "2.12 Differentiation", "search": "2.12 Differentiation" },
+        { "subtopic": "2.13 Functions", "search": "2.13 Functions" }
+      ]
+    },
+    {
+      "topic": "3 Coordinate geometry",
+      "subtopics": [
+        { "subtopic": "3.1 Coordinates", "search": "3.1 Coordinates" },
+        { "subtopic": "3.2 Drawing linear graphs", "search": "3.2 Drawing linear graphs" },
+        { "subtopic": "3.3 Gradient of linear graphs", "search": "3.3 Gradient of linear graphs" },
+        { "subtopic": "3.4 Length and midpoint", "search": "3.4 Length and midpoint" },
+        { "subtopic": "3.5 Equations of linear graphs", "search": "3.5 Equations of linear graphs" },
+        { "subtopic": "3.6 Parallel lines", "search": "3.6 Parallel lines" },
+        { "subtopic": "3.7 Perpendicular lines", "search": "3.7 Perpendicular lines" }
+      ]
+    },
+    {
+      "topic": "4 Geometry",
+      "subtopics": [
+        { "subtopic": "4.1 Geometrical terms", "search": "4.1 Geometrical terms" },
+        { "subtopic": "4.2 Geometrical constructions", "search": "4.2 Geometrical constructions" },
+        { "subtopic": "4.3 Scale drawings", "search": "4.3 Scale drawings" },
+        { "subtopic": "4.4 Similarity", "search": "4.4 Similarity" },
+        { "subtopic": "4.5 Symmetry", "search": "4.5 Symmetry" },
+        { "subtopic": "4.6 Angles", "search": "4.6 Angles" },
+        { "subtopic": "4.7 Circle theorems I", "search": "4.7 Circle theorems I" },
+        { "subtopic": "4.8 Circle theorems II", "search": "4.8 Circle theorems II" }
+      ]
+    },
+    {
+      "topic": "5 Mensuration",
+      "subtopics": [
+        { "subtopic": "5.1 Units of measure", "search": "5.1 Units of measure" },
+        { "subtopic": "5.2 Area and perimeter", "search": "5.2 Area and perimeter" },
+        { "subtopic": "5.3 Circles, arcs and sectors", "search": "5.3 Circles arcs and sectors" },
+        { "subtopic": "5.4 Surface area and volume", "search": "5.4 Surface area and volume" },
+        { "subtopic": "5.5 Compound shapes and parts of shapes", "search": "5.5 Compound shapes and parts of shapes" }
+      ]
+    },
+    {
+      "topic": "6 Trigonometry",
+      "subtopics": [
+        { "subtopic": "6.1 Pythagoras' theorem", "search": "6.1 Pythagoras theorem" },
+        { "subtopic": "6.2 Right-angled triangles", "search": "6.2 Right-angled triangles" },
+        { "subtopic": "6.3 Exact trigonometric values", "search": "6.3 Exact trigonometric values" },
+        { "subtopic": "6.4 Trigonometric functions", "search": "6.4 Trigonometric functions" },
+        { "subtopic": "6.5 Non-right-angled triangles", "search": "6.5 Non-right-angled triangles" },
+        { "subtopic": "6.6 Pythagoras' theorem and trigonometry in 3D", "search": "6.6 Pythagoras theorem and trigonometry in 3D" }
+      ]
+    },
+    {
+      "topic": "7 Transformations and vectors",
+      "subtopics": [
+        { "subtopic": "7.1 Transformations", "search": "7.1 Transformations" },
+        { "subtopic": "7.2 Vectors in two dimensions", "search": "7.2 Vectors in two dimensions" },
+        { "subtopic": "7.3 Magnitude of a vector", "search": "7.3 Magnitude of a vector" },
+        { "subtopic": "7.4 Vector geometry", "search": "7.4 Vector geometry" }
+      ]
+    },
+    {
+      "topic": "8 Probability",
+      "subtopics": [
+        { "subtopic": "8.1 Introduction to probability", "search": "8.1 Introduction to probability" },
+        { "subtopic": "8.2 Relative and expected frequencies", "search": "8.2 Relative and expected frequencies" },
+        { "subtopic": "8.3 Probability of combined events", "search": "8.3 Probability of combined events" },
+        { "subtopic": "8.4 Conditional probability", "search": "8.4 Conditional probability" }
+      ]
+    },
+    {
+      "topic": "9 Statistics",
+      "subtopics": [
+        { "subtopic": "9.1 Classifying statistical data", "search": "9.1 Classifying statistical data" },
+        { "subtopic": "9.2 Interpreting statistical data", "search": "9.2 Interpreting statistical data" },
+        { "subtopic": "9.3 Averages and measures of spread", "search": "9.3 Averages and measures of spread" },
+        { "subtopic": "9.4 Statistical charts and diagrams", "search": "9.4 Statistical charts and diagrams" },
+        { "subtopic": "9.5 Scatter diagrams", "search": "9.5 Scatter diagrams" },
+        { "subtopic": "9.6 Cumulative frequency diagrams", "search": "9.6 Cumulative frequency diagrams" },
+        { "subtopic": "9.7 Histograms", "search": "9.7 Histograms" }
+      ]
+        }
+      ]
+    }
+  ]
+},
+
   // additional config objects can be added here
 ];
 
