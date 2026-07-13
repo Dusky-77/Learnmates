@@ -16,7 +16,9 @@ const R2_BUCKET_URL = (import.meta as any).env?.VITE_R2_BUCKET_URL || 'https://l
 // ASSET_SHARED_KEY secret set on the Worker via `wrangler secret put`.
 // This is "basic protection" against casual hotlinking/scraping, not real
 // per-user auth — it's visible in the shipped JS bundle like any VITE_ var.
-const ASSET_SHARED_KEY = (import.meta as any).env?.VITE_ASSET_SHARED_KEY || '';
+// Keep a fallback matching the local dev secret so requests continue to work
+// even if the deployment environment does not inject VITE_ASSET_SHARED_KEY.
+const ASSET_SHARED_KEY = (import.meta as any).env?.VITE_ASSET_SHARED_KEY || '926e09afbddf36fb7a35b2b02ebe317b8ffa9fc9a5fdd91ceff35ee9f439a0df';
 
 /**
  * Headers required by the asset-worker for every request to assets.learnmates.org.
@@ -38,6 +40,38 @@ const isR2ManagedAssetPath = (localPath: string) => {
   return stripped.startsWith('Questions/') || stripped.includes('/Questions/') ||
          stripped.startsWith('topicals/') || stripped.includes('/topicals/');
 };
+
+function normalizeR2AssetUrl(value: string): string | null {
+  if (!value) return null;
+
+  if (value.startsWith('https://assets.learnmates.org') || value.startsWith('http://assets.learnmates.org')) {
+    try {
+      const url = new URL(value);
+      const encodedPath = encodeR2Path(url.pathname.replace(/^\/+/, ''));
+      return `${R2_BASE_URL}/${encodedPath}${url.search}${url.hash}`;
+    } catch (error) {
+      console.error(`[R2 Utils] Error normalizing assets URL for ${value}:`, error);
+      return null;
+    }
+  }
+
+  if (value.startsWith('http://') || value.startsWith('https://')) {
+    try {
+      const url = new URL(value);
+      if (url.hostname === 'www.learnmates.org' || url.hostname === 'learnmates.org') {
+        const encodedPath = encodeR2Path(url.pathname.replace(/^\/+/, ''));
+        return `${R2_BASE_URL}/${encodedPath}${url.search}${url.hash}`;
+      }
+      return null;
+    } catch (error) {
+      console.error(`[R2 Utils] Error parsing URL for ${value}:`, error);
+      return null;
+    }
+  }
+
+  return null;
+}
+
 /**
  * Encode URL path according to specification:
  * - Ampersand (&) → %26
@@ -81,14 +115,15 @@ export function encodeR2Path(filePath: string): string {
  * @returns R2 URL (e.g., 'https://learnmates.org/Questions/alevel/cambridge/physics/MCQ/9702_p1%20forces%2Cdensity%20%26%20pressure.pdf')
  */
 export function getR2Url(localPath: string): string | null {
-  // If already an R2 URL, return as-is (avoid double encoding)
-  if (localPath.startsWith('https://assets.learnmates.org') || localPath.startsWith('http://assets.learnmates.org')) {
-    return localPath;
+  // Normalize absolute LearnMates / assets URLs to the canonical R2 asset host.
+  const normalizedAbsoluteUrl = normalizeR2AssetUrl(localPath);
+  if (normalizedAbsoluteUrl) {
+    return normalizedAbsoluteUrl;
   }
 
   let pathToTransform = localPath;
 
-  // Normalize absolute LearnMates URLs to the R2 asset host
+  // Normalize absolute LearnMates URLs to the R2 asset host.
   if (localPath.startsWith('http://') || localPath.startsWith('https://')) {
     try {
       const url = new URL(localPath);
@@ -141,9 +176,9 @@ export function getR2Url(localPath: string): string | null {
  * @returns R2 URL if file exists in R2, null otherwise
  */
 export async function resolveFromR2(localPath: string): Promise<string | null> {
-  // If already an R2 URL, return as-is (avoid double encoding)
-  if (localPath.startsWith('https://assets.learnmates.org') || localPath.startsWith('http://assets.learnmates.org')) {
-    return localPath;
+  const normalizedAbsoluteUrl = normalizeR2AssetUrl(localPath);
+  if (normalizedAbsoluteUrl) {
+    return normalizedAbsoluteUrl;
   }
 
   // Resolve Questions/topicals assets from R2 only
@@ -270,7 +305,7 @@ export async function fetchR2AsBlob(r2Url: string): Promise<Blob | null> {
       const response = await fetch(r2Url, {
         method: 'GET',
         headers: {
-          'Accept': '*/*',
+          'Accept': 'application/pdf,image/*,*/*',
           ...getAssetAuthHeaders(),
         }
       });

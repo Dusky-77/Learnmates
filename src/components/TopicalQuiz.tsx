@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import MediaViewer from './MediaViewer';
 import { deriveMarkSchemeUrl } from '../utils/quizLoader';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { fetchR2AsBlobUrl, resolveFromR2 } from '../utils/r2Utils';
+import { fetchR2AsBlobUrl, resolveFromR2, getAssetAuthHeaders } from '../utils/r2Utils';
 
 export interface Question {
   id: string;
@@ -315,6 +315,7 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
       mode: 'cors',
       headers: {
         'Accept': 'application/pdf,image/*',
+        ...getAssetAuthHeaders(),
       },
     });
 

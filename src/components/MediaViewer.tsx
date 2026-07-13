@@ -302,6 +302,10 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
               pdf = await pdfjs.getDocument({
                 ...pdfGetDocumentOptions,
                 url: pdfUrl,
+                httpHeaders: {
+                  ...getAssetAuthHeaders(),
+                  Accept: 'application/pdf,application/octet-stream,*/*',
+                },
               }).promise;
             }
           } else {
@@ -328,10 +332,19 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
           
           if (shouldUseR2(currentUrl) && !disableR2) {
             console.log(`[MediaViewer] Using assets URL only for image: ${currentUrl}`);
-            resolveFromR2(currentUrl).then(r2Url => {
+            resolveFromR2(currentUrl).then(async r2Url => {
               if (r2Url && imageRef.current) {
-                console.log(`[MediaViewer] Using R2 URL for image: ${r2Url}`);
-                imageRef.current.src = r2Url;
+                // Native <img src> can never send custom headers, so fetch
+                // via blob (which carries the auth header) instead of
+                // pointing the <img> tag straight at the R2 URL.
+                const blobUrl = await fetchR2AsBlobUrl(r2Url);
+                if (blobUrl && imageRef.current) {
+                  console.log(`[MediaViewer] Using blob URL for image (from R2)`);
+                  imageRef.current.src = blobUrl;
+                } else if (imageRef.current) {
+                  setError('Failed to resolve image from R2 storage');
+                  setLoading(false);
+                }
               } else if (imageRef.current) {
                 setError('Failed to resolve image from R2 storage');
                 setLoading(false);
@@ -1095,7 +1108,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
         if (blobUrl) {
           pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: blobUrl }).promise;
         } else {
-          pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: r2Url }).promise;
+          pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: r2Url, httpHeaders: getAssetAuthHeaders() }).promise;
         }
       } else {
         pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url }).promise;
@@ -1171,7 +1184,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
         if (blobUrl) {
           pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: blobUrl }).promise;
         } else {
-          pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: r2Url }).promise;
+          pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url: r2Url, httpHeaders: getAssetAuthHeaders() }).promise;
         }
       } else {
         pdf = await pdfjs.getDocument({ ...pdfGetDocumentOptions, url }).promise;
