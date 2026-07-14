@@ -1350,9 +1350,9 @@ export const topicalConfigs: SubjectConfig[] = [
         { "subtopic": "1.1 Types of number", "search": "1.1 Types of number" },
         { "subtopic": "1.2 Sets", "search": "1.2 Sets" },
         { "subtopic": "1.3 Powers and roots", "search": "1.3 Powers and roots" },
-        { "subtopic": "1.4 Fractions, decimals and percentages", "search": "1.4 Fractions decimals and percentages" },
+        { "subtopic": "1.4 Fractions, decimals and percentages", "search": "1.4 Fractions, decimals and percentages" },
         { "subtopic": "1.5 Ordering", "search": "1.5 Ordering" },
-        { "subtopic": "1.6 The four operations", "search": "1.6 Four operations" },
+        { "subtopic": "1.6 The four operations", "search": "1.6 The four operations" },
         { "subtopic": "1.7 Indices I", "search": "1.7 Indices I" },
         { "subtopic": "1.8 Standard form", "search": "1.8 Standard form" },
         { "subtopic": "1.9 Estimation", "search": "1.9 Estimation" },
@@ -1415,7 +1415,7 @@ export const topicalConfigs: SubjectConfig[] = [
       "subtopics": [
         { "subtopic": "5.1 Units of measure", "search": "5.1 Units of measure" },
         { "subtopic": "5.2 Area and perimeter", "search": "5.2 Area and perimeter" },
-        { "subtopic": "5.3 Circles, arcs and sectors", "search": "5.3 Circles arcs and sectors" },
+        { "subtopic": "5.3 Circles, arcs and sectors", "search": "5.3 Circles, arcs and sectors" },
         { "subtopic": "5.4 Surface area and volume", "search": "5.4 Surface area and volume" },
         { "subtopic": "5.5 Compound shapes and parts of shapes", "search": "5.5 Compound shapes and parts of shapes" }
       ]
@@ -1423,12 +1423,12 @@ export const topicalConfigs: SubjectConfig[] = [
     {
       "topic": "6 Trigonometry",
       "subtopics": [
-        { "subtopic": "6.1 Pythagoras' theorem", "search": "6.1 Pythagoras theorem" },
+        { "subtopic": "6.1 Pythagoras' theorem", "search": "6.1 Pythagoras' theorem" },
         { "subtopic": "6.2 Right-angled triangles", "search": "6.2 Right-angled triangles" },
         { "subtopic": "6.3 Exact trigonometric values", "search": "6.3 Exact trigonometric values" },
         { "subtopic": "6.4 Trigonometric functions", "search": "6.4 Trigonometric functions" },
         { "subtopic": "6.5 Non-right-angled triangles", "search": "6.5 Non-right-angled triangles" },
-        { "subtopic": "6.6 Pythagoras' theorem and trigonometry in 3D", "search": "6.6 Pythagoras theorem and trigonometry in 3D" }
+        { "subtopic": "6.6 Pythagoras' theorem and trigonometry in 3D", "search": "6.6 Pythagoras' theorem and trigonometry in 3D" }
       ]
     },
     {

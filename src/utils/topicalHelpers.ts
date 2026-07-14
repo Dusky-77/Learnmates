@@ -9,7 +9,7 @@
 // subjects we keep the same workflow but limit the available options to papers 1, 2 and 4.
 const normalizeSubject = (subject: string) => subject.trim().toLowerCase();
 
-export const PAPER_FILTER_SUBJECTS = ['Biology', 'Physics', 'Chemistry', 'Mathematics', 'Maths', 'Math'];
+export const PAPER_FILTER_SUBJECTS = ['Biology', 'Physics', 'Chemistry', 'Math'];
 export const CAMBRIDGE_SCIENCE_MCQ_SUBJECTS = ['Biology', 'Physics', 'Chemistry'];
 
 export const isPaperFilterSubject = (level: string, board: string, subject: string) =>
