@@ -4,7 +4,7 @@ import { Flag, RotateCcw, Trophy, FileText, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MediaViewer from './MediaViewer';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { resolveFromR2 } from '../utils/r2Utils';
+import { resolveFromR2, fetchR2AsBlobUrl, getAssetAuthHeaders } from '../utils/r2Utils';
 
 export interface Question {
   id: string;
@@ -59,9 +59,20 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
 
   // helper: fetch with a short timeout (local files shouldn't take long)
   const fetchWithTimeout = (url: string, timeout = 3000): Promise<Response> => {
+    const isR2Asset = shouldUseR2(url);
+    const requestInit: RequestInit = {};
+
+    if (isR2Asset) {
+      requestInit.mode = 'cors';
+      requestInit.headers = {
+        Accept: 'application/pdf,image/*,*/*',
+        ...getAssetAuthHeaders(),
+      };
+    }
+
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('timeout')), timeout);
-      fetch(url)
+      fetch(url, requestInit)
         .then(res => {
           clearTimeout(timer);
           resolve(res);
@@ -77,29 +88,44 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
   const handleDownload = async (url: string, filename: string) => {
     try {
       const resolvedUrl = await resolveAssetUrl(url);
+      const isR2Asset = shouldUseR2(resolvedUrl) || shouldUseR2(url);
+
+      if (isR2Asset) {
+        const blobUrl = await fetchR2AsBlobUrl(resolvedUrl);
+        if (blobUrl) {
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+          return;
+        }
+      }
 
       // Convert relative URL to absolute if needed
-      let absoluteUrl = resolvedUrl.startsWith('http') || resolvedUrl.startsWith('blob:') 
-        ? resolvedUrl 
+      const absoluteUrl = resolvedUrl.startsWith('http') || resolvedUrl.startsWith('blob:')
+        ? resolvedUrl
         : new URL(resolvedUrl, window.location.origin).href;
-      
+
       let response: Response | null = null;
 
       try {
-        response = await fetch(absoluteUrl);
+        response = await fetchWithTimeout(absoluteUrl, 10000);
       } catch (error) {
         console.log(`[Quiz] Fetch failed for asset: ${(error as Error).message}`);
       }
-      
+
       if (!response || !response.ok) {
         if (shouldUseR2(url)) {
           throw new Error(`Failed to download managed asset from R2: ${response?.statusText || 'Network error'}`);
         }
         throw new Error(`Failed to download: ${response?.statusText || 'Network error'}`);
       }
-      
+
       const blob = await response.blob();
-      
+
       // Create a temporary link and trigger download
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -112,8 +138,8 @@ const Quiz: React.FC<QuizComponentProps> = (props) => {
     } catch (error) {
       console.error('Error downloading file:', error);
       // Fallback: open in new tab
-      let absoluteUrl = url.startsWith('http') || url.startsWith('blob:') 
-        ? url 
+      const absoluteUrl = url.startsWith('http') || url.startsWith('blob:')
+        ? url
         : new URL(url, window.location.origin).href;
       window.open(absoluteUrl, '_blank');
     }

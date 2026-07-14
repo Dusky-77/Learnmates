@@ -1051,7 +1051,7 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
   
   'Biology-T1': {
     videos: [],
-    resources: [ { id: 'r1', title: 'Molecules, Transport and Health Notes(@TheLivingAndDead)', url: '/documents/alevel/edexcel/Biology/1-Molecules, Transport and Health/Molecules, Transport and Health (TheLivingAndDead).pdf'},
+    resources: [ { id: 'r1', title: 'Molecules, Transport and Health Notes (@TheLivingAndDead)', url: '/documents/alevel/edexcel/Biology/1-Molecules, Transport and Health/Molecules, Transport and Health (TheLivingAndDead).pdf'},
       { id: 'r2', title: 'Biomolecules NOTES (@attorneighhh)', url: '/documents/alevel/edexcel/Biology/1-Molecules, Transport and Health/Biomolecules NOTES.pdf' },
       { id: 'r3', title: 'The Human Transport System NOTES (@attorneighhh)', url: '/documents/alevel/edexcel/Biology/1-Molecules, Transport and Health/The Human Transport System NOTES.pdf' },
       
@@ -1118,14 +1118,14 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
 
   'Biology-T5': {
     videos: [],
-    resources: [
+    resources: [{ id: 'r2', title: 'IAL Biology U4 topic 5 Self-Study booklet (@ppac_pp).pdf', url: '/documents/alevel/edexcel/Biology/5-Energy Flow, Ecosystems and the Environment/IAL Biology U4 topic 5 Self-Study booklet (@ppac_pp).pdf' },
       { id: 'r1', title: 'Energy and Ecosystems notes', url: '/documents/alevel/edexcel/Biology/5-Energy Flow, Ecosystems and the Environment/A2 BIOLOGY TOPIC 5.pdf' },
       ],
     quizzes: []
   },
    'Biology-T6': {
     videos: [],
-    resources: [
+    resources: [{ id: 'r2', title: 'IAL Biology U4 topic 6 Self-Study booklet (@ppac_pp).pdf', url: '/documents/alevel/edexcel/Biology/6-Microbiology, Immunity and Forensics/IAL Biology U4 topic 6 Self-Study booklet (@ppac_pp).pdf' },
       { id: 'r1', title: 'Microbiology, Immunity and Forensics notes', url: '/documents/alevel/edexcel/Biology/6-Microbiology, Immunity and Forensics/A2 BIOLOGY TOPIC 6.pdf' },
       ],
     quizzes: []
@@ -1133,7 +1133,9 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
 
   'Biology-Unit-3': {
     videos: [],
-    resources: [ { id: 'r1', title: 'Unit 3 Biology Mark Scheme Notes', url: '/documents/alevel/edexcel/Biology/Unit-3/Unit-3 Mark Scheme Notes.pdf' } ,],
+    resources: [ {id: 'r2', title: 'Biology IAS U3', url: '/documents/alevel/edexcel/Biology/Unit-3/Biology IAS U3.pdf'},
+      
+      { id: 'r1', title: 'Unit 3 Biology Mark Scheme Notes', url: '/documents/alevel/edexcel/Biology/Unit-3/Unit-3 Mark Scheme Notes.pdf' } ,],
 
     quizzes: [
       { questionFile: '/Questions/alevel/edexcel/biology/Unit-3/Biology Unit 3 FAQ.pdf', title: 'Unit 3 FAQ' }
@@ -1142,19 +1144,20 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
   
  'Biology-T7': {
     videos: [],
-    resources: [
+    resources: [{ id: 'r2', title: 'IAL Biology U5 topic 7 Self-Study booklet (@ppac_pp).pdf', url: '/documents/alevel/edexcel/Biology/7-Respiration, Muscles and the Internal Environment/IAL Biology U5 topic 7 Self-Study booklet (@ppac_pp).pdf' },
       { id: 'r1', title: 'Respiration, Muscles and the Internal Environment notes (Nour)', url: '/documents/alevel/edexcel/Biology/7-Respiration, Muscles and the Internal Environment/Respiration, Muscles and the Internal Environment (Nour).pdf' },
       ],
     quizzes: []
   },
    'Biology-T8': {
     videos: [],
-    resources: [
+    resources: [{ id: 'r2', title: 'IAL Biology U5 topic 8 Self-Study booklet (@ppac_pp).pdf', url: '/documents/alevel/edexcel/Biology/8-Coordination, Response and Gene Technology/IAL Biology U5 topic 8 Self-Study booklet (@ppac_pp).pdf' },
       { id: 'r1', title: 'Coordination, Response and Gene Technology notes (Nour)', url: '/documents/alevel/edexcel/Biology/8-Coordination, Response and Gene Technology/Coordination, Response and Gene Technology (Nour).pdf' }  ,
       ],
     quizzes: []
   },
-  
+
+  'Biology-Unit-6': {resources: [ {id: 'r1', title: 'Biology IAS U6', url: '/documents/alevel/edexcel/Biology/Unit-6/Biology IAS U6.pdf'}],},  
   
   'chemistry-T1': {
    videos: [],

@@ -436,6 +436,7 @@ export const curriculumData: Record<string, Curriculum> = {
 
             { id: 'Biology-T7', title: 'Respiration, Muscles and the Internal Environment', description: 'Study genetics, evolution, and biodiversity in biological systems.', subject: 'Biology', group:'U5' },
             { id: 'Biology-T8', title: 'Coordination, Response and Gene Technology', description: 'Understand human physiology, including the structure and function of organ systems.', subject: 'Biology', group:'U5' },
+            { id: 'Biology-Unit-6' , title: 'Unit 6 Practical Skills in Biology', description: 'Sixth unit covering practical skills in biology.', subject: 'Biology', color: 'from-green-600 to-green-500 dark:from-green-700 dark:to-green-800' , tags: [{ name: 'U6', color: 'bg-blue-900' }]},
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
           { id: 'P1-Math-T1', title: 'Algebra and inqualities', description: 'Laws of indices, surds, quadratic functions, completing the square, solving equations/inequalities.', subject: 'Pure Mathematics',group:'Pure 1' },
