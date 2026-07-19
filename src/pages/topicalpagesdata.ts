@@ -17,29 +17,29 @@ export const topicalConfigs: SubjectConfig[] = [
         {
           "topic": "1 Algebra & Functions",
           "subtopics": [
-            { "subtopic": "1.1 Algebra (Indices & Surds)", "search": "Indices and Surds" },
-            { "subtopic": "1.2 Quadratics", "search": "Quadratics" },
-            { "subtopic": "1.3 Simultaneous Equations and Inequalities", "search": "Simultaneous Equations and Inequalities" },
-            { "subtopic": "1.4 Functions and Graphs", "search": "Functions and Graphs" }
+            { "subtopic": "1.1 Algebra (Indices & Surds)", "search": "1.1 Algebra (Indices & Surds)" },
+            { "subtopic": "1.2 Quadratics", "search": "1.2 Quadratics" },
+            { "subtopic": "1.3 Simultaneous Equations and Inequalities", "search": "1.3 Simultaneous Equations and Inequalities" },
+            { "subtopic": "1.4 Functions and Graphs", "search": "1.4 Functions and Graphs" }
           ]
         },
         { "topic": "2 Coordinate Geometry", "subtopics": [
-            { "subtopic": "2 Straight Lines", "search": "Straight Lines Coordinate Geometry" }
+            { "subtopic": "2 Straight Lines", "search": "2 Straight Lines" }
           ]
         },
         {
           "topic": "3 Trigonometry",
           "subtopics": [
-            { "subtopic": "3.1 Trigonometry", "search": "Trigonometry" },
-            { "subtopic": "3.2 Radians", "search": "Radians" }
+            { "subtopic": "3.1 Trigonometry", "search": "3.1 Trigonometry" },
+            { "subtopic": "3.2 Radians", "search": "3.2 Radians" }
           ]
         },
         { "topic": "4 Differentiation", "subtopics": [
-            { "subtopic": "4 Differentiation", "search": "Differentiation" }
+            { "subtopic": "4 Differentiation", "search": "4 Differentiation" }
           ]
         },
         { "topic": "5 Integration", "subtopics": [
-            { "subtopic": "5 Integration", "search": "Integration" }
+            { "subtopic": "5 Integration", "search": "5 Integration" }
           ]
         }
       ]
@@ -48,44 +48,44 @@ export const topicalConfigs: SubjectConfig[] = [
       "unit": "Pure 2",
       "topics": [
         { "topic": "1 Proof", "subtopics": [
-            { "subtopic": "1 Proof by Exhaustion & Counter-Example", "search": "Proof by Exhaustion and Counter Example" }
+            { "subtopic": "1 Proof by Exhaustion & Counter-Example", "search": "1 Proof by Exhaustion & Counter-Example" }
           ]
         },
         {
           "topic": "2 Algebra & Functions",
           "subtopics": [
-            { "subtopic": "2 Algebraic Methods (Polynomial Division, Factor Theorem, Remainder Theorem)", "search": "Algebraic Methods Polynomial Division Factor Theorem Remainder Theorem" }
+            { "subtopic": "2 Algebraic Methods (Polynomial Division, Factor Theorem, Remainder Theorem)", "search": "2 Algebraic Methods (Polynomial Division, Factor Theorem, Remainder Theorem)" }
           ]
         },
         { "topic": "3 Coordinate Geometry", "subtopics": [
-            { "subtopic": "3 Equation of a Circle and Circle Properties", "search": "Equation of a Circle and Circle Properties" }
+            { "subtopic": "3 Equation of a Circle and Circle Properties", "search": "3 Equation of a Circle and Circle Properties" }
           ]
         },
         {
           "topic": "4 Sequences & Series",
           "subtopics": [
-            { "subtopic": "4.1 Sequences and Series", "search": "Sequences and Series" },
-            { "subtopic": "4.2 Sum to Infinity", "search": "Sum to Infinity" },
-            { "subtopic": "4.3 Binomial Expansion", "search": "Binomial Expansion" }
+            { "subtopic": "4.1 Sequences and Series", "search": "4.1 Sequences and Series" },
+            { "subtopic": "4.2 Sum to Infinity", "search": "4.2 Sum to Infinity" },
+            { "subtopic": "4.3 Binomial Expansion", "search": "4.3 Binomial Expansion" }
           ]
         },
         { "topic": "5 Exponentials & Logarithms", "subtopics": [
-            { "subtopic": "5 Exponentials & Logarithms", "search": "Exponentials and Logarithms" }
+            { "subtopic": "5 Exponentials & Logarithms", "search": "5 Exponentials & Logarithms" }
           ]
         },
         { "topic": "6 Trigonometry", "subtopics": [
-            { "subtopic": "6 Trigonometry", "search": "Trigonometry" }
+            { "subtopic": "6 Trigonometry", "search": "6 Trigonometry" }
           ]
         },
         { "topic": "7 Differentiation", "subtopics": [
-            { "subtopic": "7 Differentiation", "search": "Differentiation" }
+            { "subtopic": "7 Differentiation", "search": "7 Differentiation" }
           ]
         },
         {
           "topic": "8 Integration",
           "subtopics": [
-            { "subtopic": "8.1 Definite Integrals (Area under & between two curves)", "search": "Definite Integrals Area under and between curves" },
-            { "subtopic": "8.2 Trapezium Rule", "search": "Trapezium Rule" }
+            { "subtopic": "8.1 Definite Integrals (Area under & between two curves)", "search": "8.1 Definite Integrals (Area under & between two curves)" },
+            { "subtopic": "8.2 Trapezium Rule", "search": "8.2 Trapezium Rule" }
           ]
         }
       ]
@@ -96,42 +96,42 @@ export const topicalConfigs: SubjectConfig[] = [
         {
           "topic": "1 Algebra & Functions",
           "subtopics": [
-            { "subtopic": "1.1 Rational Expressions", "search": "Rational Expressions" },
-            { "subtopic": "1.2 Functions and Transformations (Modulus)", "search": "Functions and Transformations Modulus" }
+            { "subtopic": "1.1 Rational Expressions", "search": "1.1 Rational Expressions" },
+            { "subtopic": "1.2 Functions and Transformations (Modulus)", "search": "1.2 Functions and Transformations (Modulus)" }
           ]
         },
         {
           "topic": "2 Trigonometry",
           "subtopics": [
-            { "subtopic": "2.1 Trigonometric Functions (Sec, Cosec, Cot, Inverse)", "search": "Sec Cosec Cot Inverse Trigonometric Functions" },
-            { "subtopic": "2.2 Trigonometric Identities", "search": "Trigonometric Identities" },
-            { "subtopic": "2.3 Harmonic Form (a cos θ + b sin θ)", "search": "Harmonic Form a cos theta plus b sin theta" }
+            { "subtopic": "2.1 Trigonometric Functions (Sec, Cosec, Cot, Inverse)", "search": "2.1 Trigonometric Functions (Sec, Cosec, Cot, Inverse)" },
+            { "subtopic": "2.2 Trigonometric Identities", "search": "2.2 Trigonometric Identities" },
+            { "subtopic": "2.3 Harmonic Form (a cos θ + b sin θ)", "search": "2.3 Harmonic Form (a cos θ + b sin θ)" }
           ]
         },
         { "topic": "3 Exponentials & Logarithms", "subtopics": [
-            { "subtopic": "3 Exponential and Logarithmic Functions", "search": "Exponential and Logarithmic Functions" }
+            { "subtopic": "3 Exponential and Logarithmic Functions", "search": "3 Exponential and Logarithmic Functions" }
           ]
         },
         {
           "topic": "4 Differentiation",
           "subtopics": [
-            { "subtopic": "4.1 Differentiation (Trigonometric Functions)", "search": "Differentiation Trigonometric Functions" },
-            { "subtopic": "4.2 Differentiation Rules (Chain, Product, Quotient)", "search": "Chain Product Quotient Rule Differentiation" },
-            { "subtopic": "4.3 Exponential Growth and Decay", "search": "Exponential Growth and Decay" }
+            { "subtopic": "4.1 Differentiation (Trigonometric Functions)", "search": "4.1 Differentiation (Trigonometric Functions)" },
+            { "subtopic": "4.2 Differentiation Rules (Chain, Product, Quotient)", "search": "4.2 Differentiation Rules (Chain, Product, Quotient)" },
+            { "subtopic": "4.3 Exponential Growth and Decay", "search": "4.3 Exponential Growth and Decay" }
           ]
         },
         {
           "topic": "5 Integration",
           "subtopics": [
-            { "subtopic": "5.1 Integration (Trig, identities, other functions)", "search": "Integration Trig Identities Functions" },
-            { "subtopic": "5.2 Reverse Chain Rule", "search": "Reverse Chain Rule Integration" }
+            { "subtopic": "5.1 Integration (Trig, identities, other functions)", "search": "5.1 Integration (Trig, identities, other functions)" },
+            { "subtopic": "5.2 Reverse Chain Rule", "search": "5.2 Reverse Chain Rule" }
           ]
         },
         {
           "topic": "6 Numerical Methods",
           "subtopics": [
-            { "subtopic": "6.1 Location of Roots (change of sign)", "search": "Location of Roots Change of Sign" },
-            { "subtopic": "6.2 Iterative Methods (recurrence relations xₙ₊₁ = f(xₙ))", "search": "Iterative Methods Recurrence Relations" }
+            { "subtopic": "6.1 Location of Roots (change of sign)", "search": "6.1 Location of Roots (change of sign)" },
+            { "subtopic": "6.2 Iterative Methods (recurrence relations xₙ₊₁ = f(xₙ))", "search": "6.2 Iterative Methods (recurrence relations xₙ₊₁ = f(xₙ))" }
           ]
         }
       ]
@@ -140,45 +140,45 @@ export const topicalConfigs: SubjectConfig[] = [
       "unit": "Pure 4",
       "topics": [
         { "topic": "1 Proof", "subtopics": [
-            { "subtopic": "1 Proof by Contradiction", "search": "Proof by Contradiction" }
+            { "subtopic": "1 Proof by Contradiction", "search": "1 Proof by Contradiction" }
           ]
         },
         { "topic": "2 Algebra & Functions", "subtopics": [
-            { "subtopic": "2 Partial Fractions", "search": "Partial Fractions" }
+            { "subtopic": "2 Partial Fractions", "search": "2 Partial Fractions" }
           ]
         },
         { "topic": "3 Coordinate Geometry", "subtopics": [
-            { "subtopic": "3 Parametric Equations", "search": "Parametric Equations" }
+            { "subtopic": "3 Parametric Equations", "search": "3 Parametric Equations" }
           ]
         },
         { "topic": "4 Binomial Expansion", "subtopics": [
-            { "subtopic": "4 Binomial Series for Rational n", "search": "Binomial Series for Rational n" }
+            { "subtopic": "4 Binomial Series for Rational n", "search": "4 Binomial Series for Rational n" }
           ]
         },
         {
           "topic": "5 Differentiation",
           "subtopics": [
-            { "subtopic": "5.1 Parametric and Implicit Differentiation", "search": "Parametric and Implicit Differentiation" },
-            { "subtopic": "5.2 Rates of Change", "search": "Rates of Change" }
+            { "subtopic": "5.1 Parametric and Implicit Differentiation", "search": "5.1 Parametric and Implicit Differentiation" },
+            { "subtopic": "5.2 Rates of Change", "search": "5.2 Rates of Change" }
           ]
         },
         {
           "topic": "6 Integration",
           "subtopics": [
-            { "subtopic": "6.1 Area Under Parametric Curves", "search": "Area Under Parametric Curves" },
-            { "subtopic": "6.2 Volumes of Revolution", "search": "Volumes of Revolution" },
-            { "subtopic": "6.3 Integration by Substitution", "search": "Integration by Substitution" },
-            { "subtopic": "6.4 Integration by Parts", "search": "Integration by Parts" },
-            { "subtopic": "6.5 Integration Using Partial Fractions", "search": "Integration Using Partial Fractions" },
-            { "subtopic": "6.6 Separable First-Order Differential Equations", "search": "Separable First Order Differential Equations" }
+            { "subtopic": "6.1 Area Under Parametric Curves", "search": "6.1 Area Under Parametric Curves" },
+            { "subtopic": "6.2 Volumes of Revolution", "search": "6.2 Volumes of Revolution" },
+            { "subtopic": "6.3 Integration by Substitution", "search": "6.3 Integration by Substitution" },
+            { "subtopic": "6.4 Integration by Parts", "search": "6.4 Integration by Parts" },
+            { "subtopic": "6.5 Integration Using Partial Fractions", "search": "6.5 Integration Using Partial Fractions" },
+            { "subtopic": "6.6 Separable First-Order Differential Equations", "search": "6.6 Separable First-Order Differential Equations" }
           ]
         },
         {
           "topic": "7 Vectors",
           "subtopics": [
-            { "subtopic": "7.1 Vectors in 2D and 3D (magnitude, unit vectors, position vectors, distances)", "search": "Vectors in 2D and 3D Magnitude Unit Vectors Position Vectors" },
-            { "subtopic": "7.2 Vector Equations of Lines", "search": "Vector Equations of Lines" },
-            { "subtopic": "7.3 Scalar Product and Angles Between Lines", "search": "Scalar Product and Angles Between Lines" }
+            { "subtopic": "7.1 Vectors in 2D and 3D (magnitude, unit vectors, position vectors, distances)", "search": "7.1 Vectors in 2D and 3D (magnitude, unit vectors, position vectors, distances)" },
+            { "subtopic": "7.2 Vector Equations of Lines", "search": "7.2 Vector Equations of Lines" },
+            { "subtopic": "7.3 Scalar Product and Angles Between Lines", "search": "7.3 Scalar Product and Angles Between Lines" }
           ]
         }
       ]

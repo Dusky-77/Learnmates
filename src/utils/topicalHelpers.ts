@@ -11,6 +11,7 @@ const normalizeSubject = (subject: string) => subject.trim().toLowerCase();
 
 export const PAPER_FILTER_SUBJECTS = ['Biology', 'Physics', 'Chemistry', 'Math'];
 export const CAMBRIDGE_SCIENCE_MCQ_SUBJECTS = ['Biology', 'Physics', 'Chemistry'];
+export const THEORY_ONLY_SUBJECTS = ['pure mathematics', 'pure maths'];
 
 export const isPaperFilterSubject = (level: string, board: string, subject: string) =>
   ['igcse', 'a-level'].includes(level) && board === 'cambridge' &&
@@ -19,6 +20,10 @@ export const isPaperFilterSubject = (level: string, board: string, subject: stri
 export const isCambridgeScienceMcqSubject = (level: string, board: string, subject: string) =>
   ['igcse', 'a-level'].includes(level) && board === 'cambridge' &&
   CAMBRIDGE_SCIENCE_MCQ_SUBJECTS.some(candidate => normalizeSubject(candidate) === normalizeSubject(subject));
+
+export const isTheoryOnlySubject = (level: string, board: string, subject: string) =>
+  ['igcse', 'a-level'].includes(level) && board === 'edexcel' &&
+  THEORY_ONLY_SUBJECTS.some(candidate => normalizeSubject(candidate) === normalizeSubject(subject));
 
 export const getDefaultPaperOptions = (level: string, board: string, subject: string): number[] => {
   if (level === 'a-level' && board === 'cambridge' &&

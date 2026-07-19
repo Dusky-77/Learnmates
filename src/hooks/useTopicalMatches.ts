@@ -197,7 +197,7 @@ export function useTopicalMatches() {
       const isMcqSubject = isCambridgeScienceMcqSubject(cfg.level, cfg.board, cfg.subject);
       const mcqAnswerCacheKey = `${cfg.level}/${cfg.board}/${cfg.subject}`;
       let subjectMcqAnswers: Record<string, string> | null = null;
-
+doesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit
       if (isMcqSubject) {
         subjectMcqAnswers = mcqAnswerCacheRef.current[mcqAnswerCacheKey] || null;
         if (!subjectMcqAnswers) {
@@ -255,7 +255,7 @@ export function useTopicalMatches() {
             }
 
             if (passFilter) {
-              const paperNumber = getPaperNumberFromFileName(entry.file_name);
+              const paperNumbedoesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit
               // For IGCSE: both Paper 1 and Paper 2 are MCQ
 // For A-Level/Other: only Paper 1 is MCQ
               const mcqPaperNumbers = (cfg.level === 'igcse' || cfg.level === 'IGCSE') 

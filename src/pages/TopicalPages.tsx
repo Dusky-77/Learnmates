@@ -7,6 +7,7 @@ import { topicalConfigs } from './topicalpagesdata';
 import { downloadMergedTopicalPDFs } from '../utils/topicalPdfExport';
 import {
   isPaperFilterSubject,
+  isTheoryOnlySubject,
   getDefaultPaperOptions,
   makeKey,
 } from '../utils/topicalHelpers';
@@ -103,10 +104,13 @@ const TopicalPages: React.FC = () => {
     return topicKeys;
   }, [location.search, selectedLevel, selectedBoard, selectedSubject]);
 
+  const shouldHideMcqTheoryFilter = isTheoryOnlySubject(selectedLevel, selectedBoard, selectedSubject);
+
   const getMcqFilterFromQuery = useCallback((): 'all' | 'mcq' | 'theory' => {
+    if (shouldHideMcqTheoryFilter) return 'theory';
     const mcq = new URLSearchParams(location.search).get('mcq');
     return mcq === 'mcq' || mcq === 'theory' ? mcq : 'all';
-  }, [location.search]);
+  }, [location.search, shouldHideMcqTheoryFilter]);
 
   const getPaperFilterFromQuery = useCallback((): Set<number> => {
     const papersStr = new URLSearchParams(location.search).get('papers');
@@ -147,7 +151,11 @@ const TopicalPages: React.FC = () => {
         .join(',');
       params.set('topics', simplifiedTopics);
     }
-    if (newMcqFilter !== 'all') params.set('mcq', newMcqFilter);
+    if (shouldHideMcqTheoryFilter) {
+      params.set('mcq', 'theory');
+    } else if (newMcqFilter !== 'all') {
+      params.set('mcq', newMcqFilter);
+    }
     if (newPaperFilter) {
       params.set('papers', newPaperFilter.size === 0 ? 'none' : Array.from(newPaperFilter).sort().join(','));
     }
@@ -200,7 +208,7 @@ const TopicalPages: React.FC = () => {
     setPickerCollapsed(false);
     setLoadFeedback(null);
     resetResults();
-    setMcqFilterState('all');
+    setMcqFilterState(shouldHideMcqTheoryFilter ? 'theory' : 'all');
     setPaperFilterState(new Set(getDefaultPaperOptions(selectedLevel, selectedBoard, selectedSubject)));
     setYearFilterState(new Set());
 
@@ -421,10 +429,14 @@ const TopicalPages: React.FC = () => {
   }, [checked, matches, configs, selectedBoard, selectedLevel, selectedSubject]);
 
   useEffect(() => {
+    if (shouldHideMcqTheoryFilter) {
+      if (mcqFilter !== 'theory') setMcqFilter('theory');
+      return;
+    }
     if (mcqFilter === 'mcq' && !availableFilters.hasMCQ) setMcqFilter('all');
     else if (mcqFilter === 'theory' && !availableFilters.hasTheory) setMcqFilter('all');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availableFilters, mcqFilter]);
+  }, [availableFilters, mcqFilter, shouldHideMcqTheoryFilter]);
 
   useEffect(() => {
     if (!isPaperMode || paperFilter.size === 0) return;
@@ -534,6 +546,7 @@ const TopicalPages: React.FC = () => {
                   <FilterBar
                     onLoad={handleLoad}
                     isPaperMode={isPaperMode}
+                    showMcqTheoryFilter={!shouldHideMcqTheoryFilter}
                     mcqFilter={mcqFilter}
                     onMcqFilterChange={setMcqFilter}
                     availableFilters={availableFilters}
