@@ -6,7 +6,186 @@ import { SubjectConfig } from '../utils/topicalConfig';
 
 export const topicalConfigs: SubjectConfig[] = [
 
-  
+  {
+  "subject": "Pure Mathematics",
+  "board": "edexcel",
+  "level": "a-level",
+  "units": [
+    {
+      "unit": "Pure 1",
+      "topics": [
+        {
+          "topic": "1 Algebra & Functions",
+          "subtopics": [
+            { "subtopic": "1.1 Algebra (Indices & Surds)", "search": "Indices and Surds" },
+            { "subtopic": "1.2 Quadratics", "search": "Quadratics" },
+            { "subtopic": "1.3 Simultaneous Equations and Inequalities", "search": "Simultaneous Equations and Inequalities" },
+            { "subtopic": "1.4 Functions and Graphs", "search": "Functions and Graphs" }
+          ]
+        },
+        { "topic": "2 Coordinate Geometry", "subtopics": [
+            { "subtopic": "2 Straight Lines", "search": "Straight Lines Coordinate Geometry" }
+          ]
+        },
+        {
+          "topic": "3 Trigonometry",
+          "subtopics": [
+            { "subtopic": "3.1 Trigonometry", "search": "Trigonometry" },
+            { "subtopic": "3.2 Radians", "search": "Radians" }
+          ]
+        },
+        { "topic": "4 Differentiation", "subtopics": [
+            { "subtopic": "4 Differentiation", "search": "Differentiation" }
+          ]
+        },
+        { "topic": "5 Integration", "subtopics": [
+            { "subtopic": "5 Integration", "search": "Integration" }
+          ]
+        }
+      ]
+    },
+    {
+      "unit": "Pure 2",
+      "topics": [
+        { "topic": "1 Proof", "subtopics": [
+            { "subtopic": "1 Proof by Exhaustion & Counter-Example", "search": "Proof by Exhaustion and Counter Example" }
+          ]
+        },
+        {
+          "topic": "2 Algebra & Functions",
+          "subtopics": [
+            { "subtopic": "2 Algebraic Methods (Polynomial Division, Factor Theorem, Remainder Theorem)", "search": "Algebraic Methods Polynomial Division Factor Theorem Remainder Theorem" }
+          ]
+        },
+        { "topic": "3 Coordinate Geometry", "subtopics": [
+            { "subtopic": "3 Equation of a Circle and Circle Properties", "search": "Equation of a Circle and Circle Properties" }
+          ]
+        },
+        {
+          "topic": "4 Sequences & Series",
+          "subtopics": [
+            { "subtopic": "4.1 Sequences and Series", "search": "Sequences and Series" },
+            { "subtopic": "4.2 Sum to Infinity", "search": "Sum to Infinity" },
+            { "subtopic": "4.3 Binomial Expansion", "search": "Binomial Expansion" }
+          ]
+        },
+        { "topic": "5 Exponentials & Logarithms", "subtopics": [
+            { "subtopic": "5 Exponentials & Logarithms", "search": "Exponentials and Logarithms" }
+          ]
+        },
+        { "topic": "6 Trigonometry", "subtopics": [
+            { "subtopic": "6 Trigonometry", "search": "Trigonometry" }
+          ]
+        },
+        { "topic": "7 Differentiation", "subtopics": [
+            { "subtopic": "7 Differentiation", "search": "Differentiation" }
+          ]
+        },
+        {
+          "topic": "8 Integration",
+          "subtopics": [
+            { "subtopic": "8.1 Definite Integrals (Area under & between two curves)", "search": "Definite Integrals Area under and between curves" },
+            { "subtopic": "8.2 Trapezium Rule", "search": "Trapezium Rule" }
+          ]
+        }
+      ]
+    },
+    {
+      "unit": "Pure 3",
+      "topics": [
+        {
+          "topic": "1 Algebra & Functions",
+          "subtopics": [
+            { "subtopic": "1.1 Rational Expressions", "search": "Rational Expressions" },
+            { "subtopic": "1.2 Functions and Transformations (Modulus)", "search": "Functions and Transformations Modulus" }
+          ]
+        },
+        {
+          "topic": "2 Trigonometry",
+          "subtopics": [
+            { "subtopic": "2.1 Trigonometric Functions (Sec, Cosec, Cot, Inverse)", "search": "Sec Cosec Cot Inverse Trigonometric Functions" },
+            { "subtopic": "2.2 Trigonometric Identities", "search": "Trigonometric Identities" },
+            { "subtopic": "2.3 Harmonic Form (a cos θ + b sin θ)", "search": "Harmonic Form a cos theta plus b sin theta" }
+          ]
+        },
+        { "topic": "3 Exponentials & Logarithms", "subtopics": [
+            { "subtopic": "3 Exponential and Logarithmic Functions", "search": "Exponential and Logarithmic Functions" }
+          ]
+        },
+        {
+          "topic": "4 Differentiation",
+          "subtopics": [
+            { "subtopic": "4.1 Differentiation (Trigonometric Functions)", "search": "Differentiation Trigonometric Functions" },
+            { "subtopic": "4.2 Differentiation Rules (Chain, Product, Quotient)", "search": "Chain Product Quotient Rule Differentiation" },
+            { "subtopic": "4.3 Exponential Growth and Decay", "search": "Exponential Growth and Decay" }
+          ]
+        },
+        {
+          "topic": "5 Integration",
+          "subtopics": [
+            { "subtopic": "5.1 Integration (Trig, identities, other functions)", "search": "Integration Trig Identities Functions" },
+            { "subtopic": "5.2 Reverse Chain Rule", "search": "Reverse Chain Rule Integration" }
+          ]
+        },
+        {
+          "topic": "6 Numerical Methods",
+          "subtopics": [
+            { "subtopic": "6.1 Location of Roots (change of sign)", "search": "Location of Roots Change of Sign" },
+            { "subtopic": "6.2 Iterative Methods (recurrence relations xₙ₊₁ = f(xₙ))", "search": "Iterative Methods Recurrence Relations" }
+          ]
+        }
+      ]
+    },
+    {
+      "unit": "Pure 4",
+      "topics": [
+        { "topic": "1 Proof", "subtopics": [
+            { "subtopic": "1 Proof by Contradiction", "search": "Proof by Contradiction" }
+          ]
+        },
+        { "topic": "2 Algebra & Functions", "subtopics": [
+            { "subtopic": "2 Partial Fractions", "search": "Partial Fractions" }
+          ]
+        },
+        { "topic": "3 Coordinate Geometry", "subtopics": [
+            { "subtopic": "3 Parametric Equations", "search": "Parametric Equations" }
+          ]
+        },
+        { "topic": "4 Binomial Expansion", "subtopics": [
+            { "subtopic": "4 Binomial Series for Rational n", "search": "Binomial Series for Rational n" }
+          ]
+        },
+        {
+          "topic": "5 Differentiation",
+          "subtopics": [
+            { "subtopic": "5.1 Parametric and Implicit Differentiation", "search": "Parametric and Implicit Differentiation" },
+            { "subtopic": "5.2 Rates of Change", "search": "Rates of Change" }
+          ]
+        },
+        {
+          "topic": "6 Integration",
+          "subtopics": [
+            { "subtopic": "6.1 Area Under Parametric Curves", "search": "Area Under Parametric Curves" },
+            { "subtopic": "6.2 Volumes of Revolution", "search": "Volumes of Revolution" },
+            { "subtopic": "6.3 Integration by Substitution", "search": "Integration by Substitution" },
+            { "subtopic": "6.4 Integration by Parts", "search": "Integration by Parts" },
+            { "subtopic": "6.5 Integration Using Partial Fractions", "search": "Integration Using Partial Fractions" },
+            { "subtopic": "6.6 Separable First-Order Differential Equations", "search": "Separable First Order Differential Equations" }
+          ]
+        },
+        {
+          "topic": "7 Vectors",
+          "subtopics": [
+            { "subtopic": "7.1 Vectors in 2D and 3D (magnitude, unit vectors, position vectors, distances)", "search": "Vectors in 2D and 3D Magnitude Unit Vectors Position Vectors" },
+            { "subtopic": "7.2 Vector Equations of Lines", "search": "Vector Equations of Lines" },
+            { "subtopic": "7.3 Scalar Product and Angles Between Lines", "search": "Scalar Product and Angles Between Lines" }
+          ]
+        }
+      ]
+    }
+  ]
+}
+,
   {
     "subject": "Chemistry",
     
@@ -78,11 +257,6 @@ export const topicalConfigs: SubjectConfig[] = [
             ]
             },
             {"topic": "13 Chemical Equilibria", "search": "13 Chemical Equilibria"},
-          {"topic": "Introduction to Kinetics and Equilibria", "subtopics":[
-            { "subtopic": "Kinetics", "search": "Kineticss" },
-            { "subtopic": "Equilibria", "search": "Equilibria" }
-          ]
-            },
             {"topic": "14 Acid-base Equilibria", "search": "14 Acid-base Equilibria"},
 
             {"topic": "15 Organic Chemistry: Carbonyls, Carboxylic Acids and Chirality", "subtopics":[
@@ -249,8 +423,8 @@ export const topicalConfigs: SubjectConfig[] = [
                     {
             "topic": "5 Further Mechanics",
             "subtopics": [
-              { "subtopic": "5A Further Momentum", "search": "1A motion" },
-              { "subtopic": "5B Circular Motion", "search": "1B energy" },
+              { "subtopic": "5A Further Momentum", "search": "5A Further Momentum" },
+              { "subtopic": "5B Circular Motion", "search": "5B Circular Motion" },
               ]
           },
           {"topic": "6 Electric and Magnetic Fields", "subtopics":[
