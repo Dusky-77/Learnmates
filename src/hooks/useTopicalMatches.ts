@@ -27,6 +27,21 @@ interface ComputeParams {
   isPaperMode: boolean;
 }
 
+const normalizeTopicMatchTerm = (value: string) => value.trim().toLowerCase();
+
+const doesEntryMatchSelectedTopics = (topicMatches: unknown, selectedTopicsForUnit: Set<string>) => {
+  if (!Array.isArray(topicMatches)) return false;
+
+  const normalizedSelectedTopics = new Set(
+    Array.from(selectedTopicsForUnit).map(term => normalizeTopicMatchTerm(term))
+  );
+
+  return topicMatches.some((match: unknown) => {
+    if (typeof match !== 'string') return false;
+    return normalizedSelectedTopics.has(normalizeTopicMatchTerm(match));
+  });
+};
+
 // Builds a `unit -> Set<searchTerm>` map from the raw "level||board||subject||unit||topic"
 // checkbox keys, resolving each display name back to its underlying search term.
 const buildSelectedTopicsByUnit = (checked: Set<string>, configs: SubjectConfig[]) => {
@@ -140,7 +155,7 @@ export function useTopicalMatches() {
         if (info && Array.isArray(info)) {
           info.forEach((entry: any) => {
             const matchesList = Array.isArray(entry.topic_matches) ? entry.topic_matches : [];
-            const doesMatch = matchesList.some((tm: string) => selectedTopicsForUnit.has(tm));
+            const doesMatch = doesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit);
             if (doesMatch) {
               const isMCQ = entry.MCQ === 'yes' || entry.MCQ === true;
               if (isMCQ) hasMCQ = true;
@@ -179,7 +194,7 @@ export function useTopicalMatches() {
         if (info && Array.isArray(info)) {
           info.forEach((entry: any) => {
             const matchesList = Array.isArray(entry.topic_matches) ? entry.topic_matches : [];
-            const doesMatch = matchesList.some((tm: string) => selectedTopicsForUnit.has(tm));
+            const doesMatch = doesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit);
             if (doesMatch) totalQuestions++;
           });
         }
@@ -197,7 +212,7 @@ export function useTopicalMatches() {
       const isMcqSubject = isCambridgeScienceMcqSubject(cfg.level, cfg.board, cfg.subject);
       const mcqAnswerCacheKey = `${cfg.level}/${cfg.board}/${cfg.subject}`;
       let subjectMcqAnswers: Record<string, string> | null = null;
-doesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit
+
       if (isMcqSubject) {
         subjectMcqAnswers = mcqAnswerCacheRef.current[mcqAnswerCacheKey] || null;
         if (!subjectMcqAnswers) {
@@ -237,7 +252,7 @@ doesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit
         if (info && Array.isArray(info)) {
           for (const entry of info) {
             const matchesList = Array.isArray(entry.topic_matches) ? entry.topic_matches : [];
-            const doesMatch = matchesList.some((tm: string) => selectedTopicsForUnit.has(tm));
+            const doesMatch = doesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit);
             if (!doesMatch) continue;
 
             let passFilter: boolean;
@@ -255,7 +270,7 @@ doesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit
             }
 
             if (passFilter) {
-              const paperNumbedoesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit
+              const paperNumber = getPaperNumberFromFileName(entry.file_name);
               // For IGCSE: both Paper 1 and Paper 2 are MCQ
 // For A-Level/Other: only Paper 1 is MCQ
               const mcqPaperNumbers = (cfg.level === 'igcse' || cfg.level === 'IGCSE') 
