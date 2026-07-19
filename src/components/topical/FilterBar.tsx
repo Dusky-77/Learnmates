@@ -6,7 +6,6 @@ interface FilterBarProps {
   isPaperMode: boolean;
 
   // MCQ / Theory mode
-  showMcqTheoryFilter: boolean;
   mcqFilter: 'all' | 'mcq' | 'theory';
   onMcqFilterChange: (filter: 'all' | 'mcq' | 'theory') => void;
   availableFilters: { hasMCQ: boolean; hasTheory: boolean };
@@ -179,7 +178,6 @@ const YearFilterDropdown: React.FC<{
 const FilterBar: React.FC<FilterBarProps> = ({
   onLoad,
   isPaperMode,
-  showMcqTheoryFilter,
   mcqFilter,
   onMcqFilterChange,
   availableFilters,
@@ -208,9 +206,9 @@ const FilterBar: React.FC<FilterBarProps> = ({
           selectedPaperSummary={selectedPaperSummary}
           onToggle={onTogglePaper}
         />
-      ) : showMcqTheoryFilter ? (
+      ) : (
         <McqTheoryToggle mcqFilter={mcqFilter} onChange={onMcqFilterChange} availableFilters={availableFilters} />
-      ) : null}
+      )}
 
       <YearFilterDropdown
         availableYears={availableYears}
