@@ -193,6 +193,28 @@ const buildTopicsStructure = (selectedTopics: Set<string>) => {
   return { topicsStructure, totalTopicCount };
 };
 
+const extractTopicCode = (topic: string): string => {
+  const trimmed = topic.trim();
+  if (!trimmed) return '';
+
+  const directMatch = trimmed.match(/^(\d+(?:\.\d+)*)(?:\s|$)/);
+  if (directMatch) return directMatch[1];
+
+  const embeddedMatch = trimmed.match(/(\d+(?:\.\d+)*)(?!.*\d)/);
+  if (embeddedMatch) return embeddedMatch[1];
+
+  return trimmed;
+};
+
+const formatTopicHeaderText = (topicMatches: string[] = []): string => {
+  const topicCodes = topicMatches
+    .map(extractTopicCode)
+    .filter(Boolean)
+    .filter((value, index, array) => array.indexOf(value) === index);
+
+  return topicCodes.join(', ');
+};
+
 export const createCoverPage = async (
   pdf: PDFDocument,
   type: ExportType,
@@ -398,7 +420,9 @@ export const createHeaderPage = async (
   page.drawLine({ start: { x: 0, y: 0 }, end: { x: width, y: 0 }, thickness: 1, color: rgb(0.65, 0.65, 0.65) });
 
   const titleText = question.title || `Question ${questionNumber}`;
-  const topicsText = question.topicMatches && question.topicMatches.length > 0 ? question.topicMatches.join(', ') : '';
+  const topicsText = question.topicMatches && question.topicMatches.length > 0
+    ? formatTopicHeaderText(question.topicMatches)
+    : '';
 
   const titleSize = 12;
   const topicSize = 10;
@@ -431,12 +455,18 @@ export const createHeaderPage = async (
 // Merge
 // ---------------------------------------------------------------------------
 
+const addBlankPageToPdf = async (pdf: PDFDocument, width: number, height: number) => {
+  const page = pdf.addPage([width, height]);
+  page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(1, 1, 1) });
+};
+
 export const mergeTopicalPDFs = async (
   questions: Question[],
   type: ExportType,
   selectedTopics: Set<string>,
   levelBoardSubject: { level: string; board: string; subject: string },
-  onProgress?: (progress: ExportProgress) => void
+  onProgress?: (progress: ExportProgress) => void,
+  options: { extraPage?: boolean } = {}
 ): Promise<Blob> => {
   const mergedPdf = await PDFDocument.create();
 
@@ -551,10 +581,13 @@ export const mergeTopicalPDFs = async (
 
         if (pages.length > 0) {
           const firstPage = pages[0];
-          const { width } = firstPage.getSize();
+          const { width, height } = firstPage.getSize();
 
           await createHeaderPage(mergedPdf, task.question, questionNumber, type, width, boldFont, regularFont);
           pages.forEach(page => mergedPdf.addPage(page));
+          if (options.extraPage && type === 'questions') {
+            await addBlankPageToPdf(mergedPdf, width, height);
+          }
         }
       } else if (task.fileType === 'image') {
         let image;
@@ -599,7 +632,7 @@ export const mergeTopicalPDFs = async (
         if (task.question.topicMatches && task.question.topicMatches.length > 0) {
           page.drawText('Topics:', { x: 20, y: height - 55, size: 9, color: rgb(0, 0, 0), font: boldFont });
 
-          const topicsString = task.question.topicMatches.join(', ');
+          const topicsString = formatTopicHeaderText(task.question.topicMatches);
           const maxWidth = width - 100;
           const topicSize = 8;
           const lineHeight = 10;
@@ -645,6 +678,10 @@ export const mergeTopicalPDFs = async (
         const imageY = height - headerHeight - 20 - scaledHeight;
 
         page.drawImage(image, { x: imageX, y: imageY, width: scaledWidth, height: scaledHeight });
+
+        if (options.extraPage && type === 'questions') {
+          await addBlankPageToPdf(mergedPdf, width, height);
+        }
       } else if (task.fileType === 'mcqAnswer') {
         // Keep this as small as the per-question header strip (not a full page) —
         // there's no mark scheme file, just a single answer letter to show.
@@ -695,7 +732,8 @@ export const downloadMergedTopicalPDFs = async (
     onProgress?: (progress: ExportProgress) => void;
     onDone?: () => void;
     onError?: (message: string) => void;
-  } = {}
+  } = {},
+  options: { extraPage?: boolean } = {}
 ) => {
   if (questions.length === 0) {
     callbacks.onError?.('No questions to download');
@@ -720,7 +758,7 @@ export const downloadMergedTopicalPDFs = async (
     callbacks.onStart?.();
     callbacks.onProgress?.({ current: 0, total: validQuestions.length });
 
-    const mergedBlob = await mergeTopicalPDFs(validQuestions, type, selectedTopics, levelBoardSubject, callbacks.onProgress);
+    const mergedBlob = await mergeTopicalPDFs(validQuestions, type, selectedTopics, levelBoardSubject, callbacks.onProgress, options);
 
     const downloadUrl = window.URL.createObjectURL(mergedBlob);
     const link = document.createElement('a');

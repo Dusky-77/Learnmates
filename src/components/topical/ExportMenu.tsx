@@ -2,12 +2,15 @@ import React, { useRef, useState, useEffect } from 'react';
 import { btnSecondary, dropdownPanel, dropdownItem } from './ui';
 
 interface ExportMenuProps {
-  onExport: (type: 'questions' | 'markschemes') => void;
+  onExport: (type: 'questions' | 'markschemes', options?: { extraPage?: boolean }) => void;
+  showExtraPageOption?: boolean;
+  extraPageEnabled?: boolean;
+  onExtraPageToggle?: (enabled: boolean) => void;
 }
 
 // Same height/padding/font as every other control now (btnSecondary),
 // instead of the old oversized purple button.
-const ExportMenu: React.FC<ExportMenuProps> = ({ onExport }) => {
+const ExportMenu: React.FC<ExportMenuProps> = ({ onExport, showExtraPageOption = false, extraPageEnabled = false, onExtraPageToggle }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -34,10 +37,31 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onExport }) => {
       </button>
 
       {open && (
-        <div className={`${dropdownPanel} right-0 w-56`}>
+        <div className={`${dropdownPanel} right-0 w-64`}>
+          {showExtraPageOption && (
+            <div className="flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700">
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={extraPageEnabled}
+                  onChange={event => onExtraPageToggle?.(event.target.checked)}
+                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <span>Extra page</span>
+              </label>
+              <button
+                type="button"
+                className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 text-[11px] text-gray-500 hover:bg-gray-200 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                title="Adds an extra blank page after each question so you can write extra working space."
+                aria-label="Extra page info"
+              >
+                i
+              </button>
+            </div>
+          )}
           <button
             onClick={() => {
-              onExport('questions');
+              onExport('questions', { extraPage: extraPageEnabled });
               setOpen(false);
             }}
             className={dropdownItem}
@@ -47,7 +71,7 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onExport }) => {
           </button>
           <button
             onClick={() => {
-              onExport('markschemes');
+              onExport('markschemes', { extraPage: false });
               setOpen(false);
             }}
             className={dropdownItem}

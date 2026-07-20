@@ -7,6 +7,7 @@ import { topicalConfigs } from './topicalpagesdata';
 import { downloadMergedTopicalPDFs } from '../utils/topicalPdfExport';
 import {
   isPaperFilterSubject,
+  isEdexcelALevelPureMathSubject,
   getDefaultPaperOptions,
   makeKey,
 } from '../utils/topicalHelpers';
@@ -176,6 +177,7 @@ const TopicalPages: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null);
   const [loadFeedback, setLoadFeedback] = useState<string | null>(null);
+  const [extraPageEnabled, setExtraPageEnabled] = useState(false);
 
   const {
     topicalQuiz,
@@ -199,6 +201,7 @@ const TopicalPages: React.FC = () => {
     setHasLoadedOnce(false);
     setPickerCollapsed(false);
     setLoadFeedback(null);
+    setExtraPageEnabled(false);
     resetResults();
     setMcqFilterState('all');
     setPaperFilterState(new Set(getDefaultPaperOptions(selectedLevel, selectedBoard, selectedSubject)));
@@ -237,6 +240,8 @@ const TopicalPages: React.FC = () => {
   }, [getYearFilterFromQuery]);
 
   const isPaperMode = isPaperFilterSubject(selectedLevel, selectedBoard, selectedSubject);
+  const showMcqTheoryFilter = !isEdexcelALevelPureMathSubject(selectedLevel, selectedBoard, selectedSubject);
+  const showExtraPageOption = isEdexcelALevelPureMathSubject(selectedLevel, selectedBoard, selectedSubject);
   const availablePaperNumbers = getDefaultPaperOptions(selectedLevel, selectedBoard, selectedSubject).filter(n => availablePapers.has(n));
   const isAllPapersSelected = availablePaperNumbers.length > 0 && availablePaperNumbers.every(n => paperFilter.has(n));
   const selectedPaperSummary = isAllPapersSelected
@@ -391,7 +396,7 @@ const TopicalPages: React.FC = () => {
     setNeedLoad(true);
   };
 
-  const handleExport = (type: 'questions' | 'markschemes') => {
+  const handleExport = (type: 'questions' | 'markschemes', options?: { extraPage?: boolean }) => {
     downloadMergedTopicalPDFs(
       type,
       topicalQuiz,
@@ -405,7 +410,8 @@ const TopicalPages: React.FC = () => {
           setExportProgress(null);
         },
         onError: message => alert(message),
-      }
+      },
+      { extraPage: options?.extraPage ?? extraPageEnabled }
     );
   };
 
@@ -534,6 +540,7 @@ const TopicalPages: React.FC = () => {
                   <FilterBar
                     onLoad={handleLoad}
                     isPaperMode={isPaperMode}
+                    showMcqTheoryFilter={showMcqTheoryFilter}
                     mcqFilter={mcqFilter}
                     onMcqFilterChange={setMcqFilter}
                     availableFilters={availableFilters}
@@ -589,6 +596,9 @@ const TopicalPages: React.FC = () => {
                       onExport={handleExport}
                       onExpandPicker={() => setPickerCollapsed(false)}
                       loadFeedback={loadFeedback}
+                      showExtraPageOption={showExtraPageOption}
+                      extraPageEnabled={extraPageEnabled}
+                      onExtraPageToggle={setExtraPageEnabled}
                     />
                   </div>
                 </div>

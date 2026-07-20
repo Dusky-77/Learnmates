@@ -20,6 +20,10 @@ export const isCambridgeScienceMcqSubject = (level: string, board: string, subje
   ['igcse', 'a-level'].includes(level) && board === 'cambridge' &&
   CAMBRIDGE_SCIENCE_MCQ_SUBJECTS.some(candidate => normalizeSubject(candidate) === normalizeSubject(subject));
 
+export const isEdexcelALevelPureMathSubject = (level: string, board: string, subject: string) =>
+  level === 'a-level' && board === 'edexcel' &&
+  ['pure mathematics', 'pure maths', 'math', 'mathematics'].some(candidate => normalizeSubject(candidate) === normalizeSubject(subject));
+
 export const getDefaultPaperOptions = (level: string, board: string, subject: string): number[] => {
   if (level === 'a-level' && board === 'cambridge' &&
       CAMBRIDGE_SCIENCE_MCQ_SUBJECTS.some(candidate => normalizeSubject(candidate) === normalizeSubject(subject))) {

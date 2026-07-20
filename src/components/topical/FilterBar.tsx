@@ -4,6 +4,7 @@ import { btnPrimary, btnToggleBase, btnToggleActive, btnToggleInactive, dropdown
 interface FilterBarProps {
   onLoad: () => void;
   isPaperMode: boolean;
+  showMcqTheoryFilter?: boolean;
 
   // MCQ / Theory mode
   mcqFilter: 'all' | 'mcq' | 'theory';
@@ -178,6 +179,7 @@ const YearFilterDropdown: React.FC<{
 const FilterBar: React.FC<FilterBarProps> = ({
   onLoad,
   isPaperMode,
+  showMcqTheoryFilter = true,
   mcqFilter,
   onMcqFilterChange,
   availableFilters,
@@ -206,9 +208,9 @@ const FilterBar: React.FC<FilterBarProps> = ({
           selectedPaperSummary={selectedPaperSummary}
           onToggle={onTogglePaper}
         />
-      ) : (
+      ) : showMcqTheoryFilter ? (
         <McqTheoryToggle mcqFilter={mcqFilter} onChange={onMcqFilterChange} availableFilters={availableFilters} />
-      )}
+      ) : null}
 
       <YearFilterDropdown
         availableYears={availableYears}

@@ -8,9 +8,12 @@ interface MatchesViewerPanelProps {
   hasLoadedOnce: boolean;
   loadingProgress: { current: number; total: number; isLoading: boolean };
   showUnitTags: boolean;
-  onExport: (type: 'questions' | 'markschemes') => void;
+  onExport: (type: 'questions' | 'markschemes', options?: { extraPage?: boolean }) => void;
   onExpandPicker?: () => void;
   loadFeedback?: string | null;
+  showExtraPageOption?: boolean;
+  extraPageEnabled?: boolean;
+  onExtraPageToggle?: (enabled: boolean) => void;
 }
 
 const EmptyState: React.FC<{ title: string; body: string }> = ({ title, body }) => (
@@ -28,6 +31,9 @@ const MatchesViewerPanel: React.FC<MatchesViewerPanelProps> = ({
   onExport,
   onExpandPicker,
   loadFeedback,
+  showExtraPageOption = false,
+  extraPageEnabled = false,
+  onExtraPageToggle,
 }) => {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-5 h-full flex flex-col">
@@ -45,7 +51,14 @@ const MatchesViewerPanel: React.FC<MatchesViewerPanelProps> = ({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {hasLoadedOnce && topicalQuiz.length > 0 && <ExportMenu onExport={onExport} />}
+          {hasLoadedOnce && topicalQuiz.length > 0 && (
+            <ExportMenu
+              onExport={onExport}
+              showExtraPageOption={showExtraPageOption}
+              extraPageEnabled={extraPageEnabled}
+              onExtraPageToggle={onExtraPageToggle}
+            />
+          )}
           {hasLoadedOnce && (
             <span className={pillActive}>
               {topicalQuiz.length} match{topicalQuiz.length === 1 ? '' : 'es'}
