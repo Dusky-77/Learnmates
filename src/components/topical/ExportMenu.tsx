@@ -8,16 +8,27 @@ interface ExportMenuProps {
   onExtraPageToggle?: (enabled: boolean) => void;
 }
 
+const EXTRA_PAGE_EXPLANATION =
+  "Inserts a blank page right after each question in the Questions PDF. Handy for printing " +
+  "worksheets that need extra room to work out answers by hand. It only applies to the " +
+  "Questions PDF — Mark Schemes are never padded with blank pages.";
+
 // Same height/padding/font as every other control now (btnSecondary),
 // instead of the old oversized purple button.
 const ExportMenu: React.FC<ExportMenuProps> = ({ onExport, showExtraPageOption = false, extraPageEnabled = false, onExtraPageToggle }) => {
   const [open, setOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const infoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (ref.current && !ref.current.contains(event.target as Node)) {
         setOpen(false);
+        setInfoOpen(false);
+      } else if (infoRef.current && !infoRef.current.contains(event.target as Node)) {
+        // Clicked somewhere else inside the menu — just close the popover.
+        setInfoOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -38,27 +49,6 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onExport, showExtraPageOption =
 
       {open && (
         <div className={`${dropdownPanel} right-0 w-64`}>
-          {showExtraPageOption && (
-            <div className="flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700">
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={extraPageEnabled}
-                  onChange={event => onExtraPageToggle?.(event.target.checked)}
-                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                />
-                <span>Extra page</span>
-              </label>
-              <button
-                type="button"
-                className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 text-[11px] text-gray-500 hover:bg-gray-200 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-                title="Adds an extra blank page after each question so you can write extra working space."
-                aria-label="Extra page info"
-              >
-                i
-              </button>
-            </div>
-          )}
           <button
             onClick={() => {
               onExport('questions', { extraPage: extraPageEnabled });
@@ -79,6 +69,54 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ onExport, showExtraPageOption =
             <span className="text-green-500">📝</span>
             Mark Schemes PDF
           </button>
+
+          {showExtraPageOption && (
+            <>
+              <div className="my-1.5 border-t border-gray-200 dark:border-gray-700" />
+
+              <div className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                Extras
+              </div>
+
+              <div className="flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm text-gray-700 dark:text-gray-200">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={extraPageEnabled}
+                    onChange={event => onExtraPageToggle?.(event.target.checked)}
+                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  />
+                  <span>Extra page</span>
+                </label>
+
+                <div className="relative" ref={infoRef}>
+                  <button
+                    type="button"
+                    onClick={() => setInfoOpen(prev => !prev)}
+                    className={`flex h-5 w-5 items-center justify-center rounded-full border text-[11px] transition-colors ${
+                      infoOpen
+                        ? 'border-purple-400 bg-purple-50 text-purple-600 dark:border-purple-500 dark:bg-purple-500/10 dark:text-purple-300'
+                        : 'border-gray-300 text-gray-500 hover:bg-gray-200 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700'
+                    }`}
+                    aria-label="What does extra page do?"
+                    aria-expanded={infoOpen}
+                  >
+                    i
+                  </button>
+
+                  {infoOpen && (
+                    <div
+                      role="tooltip"
+                      className="absolute right-0 top-full z-20 mt-2 w-56 rounded-lg border border-gray-200 bg-white p-3 text-xs leading-relaxed text-gray-600 shadow-lg dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                    >
+                      <div className="absolute -top-1 right-1.5 h-2 w-2 rotate-45 border-l border-t border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800" />
+                      {EXTRA_PAGE_EXPLANATION}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
