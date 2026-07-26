@@ -1640,6 +1640,124 @@ export const topicalConfigs: SubjectConfig[] = [
   ]
 },
 
+{
+  "subject": "Additional Mathematics",
+  "board": "cambridge",
+  "level": "igcse",
+  "units": [
+    {
+      "unit": "Additional Mathematics",
+      "topics": [
+        {
+          "topic": "1 Functions",
+          "subtopics": [
+            { "subtopic": "1.1 Domain, Range & Function Notation", "search": "1.1 Domain, Range & Function Notation" },
+            { "subtopic": "1.2 Composite Functions & Inverse Functions", "search": "1.2 Composite Functions & Inverse Functions" },
+            { "subtopic": "1.3 Graphical Relationships (Reflection in y = x)", "search": "1.3 Graphical Relationships (Reflection in y = x)" }
+          ]
+        },
+        {
+          "topic": "2 Quadratic Functions",
+          "subtopics": [
+            { "subtopic": "2.1 Completing the Square, Max/Min & Graphs", "search": "2.1 Completing the Square, Max/Min & Graphs" },
+            { "subtopic": "2.2 Discriminant & Line/Curve Intersections", "search": "2.2 Discriminant & Line/Curve Intersections" },
+            { "subtopic": "2.3 Quadratic Equations & Inequalities", "search": "2.3 Quadratic Equations & Inequalities" }
+          ]
+        },
+        {
+          "topic": "3 Factors of Polynomials",
+          "subtopics": [
+            { "subtopic": "3.1 Factor & Remainder Theorems", "search": "3.1 Factor & Remainder Theorems" },
+            { "subtopic": "3.2 Factorising Polynomials & Solving Cubic Equations", "search": "3.2 Factorising Polynomials & Solving Cubic Equations" }
+          ]
+        },
+        {
+          "topic": "4 Equations, Inequalities and Graphs",
+          "subtopics": [
+            { "subtopic": "4.1 Modulus Equations & Inequalities", "search": "4.1 Modulus Equations & Inequalities" },
+            { "subtopic": "4.2 Substitution to Form Quadratics", "search": "4.2 Substitution to Form Quadratics" },
+            { "subtopic": "4.3 Cubic Graphs & Cubic Inequalities", "search": "4.3 Cubic Graphs & Cubic Inequalities" }
+          ]
+        },
+        {
+          "topic": "5 Simultaneous Equations",
+          "subtopics": [
+            { "subtopic": "5.1 Solving Linear & Non-Linear Simultaneous Equations", "search": "5.1 Solving Linear & Non-Linear Simultaneous Equations" }
+          ]
+        },
+        {
+          "topic": "6 Logarithmic and Exponential Functions",
+          "subtopics": [
+            { "subtopic": "6.1 Exponential & Logarithmic Graphs & Properties", "search": "6.1 Exponential & Logarithmic Graphs & Properties" },
+            { "subtopic": "6.2 Laws of Logarithms & Change of Base", "search": "6.2 Laws of Logarithms & Change of Base" },
+            { "subtopic": "6.3 Solving Exponential Equations (aˣ = b)", "search": "6.3 Solving Exponential Equations (aˣ = b)" }
+          ]
+        },
+        {
+          "topic": "7 Straight-Line Graphs",
+          "subtopics": [
+            { "subtopic": "7.1 Equations, Parallel/Perpendicular Lines & Perpendicular Bisectors", "search": "7.1 Equations, Parallel/Perpendicular Lines & Perpendicular Bisectors" },
+            { "subtopic": "7.2 Transforming Non-Linear Forms to Linear Graphs", "search": "7.2 Transforming Non-Linear Forms to Linear Graphs" }
+          ]
+        },
+        {
+          "topic": "8 Coordinate Geometry of the Circle",
+          "subtopics": [
+            { "subtopic": "8.1 Circle Equations & Line Intersections", "search": "8.1 Circle Equations & Line Intersections" },
+            { "subtopic": "8.2 Tangents, Chords & Circle Intersections", "search": "8.2 Tangents, Chords & Circle Intersections" }
+          ]
+        },
+        {
+          "topic": "9 Circular Measure",
+          "subtopics": [
+            { "subtopic": "9.1 Radians, Arc Length & Sector Area", "search": "9.1 Radians, Arc Length & Sector Area" }
+          ]
+        },
+        {
+          "topic": "10 Trigonometry",
+          "subtopics": [
+            { "subtopic": "10.1 Trigonometric Functions, Periodicity & Graphs", "search": "10.1 Trigonometric Functions, Periodicity & Graphs" },
+            { "subtopic": "10.2 Trigonometric Identities & Proofs", "search": "10.2 Trigonometric Identities & Proofs" },
+            { "subtopic": "10.3 Solving Trigonometric Equations", "search": "10.3 Solving Trigonometric Equations" }
+          ]
+        },
+        {
+          "topic": "11 Permutations and Combinations",
+          "subtopics": [
+            { "subtopic": "11.1 Permutations & Factorial Notation", "search": "11.1 Permutations & Factorial Notation" },
+            { "subtopic": "11.2 Combinations", "search": "11.2 Combinations" },
+            { "subtopic": "11.3 Applied Selection & Arrangement Problems", "search": "11.3 Applied Selection & Arrangement Problems" }
+          ]
+        },
+        {
+          "topic": "12 Series",
+          "subtopics": [
+            { "subtopic": "12.1 Binomial Theorem & General Term", "search": "12.1 Binomial Theorem & General Term" },
+            { "subtopic": "12.2 Arithmetic Progressions", "search": "12.2 Arithmetic Progressions" },
+            { "subtopic": "12.3 Geometric Progressions & Sum to Infinity", "search": "12.3 Geometric Progressions & Sum to Infinity" }
+          ]
+        },
+        {
+          "topic": "13 Vectors in Two Dimensions",
+          "subtopics": [
+            { "subtopic": "13.1 Vector Operations, Position & Unit Vectors", "search": "13.1 Vector Operations, Position & Unit Vectors" },
+            { "subtopic": "13.2 Vector Geometry & Relative Velocity", "search": "13.2 Vector Geometry & Relative Velocity" }
+          ]
+        },
+        {
+          "topic": "14 Calculus",
+          "subtopics": [
+            { "subtopic": "14.1 Differentiation Techniques (Chain, Product & Quotient Rules)", "search": "14.1 Differentiation Techniques (Chain, Product & Quotient Rules)" },
+            { "subtopic": "14.2 Applications of Differentiation (Tangents, Max/Min & Connected Rates)", "search": "14.2 Applications of Differentiation (Tangents, Max/Min & Connected Rates)" },
+            { "subtopic": "14.3 Integration & Area Under/Between Curves", "search": "14.3 Integration & Area Under/Between Curves" },
+            { "subtopic": "14.4 Kinematics (Motion Functions & Motion Graphs)", "search": "14.4 Kinematics (Motion Functions & Motion Graphs)" }
+          ]
+        }
+      ]
+    }
+  ]
+},
+
   // additional config objects can be added here
 ];
 
