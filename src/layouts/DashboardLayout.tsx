@@ -1,0 +1,373 @@
+import { ReactNode, useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Bell,
+  BookOpen,
+  Flame,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MessageCircle,
+  Moon,
+  Sun,
+  Trophy,
+  User,
+  X,
+  Layers,
+  LibraryBig
+} from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useDarkMode } from '../context/DarkModeContext';
+import { useUser } from '../context/UserContext';
+import { fetchProfile } from '../utils/profileSync';
+
+interface DashboardLayoutProps {
+  children: ReactNode;
+}
+
+const navItems = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Curriculum', href: '/curriculum', icon: LibraryBig },
+  { name: 'Topicals', href: '/topicals', icon: Layers },
+  { name: 'Chat', href: '#', icon: MessageCircle, disabled: true },
+  { name: 'Leaderboard', href: '#', icon: Trophy, disabled: true },
+  { name: 'Lock in', href: '#', icon: Flame, disabled: true },
+];
+
+interface ProfileSectionProps {
+  displayName: string;
+  username: string | null;
+  sidebarExpanded: boolean;
+  isMobile?: boolean;
+  onClose?: () => void;
+}
+
+function ProfileSection({ displayName, username, sidebarExpanded, isMobile = false, onClose }: ProfileSectionProps) {
+  const textTransition = isMobile ? '' : `overflow-hidden transition-all duration-500 ease-in-out ${sidebarExpanded ? 'max-w-[220px] opacity-100 ml-3' : 'max-w-0 opacity-0 ml-0'}`;
+  const textClassName = isMobile ? 'ml-3 overflow-hidden' : textTransition;
+  
+  return (
+    <Link
+      to="/dashboard/profile"
+      onClick={onClose}
+      className={isMobile 
+        ? 'flex items-center rounded-xl px-4 py-3 transition-colors hover:bg-blue-50 dark:hover:bg-gray-800'
+        : 'flex items-center rounded-xl -mx-2 px-2 py-1.5 transition-colors hover:bg-blue-50 dark:hover:bg-gray-800'
+      }
+    >
+      <span className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${isMobile ? 'bg-blue-400 dark:bg-blue-900' : 'bg-blue-400 dark:bg-blue-900'} text-white`}>
+        <User className="h-6 w-6" />
+      </span>
+      <div className={textClassName}>
+        <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{displayName}</p>
+        {username && (
+          <p className="truncate text-xs text-gray-500 dark:text-gray-400">@{username}</p>
+        )}
+      </div>
+    </Link>
+  );
+}
+
+interface SignOutButtonProps {
+  onClick: () => void;
+  sidebarExpanded: boolean;
+  isMobile?: boolean;
+  onClose?: () => void;
+}
+
+function SignOutButton({ onClick, sidebarExpanded, isMobile = false, onClose }: SignOutButtonProps) {
+  if (isMobile) {
+    return (
+      <button
+        type="button"
+        onClick={() => { onClick(); onClose?.(); }}
+        className="mt-3 flex items-center gap-3 w-full rounded-xl px-4 py-3 text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
+      >
+        <LogOut className="h-6 w-6" />
+        <span>Sign Out</span>
+      </button>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative mt-3 flex h-12 items-center rounded-xl bg-red-600 text-white transition-all duration-300 ease-in-out overflow-hidden hover:bg-red-700 dark:hover:bg-red-500 ${
+        sidebarExpanded ? 'w-full px-3 justify-start' : 'w-12 justify-center'
+      }`}
+      aria-label="Sign out"
+    >
+      <span className="absolute left-3 flex h-12 items-center justify-center">
+        <LogOut className="h-6 w-6" />
+      </span>
+      <span className={`absolute left-14 top-1/2 -translate-y-1/2 w-[96px] transition-opacity duration-500 ease-in-out ${
+        sidebarExpanded ? 'opacity-100' : 'opacity-0'
+      }`}>
+        log out
+      </span>
+    </button>
+  );
+}
+
+export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const { user: authUser, signOut } = useAuth();
+  const { user, setUser } = useUser();
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [displayName, setDisplayName] = useState('Student');
+  const [username, setUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authUser) return;
+
+    const loadProfile = async () => {
+      const profile = await fetchProfile(authUser.id);
+      const name =
+        profile?.name ||
+        authUser.user_metadata?.full_name ||
+        authUser.email?.split('@')[0] ||
+        'Student';
+
+      setDisplayName(name);
+      setUsername(profile?.username ?? null);
+
+      if (user?.name !== name) {
+        setUser({
+          name,
+          progress: user?.progress ?? {},
+          recentCourses: user?.recentCourses ?? [],
+        });
+      }
+    };
+
+    loadProfile();
+  }, [authUser, setUser, user?.name, user?.progress, user?.recentCourses]);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
+  const isActive = (path: string) =>
+    path === '/dashboard'
+      ? location.pathname === '/dashboard'
+      : location.pathname.startsWith(path);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex text-gray-900 dark:text-gray-100">
+      {/* Desktop sidebar */}
+      <aside
+        onMouseEnter={() => setSidebarExpanded(true)}
+        onMouseLeave={() => setSidebarExpanded(false)}
+        className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-40 border-r border-gray-200/80 dark:border-gray-700/80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm overflow-hidden transition-[width,box-shadow,background-color] duration-500 ease-in-out ${
+          sidebarExpanded ? 'w-72 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/50' : 'w-20'
+        }`}
+      >
+        <div className="flex h-20 items-center border-b border-gray-200/80 dark:border-gray-700/80 transition-all duration-500 px-4 justify-start">
+          <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center">
+            <img src="/logo.svg" alt="Learnmates" className="h-12 w-12" />
+          </span>
+          <div className={`overflow-hidden transition-all duration-500 ease-in-out ${sidebarExpanded ? 'max-w-[220px] opacity-100 ml-3' : 'max-w-0 opacity-0 ml-0'}`}>
+            <p className="text-base font-bold bg-blue-600 bg-clip-text text-transparent whitespace-nowrap">
+              Learnmates
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Dashboard</p>
+          </div>
+        </div>
+
+        <nav className="flex-1 px-2 py-6 space-y-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.href);
+
+            if (item.disabled) {
+              return (
+                <div
+                  key={item.name}
+                  title={`${item.name} — coming soon`}
+                  aria-disabled="true"
+                  className="group flex items-center rounded-xl py-3.5 text-sm font-medium text-gray-400 dark:text-gray-600 cursor-not-allowed px-0 justify-start"
+                >
+                  <span className="flex h-6 w-20 min-w-[5rem] flex-shrink-0 items-center justify-start pl-5">
+                    <Icon className="h-6 w-6" />
+                  </span>
+                  <span className={`flex items-center gap-2 overflow-hidden transition-all duration-500 ease-in-out ${sidebarExpanded ? 'opacity-100 max-w-[220px] ml-1' : 'opacity-0 max-w-0'}`}>
+                    <span className="whitespace-nowrap">{item.name}</span>
+                    <span className="whitespace-nowrap rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                      Soon
+                    </span>
+                  </span>
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                title={item.name}
+                className={`group flex items-center rounded-xl py-3.5 text-sm font-medium transition-all duration-300 ease-in-out ${
+                  active
+                    ? 'bg-blue-400 dark:bg-blue-900 text-white shadow-md shadow-blue-500/20'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-800'
+                } px-0 justify-start`}
+              >
+                <span className="flex h-6 w-20 min-w-[5rem] flex-shrink-0 items-center justify-start pl-5">
+                  <Icon className="h-6 w-6" />
+                </span>
+                <span className={`overflow-hidden transition-all duration-500 ease-in-out ${sidebarExpanded ? 'opacity-100 max-w-[220px] ml-1' : 'opacity-0 max-w-0'}`}>
+                  {item.name}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="mt-auto border-t border-gray-200/80 dark:border-gray-700/80 p-4">
+          <ProfileSection
+            displayName={displayName}
+            username={username}
+            sidebarExpanded={sidebarExpanded}
+          />
+          <SignOutButton
+            onClick={handleSignOut}
+            sidebarExpanded={sidebarExpanded}
+          />
+        </div>
+      </aside>
+
+      {/* Mobile sidebar overlay */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              className="fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 lg:hidden flex flex-col"
+            >
+              <div className="flex h-16 items-center justify-between px-5 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <img src="/logo.svg" alt="Learnmates" className="h-8 w-8" />
+                  <span className="font-bold text-blue-600">Learnmates</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(false)}
+                  className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              <nav className="flex-1 px-4 py-6 space-y-1">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+
+                  if (item.disabled) {
+                    return (
+                      <div
+                        key={item.name}
+                        aria-disabled="true"
+                        className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-400 dark:text-gray-600 cursor-not-allowed"
+                      >
+                        <span className="flex items-center gap-3">
+                          <Icon className="h-6 w-6" />
+                          {item.name}
+                        </span>
+                        <span className="rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                          Soon
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-800"
+                    >
+                      <Icon className="h-6 w-6" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </nav>
+              <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+                <ProfileSection
+                  displayName={displayName}
+                  username={username}
+                  sidebarExpanded={true}
+                  isMobile={true}
+                  onClose={() => setSidebarOpen(false)}
+                />
+                <SignOutButton
+                  onClick={handleSignOut}
+                  sidebarExpanded={true}
+                  isMobile={true}
+                  onClose={() => setSidebarOpen(false)}
+                />
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      <div className="flex-1 flex flex-col min-h-screen lg:pl-20">
+        <header className="sticky top-0 z-30 h-20 border-b border-gray-200/80 dark:border-gray-700/80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
+          <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(true)}
+                className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800 lg:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+              
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={toggleDarkMode}
+                className="rounded-lg p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Toggle dark mode"
+              >
+                {isDarkMode ? (
+                  <Sun className="h-6 w-6 text-yellow-500" />
+                ) : (
+                  <Moon className="h-6 w-6 text-gray-600" />
+                )}
+              </button>
+              <button
+                type="button"
+                className="rounded-lg p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Notifications"
+              >
+                <Bell className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">{children}</main>
+      </div>
+    </div>
+  );
+}

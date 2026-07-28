@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui';
 
 const PrivacyPolicy: React.FC = () => {
   const sections = [
@@ -8,56 +9,70 @@ const PrivacyPolicy: React.FC = () => {
       title: 'Privacy Overview',
       content: `At Learnmates, we are committed to protecting your privacy and ensuring you have a positive experience on our platform. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website and use our educational resources.
 
-Your privacy is important to us, and we strive to be transparent about our data practices. We comply with applicable privacy regulations and best practices in data protection.`,
+Your privacy is important to us, and we strive to be transparent about our data practices. We comply with applicable privacy regulations and best practices in data protection.`
     },
     {
       title: 'What Information We Collect',
-      content: `We collect minimal information and are committed to user privacy. Here's what we do collect:
+      content: `We collect minimal information and are committed to user privacy. Here's what we collect:
 
-Information You Provide Directly:
-- Your name (optional, stored locally in your browser for personalization)
-- Contact information you submit through our contact form
-- Feedback or inquiries you send to us
+Account Information (when you create an account):
+- Email address (via Google OAuth or email/password signup)
+- Name (from Google profile or entered during signup)
+- Username (optional, chosen by you)
+- Profile picture (from Google OAuth)
 
-Information NOT Collected:
-- We do NOT require email addresses to use the platform
-- We do NOT have user accounts or login systems
-- We do NOT collect personally identifiable information automatically
-- We do NOT require registration to access educational content
+Learning Data (stored in Supabase database):
+- Topic progress percentages
+- Completed resources (videos, quizzes, etc.)
+- Daily visit dates for streak tracking
+- Last 3 opened topics for "continue where you left off"
+- Favorite subjects, boards, and levels
 
-Information Stored Locally:
-- Your name preference (stored in your browser)
-- Your learning progress and completed resources
-- Your theme preference - dark/light mode
-- Resources you've marked as done
-- These are stored ONLY in your browser and NOT sent to our servers`,
+Local Browser Storage (not sent to our servers):
+- Theme preference (dark/light mode)
+- Temporary UI state
+
+Contact Form Data:
+- Name and email you provide via contact form (sent to Formspree)
+
+Information We Do NOT Collect:
+- Passwords (handled securely by Supabase Auth)
+- Payment information (no payments on platform)
+- Precise location data
+- Browsing history beyond the 3 recent topics
+- Data for advertising or tracking purposes`
     },
     {
       title: 'How We Use Your Information',
       content: `Your information is used for the following purposes:
 
-Personalizing Your Experience:
-- Personalizing your learning experience with your preferred name
-- Tracking YOUR learning progress (stored only on your device)
-- Remembering resources you mark as complete
-- Displaying recent courses you've viewed
+Account & Personalization:
+- Creating and managing your account
+- Personalizing your experience with your name and preferences
+- Enabling Google OAuth sign-in
+- Syncing progress across devices
 
-Contact Form Data:
-- Your name and email are sent to Formspree to handle your inquiry
-- We use responses only to help you with your questions
-- Improving our platform based on your feedback
+Learning Features:
+- Tracking YOUR learning progress (stored in Supabase)
+- Displaying streak count and calendar
+- Showing "continue where you left off" topics (last 3)
+- Remembering favorite subjects and progress
+
+Contact Form:
+- Your name and email sent to Formspree to handle your inquiry
+- Used only to respond to your questions
 
 Platform Operations:
 - Maintaining website functionality and security
 - Debugging and error resolution
-- Analyzing usage patterns to improve user experience
+- Analyzing aggregated usage patterns to improve experience
 - Preventing fraud and abuse
 
 What We Do NOT Do:
 - We do NOT sell your personal information to third parties
 - We do NOT use your information for targeted advertising
-- We do NOT share your local data with external services
-- We do NOT send emails unless you contact us first`,
+- We do NOT share your learning data with external services
+- We do NOT send marketing emails unless you contact us first`
     },
     {
       title: 'Data Security',
@@ -65,10 +80,10 @@ What We Do NOT Do:
 
 Technical Safeguards:
 - HTTPS encryption for all data in transit
-- Secure password storage with industry-standard hashing
+- Secure authentication via Supabase Auth (industry-standard)
+- Row Level Security (RLS) on all database tables
 - Regular security audits and vulnerability assessments
-- Firewall protection and DDoS mitigation
-- Secure hosting on reputable cloud providers
+- Secure hosting on reputable cloud providers (Vercel, Supabase)
 
 Administrative Safeguards:
 - Employee privacy training
@@ -78,101 +93,155 @@ Administrative Safeguards:
 - Regular backup and disaster recovery
 
 What We Cannot Guarantee:
-No security system is completely impenetrable. While we take reasonable precautions, we cannot guarantee absolute security. Users should use strong passwords and keep devices updated.`,
+No security system is completely impenetrable. While we take reasonable precautions, we cannot guarantee absolute security. Users should use strong passwords, enable 2FA if available, and keep devices updated.`
     },
     {
       title: 'Children\'s Privacy',
-      content: `Learnmates is designed for educational use by students of all ages. Our privacy practices are particularly child-friendly:
+      content: `Learnmates is designed for educational use by students of all ages. Our privacy practices:
 
-Why We're Safe for Children:
-- No user accounts or logins required
-- No email addresses collected to use the platform
-- No personal information stored on servers
-- All data stored locally on the child's device only
-- No marketing or advertising targeting
-- No data sharing with third parties
-- Parents/guardians have full visibility and control
+For Users Under 13:
+- Account creation requires parental consent (handled by Google/Supabase)
+- We do not knowingly collect data from children under 13 without parental consent
+- Parents can request account deletion at any time
+
+Safety Features:
+- No public profiles or social features
+- No chat or messaging between users
+- No advertising or tracking
+- All learning data is private to the account
 
 For Parents:
-You can monitor learning progress, clear stored data, teach your child to manage their data, disable cookies in browser settings, and use parental controls on their device.`,
+You can monitor learning progress, request account deletion, and manage data through account settings.`
     },
     {
       title: 'Third-Party Services & Data Sharing',
       content: `Third-Party Services We Use:
-- Formspree: Processes contact form submissions containing name and email
-- YouTube: Embedded videos for educational content
-- Google Drive, Dropbox, OneDrive: Links to supplementary materials
-- Google Forms: Surveys and feedback collection
-- Vimeo: Video hosting for educational content
+
+Authentication & Database:
+- Supabase: Authentication (email/password, Google OAuth), database, storage
+  - We receive: email, name, profile picture from Google
+  - Supabase Privacy Policy: https://supabase.com/privacy
+
+Contact Forms:
+- Formspree: Processes contact form submissions
+  - Data sent: name, email, message content
+  - Formspree Privacy Policy: https://formspree.io/privacy/
+
+Embedded Educational Content:
+- YouTube: Embedded videos (governed by YouTube Terms of Service)
+- Vimeo: Embedded videos (governed by Vimeo Terms of Service)
+- Google Drive/Dropbox/OneDrive: Links to supplementary materials
 
 How Your Data is Shared:
-- Contact form data is sent to Formspree to handle your inquiry
-- Only contact information is shared when you voluntarily submit the form
-- Other services are accessed through embedded links or iframes
-- No personal data is automatically shared with these services
+- Account data stored in Supabase (our backend provider)
+- Contact form data sent to Formspree
+- No learning data shared with YouTube, Vimeo, or file hosts
+- Embedded content loads from their domains (their cookies/policies apply)
 
 Third-Party Privacy Policies:
 - Each third-party service has its own privacy policy and terms
 - You should review their privacy practices before using their services
 - Learnmates is not responsible for third-party data handling practices
-- We recommend understanding what data you share when accessing external services
 
 Data Control:
-- You control whether you submit your information through contact forms
+- You control whether you submit information through contact forms
 - You can choose not to use links to third-party services
-- You can manage your privacy settings on third-party platforms directly`,
+- You can manage your privacy settings on third-party platforms directly`
     },
     {
       title: 'Data Retention',
       content: `How Long We Keep Your Data:
 
+Account Data (Supabase):
+- Retained while account is active
+- Deleted within 30 days of account deletion request
+- Anonymized analytics may be retained
+
+Learning Progress (Supabase):
+- Retained while account is active
+- Deleted with account deletion
+- You can delete individual progress anytime
+
+Streak Data (Supabase):
+- Daily visit dates retained for streak calculation
+- Deleted with account deletion
+
+Recent Topics (Supabase):
+- Last 3 topics retained for "continue where you left off"
+- Automatically rotated as you open new topics
+
 Local Browser Data:
-- Your name preference is stored indefinitely until you clear browser data
-- Learning progress and completed resources remain until you clear local storage
 - Theme preference persists until changed or cleared
-- You can delete this data anytime by clearing your browser's local storage
+- You can delete anytime by clearing browser storage
 
 Contact Form Data:
-- Information submitted through contact forms is sent to Formspree
-- Formspree retains submission data according to their privacy policy
-- You can request deletion of your contact data by emailing us
-
-Server-Side Data:
-- We do not store any server-side user data
-- No accounts or login information is retained
-- Analytics data (if any) is aggregated and anonymized
+- Sent to Formspree, retained per their policy
+- You can request deletion by emailing us
 
 Your Control:
-- You have full control over deleting your local data
-- You can request deletion of contact form submissions
-- Clear cookies and local storage in your browser settings anytime`,
+- Delete account anytime in settings (deletes all Supabase data)
+- Clear local browser data anytime
+- Request data export by emailing us`
     },
     {
       title: 'Cookies & Local Storage',
       content: `What We Use:
 
-Local Storage:
-- Browser local storage stores your preferences and learning data
-- This is NOT tracked or monitored by our servers
+Local Storage (browser):
+- Theme preference (dark/light mode)
+- Temporary UI state
+- NOT tracked or monitored by our servers
 - Data remains only on your device
-- Essential for remembering your progress and preferences
 
 Cookies:
-- We use minimal cookies, primarily for basic functionality
-- Session cookies may be used for site navigation
+- Supabase Auth session cookies (secure, httpOnly, sameSite)
 - No tracking or advertising cookies
-- You can disable cookies in your browser settings
+- No third-party analytics cookies (we don't use Google Analytics, etc.)
 
 How to Manage:
-- Access local storage settings in your browser's developer tools
 - Clear cookies anytime through browser settings
-- Most browsers allow you to set privacy levels for local storage
-- Disabling storage may affect functionality (progress tracking, preferences)
+- Clear local storage in browser developer tools
+- Disabling cookies will prevent authentication from working
+- Disabling local storage may affect theme persistence
 
 No Third-Party Tracking:
 - We do not use cookies to track your behavior
 - We do not use cookies for advertising or analytics
-- Your browsing activity is private to your device`,
+- Your browsing activity is private to your device`
+    },
+    {
+      title: 'International Data Transfers',
+      content: `Our services are hosted on:
+- Vercel (US/EU edge network)
+- Supabase (US/EU regions, configurable)
+
+Data may be processed in the United States or European Union depending on hosting region. Both providers offer Standard Contractual Clauses and adequacy decisions for international transfers.`
+    },
+    {
+      title: 'Your Rights',
+      content: `Depending on your jurisdiction, you may have the right to:
+
+Access & Portability:
+- Request a copy of your personal data
+- Request data export in portable format
+
+Rectification:
+- Update your name, username, email in account settings
+
+Deletion:
+- Delete your account anytime (Settings → Delete Account)
+- Request deletion of contact form submissions
+
+Objection & Restriction:
+- Object to processing (though this may disable features)
+- Restrict certain processing activities
+
+Withdraw Consent:
+- Disconnect Google OAuth in account settings
+- Delete account to withdraw all consent
+
+To exercise these rights, email: learnmates.share@gmail.com
+We respond within 30 days as required by applicable law.`
     },
     {
       title: 'Contact Us',
@@ -184,7 +253,7 @@ Contact Methods:
 - Send us your inquiry with details about your concern
 
 Your Rights:
-You have the right to request what personal information we have collected, request deletion of your data, understand our data practices, and ask questions about this policy.`,
+You have the right to request what personal information we have collected, request deletion of your data, understand our data practices, and ask questions about this policy.`
     },
   ];
 
@@ -222,7 +291,7 @@ You have the right to request what personal information we have collected, reque
             transition={{ delay: 0.3 }}
             className="text-blue-200 text-sm mt-4"
           >
-            Last updated: January 16, 2026
+            Last updated: January 2026
           </motion.p>
         </div>
       </motion.div>
@@ -306,18 +375,12 @@ You have the right to request what personal information we have collected, reque
               We're committed to protecting your data and answering any questions you may have.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="mailto:learnmates.share@gmail.com"
-                className="inline-flex items-center justify-center px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-all"
-              >
-                Email Us
-              </a>
-              <Link
-                to="/contact"
-                className="inline-flex items-center justify-center px-8 py-3 bg-blue-500 hover:bg-blue-400 text-white font-semibold rounded-lg transition-all"
-              >
-                Contact Form
-              </Link>
+              <Button variant="secondary" asChild>
+                <a href="mailto:learnmates.share@gmail.com">Email Us</a>
+              </Button>
+              <Button asChild>
+                <Link to="/contact">Contact Form</Link>
+              </Button>
             </div>
           </div>
         </div>

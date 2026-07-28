@@ -2,13 +2,18 @@ import { SitemapStream, streamToPromise } from 'sitemap';
 import { createWriteStream, readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { curriculumData } from '../src/utils/curriculumData.ts';
+import { topicData } from '../src/data/topicData.ts';
+import { buildPdfViewerPath } from '../src/utils/pdfViewerPaths.ts';
+import { getTopicSlug } from '../src/utils/curriculumData.ts';
+
+const isPdfUrl = (url) => /\.pdf(\?|$)/i.test(url) && !url.includes('drive.google.com');
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const baseUrl = 'https://www.learnmates.org';
 
-// Base routes that are always included
 const baseRoutes = [
   { url: '/', changefreq: 'daily', priority: 1.0 },
   { url: '/curriculum', changefreq: 'weekly', priority: 0.9 },
@@ -18,27 +23,50 @@ const baseRoutes = [
   { url: '/contact', changefreq: 'monthly', priority: 0.5 }
 ];
 
-// Function to get topic routes from metadata
 function getTopicRoutes() {
   const metadataPath = path.join(process.cwd(), 'public', 'metadata.json');
   let topicRoutes = [];
-
   try {
     const metadata = JSON.parse(readFileSync(metadataPath, 'utf8'));
-
-    // Add topic routes from metadata
     Object.values(metadata.topics).forEach(topic => {
-      topicRoutes.push({
-        url: topic.url,
-        changefreq: 'weekly',
-        priority: 0.8
-      });
+      topicRoutes.push({ url: topic.url, changefreq: 'weekly', priority: 0.8 });
     });
   } catch (err) {
     console.warn('Warning: Error reading metadata file', err);
   }
-
   return topicRoutes;
+}
+
+// NEW: walk every topic's resources and build a PDF viewer route per PDF
+function getResourceRoutes() {
+  const resourceRoutes = [];
+
+  Object.entries(curriculumData).forEach(([level, curriculum]) => {
+    const type = level === 'igcse' ? 'igcse' : 'a-level';
+
+    Object.entries(curriculum.boards || {}).forEach(([boardKey, boardData]) => {
+      (boardData?.topics || []).forEach(topic => {
+        const fullTopic = topic.id ? topicData[topic.id] : null;
+        const resources = fullTopic?.resources || [];
+
+        // use the same slug builder the live routes use — title + group, e.g. "microbiology-immunity-and-forensics-(u4)"
+        const topicSlug = getTopicSlug({ title: topic.title, group: topic.group });
+
+        resources.forEach(resource => {
+          if (!isPdfUrl(resource.url)) return; // excludes Google Drive links, same rule as resolvePdfResource
+
+          const url = buildPdfViewerPath(
+            { type, board: boardKey, subject: topic.subject, topicSlug },
+            resource.url
+          );
+
+          resourceRoutes.push({ url, changefreq: 'monthly', priority: 0.6 });
+        });
+      });
+    });
+  });
+  console.log('Resource routes:', resourceRoutes.length);
+  return resourceRoutes;
 }
 
 async function generateSitemap() {
@@ -47,10 +75,8 @@ async function generateSitemap() {
     const writeStream = createWriteStream(path.join(__dirname, '../public/sitemap.xml'));
     sitemap.pipe(writeStream);
 
-    // Combine base routes and topic routes
-    const allRoutes = [...baseRoutes, ...getTopicRoutes()];
+    const allRoutes = [...baseRoutes, ...getTopicRoutes(), ...getResourceRoutes()];
 
-    // Write all routes to sitemap
     allRoutes.forEach(route => {
       sitemap.write({
         url: route.url,

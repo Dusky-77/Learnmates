@@ -3,8 +3,11 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { BookOpen, ArrowRight, GraduationCap, Brain ,TrendingUp ,School, BookText } from 'lucide-react';
+import { useRouteBase, withBase } from '../utils/routeBase';
 
 const Curriculum: React.FC = () => {
+  const base = useRouteBase();
+  const embedded = Boolean(base);
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -46,7 +49,7 @@ const Curriculum: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className={embedded ? 'text-gray-900 dark:text-gray-100' : 'min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100'}>
       <Helmet>
         <title>Learnmates | Curriculum</title>
         <meta name="keywords" content="Learnmates, Curriculum, IGCSE, A-Level, Education, Study Resources, Learning Paths, Subjects, Interactive Content" />
@@ -116,7 +119,7 @@ const Curriculum: React.FC = () => {
 
                   {/* CTA Button */}
                   <Link
-                    to={`/curriculum/${curriculum.id}`}
+                    to={withBase(base, `/curriculum/${curriculum.id}`)}
                     className={`block w-full text-center py-4 px-6 bg-gradient-to-r ${curriculum.color} text-white rounded-xl hover:shadow-lg transition-all duration-200 group-hover:scale-105 font-medium`}
                   >
                     <span className="flex items-center justify-center">
@@ -181,14 +184,14 @@ const Curriculum: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
-              to="/curriculum/igcse"
+              to={withBase(base, '/curriculum/igcse')}
               className="inline-flex items-center px-8 py-4 bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium shadow-lg"
             >
               Start with IGCSE
               <ArrowRight className="w-5 h-5 ml-2" />
             </Link>
             <Link
-              to="/curriculum/a-level"
+              to={withBase(base, '/curriculum/a-level')}
               className="inline-flex items-center px-8 py-4 border-2 border-white text-white rounded-lg hover:bg-white hover:text-indigo-600 transition-colors font-medium"
             >
               Explore A-Level

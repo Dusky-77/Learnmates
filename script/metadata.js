@@ -1,4 +1,5 @@
 import slugify from '../src/utils/slugify.ts';
+import { getTopicSlug } from '../src/utils/curriculumData.ts';
 
 // Default metadata for all pages
 const defaultMetadata = {
@@ -9,9 +10,9 @@ const defaultMetadata = {
 };
 
 // Function to generate topic metadata
-function generateTopicMetadata({ title, subject, curriculum, board }) {
+function generateTopicMetadata({ title, subject, curriculum, board, group }) {
   const urlSafeSubject = subject;
-  const urlSafeTitle = slugify(title);
+  const urlSafeTitle = getTopicSlug({ title, group });  // was: slugify(title)
   const type = curriculum.toLowerCase().includes('igcse') ? 'igcse' : 'a-level';
 
   return {
@@ -32,7 +33,7 @@ function generateTopicMetadata({ title, subject, curriculum, board }) {
       subject,
       curriculum
     ].filter(Boolean).join(', '),
-    url: `/curriculum/${type}/${board}/${urlSafeSubject}/${urlSafeTitle}`,
+   url: `/curriculum/${type}/${board}/${urlSafeSubject}/${urlSafeTitle}`,
     hasVideo: false, // Will be updated by generateMetadata script
     hasResources: false, // Will be updated by generateMetadata script
     hasQuiz: false // Will be updated by generateMetadata script

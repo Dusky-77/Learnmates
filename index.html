@@ -52,7 +52,7 @@
             const title = meta.title || document.title;
             const description = meta.description || document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
             const keywords = meta.keywords || document.querySelector('meta[name="keywords"]')?.getAttribute('content') || '';
-            const url = (meta.url ? new URL(meta.url, window.location.origin).href : window.location.href);
+            const url = (meta.url ? new URL(meta.url, 'https://www.learnmates.org').href : window.location.href);
             const image = (meta.ogImage || 'https://www.learnmates.org/logos/og-image.png');
 
             document.title = title;

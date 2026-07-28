@@ -16,6 +16,7 @@ import LevelBoardSubjectPicker from '../components/topical/LevelBoardSubjectPick
 import TopicPickerPanel from '../components/topical/TopicPickerPanel';
 import FilterBar from '../components/topical/FilterBar';
 import MatchesViewerPanel from '../components/topical/MatchesViewerPanel';
+import { useRouteBase, withBase } from '../utils/routeBase';
 
 
 const containerVariants = {
@@ -29,6 +30,8 @@ const itemVariants = {
 };
 
 const TopicalPages: React.FC = () => {
+  const base = useRouteBase();
+  const topicalsPath = (...parts: string[]) => withBase(base, `/topicals/${parts.join('/')}`);
   const { level: urlLevel, board: urlBoard, subject: urlSubject } = useParams<{ level?: string; board?: string; subject?: string }>();
   const location = useLocation();
 
@@ -53,7 +56,7 @@ const TopicalPages: React.FC = () => {
 
   useEffect(() => {
     if (selectedLevel && selectedBoard && selectedSubject) {
-      const newPathUrl = `/topicals/${selectedLevel}/${selectedBoard}/${selectedSubject}`;
+      const newPathUrl = topicalsPath(selectedLevel, selectedBoard, selectedSubject);
       if (window.location.pathname !== newPathUrl) {
         window.history.replaceState({}, '', newPathUrl);
       }
@@ -156,7 +159,7 @@ const TopicalPages: React.FC = () => {
       params.set('years', newYearFilter.size === 0 ? 'all' : Array.from(newYearFilter).sort().join(','));
     }
     const queryString = params.toString();
-    const newUrl = `/topicals/${selectedLevel}/${selectedBoard}/${selectedSubject}${queryString ? '?' + queryString : ''}`;
+    const newUrl = `${topicalsPath(selectedLevel, selectedBoard, selectedSubject)}${queryString ? '?' + queryString : ''}`;
     window.history.replaceState({}, '', newUrl);
   };
 
@@ -208,7 +211,7 @@ const TopicalPages: React.FC = () => {
     setYearFilterState(new Set());
 
     if (selectedLevel && selectedBoard && selectedSubject) {
-      window.history.replaceState({}, '', `/topicals/${selectedLevel}/${selectedBoard}/${selectedSubject}`);
+      window.history.replaceState({}, '', topicalsPath(selectedLevel, selectedBoard, selectedSubject));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLevel, selectedBoard, selectedSubject]);

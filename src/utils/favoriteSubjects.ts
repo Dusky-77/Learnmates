@@ -1,5 +1,6 @@
 import { BoardKey } from './curriculumData';
 import { topicalConfigs } from '../pages/topicalpagesdata';
+import { withBase } from './routeBase';
 
 export interface FavoriteSubject {
   subject: string;
@@ -25,12 +26,12 @@ export function saveFavoriteSubjects(subjects: FavoriteSubject[]): void {
 
 export const getLevelKey = (level: string) => (level.toLowerCase() === 'a-level' ? 'a-level' : 'igcse');
 
-export function getSubjectPaths(subject: FavoriteSubject) {
+export function getSubjectPaths(subject: FavoriteSubject, base = '') {
   const levelKey = getLevelKey(subject.level);
-  const base = `${levelKey}/${subject.board}/${subject.subject}`;
+  const pathBase = `${levelKey}/${subject.board}/${subject.subject}`;
   return {
-    resources: `/curriculum/${base}`,
-    topicals: `/topicals/${base}`,
+    resources: withBase(base, `/curriculum/${pathBase}`),
+    topicals: withBase(base, `/topicals/${pathBase}`),
   };
 }
 

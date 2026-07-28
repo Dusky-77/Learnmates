@@ -18,7 +18,8 @@ function generateMetadata() {
             title: topic.title,
             subject: topic.subject,
             curriculum: curriculumType,
-            board: boardKey
+            board: boardKey,
+            group: topic.group
           });
 
           // We don't have per-topic runtime fields here (videos/resources/quizzes)

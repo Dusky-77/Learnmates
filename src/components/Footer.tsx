@@ -1,6 +1,5 @@
 // No default React import needed with react-jsx transform
-import { Github} from 'lucide-react';
-import { InstagramLogo, DiscordLogo } from 'phosphor-react';
+import { InstagramLogo, DiscordLogo, GithubLogo } from 'phosphor-react';
 import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
@@ -72,6 +71,13 @@ const Footer: React.FC = () => {
                   onClick={scrollTop}
                 >
                   Terms of Service
+                </Link>
+                <Link
+                  to="/copyright"
+                  className="text-gray-600 dark:text-gray-200 hover:text-blue-400 transition-colors duration-200"
+                  onClick={scrollTop}
+                >
+                  Copyright & Attribution
                 </Link>
               </div>
             </div>
@@ -169,7 +175,7 @@ const Footer: React.FC = () => {
                   className="text-gray-600 dark:text-gray-200 hover:text-gray-300 transition-colors duration-200"
                   aria-label="GitHub"
                 >
-                  <Github className="w-5 h-5" />
+                  <GithubLogo className="w-5 h-5" />
                 </a>
               </div>
             </div>

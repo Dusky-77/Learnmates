@@ -6,7 +6,7 @@ const TermsOfService: React.FC = () => {
   const sections = [
     {
       title: 'Educational Purpose & Use',
-      content: `Learnmates is a learning platform designed to support students in their academic journey by providing quizzes, study materials, and educational resources. All content is provided exclusively for personal, non-commercial educational use. Users commit to using the platform responsibly and in accordance with their educational institution's policies and local regulations.`,
+      content: `Learnmates is a learning platform designed to support students in their academic journey by providing quizzes, study materials, and educational resources. All content is provided exclusively for personal, non-commercial educational use. Users commit to using the platform responsibly and in accordance with their educational institution's policies and local regulations.`
     },
     {
       title: 'Intellectual Property & Attribution',
@@ -18,9 +18,9 @@ const TermsOfService: React.FC = () => {
 
 Original Content:
 - Original content created by Learnmates is protected by copyright
--TopicalQuiz questions, explanations, and study guides are owned by Learnmates
+- TopicalQuiz questions, explanations, and study guides are owned by Learnmates
 - Content is provided "as-is" and not endorsed by examination boards
-- All materials are used under fair use principles`,
+- All materials are used under fair use principles`
     },
     {
       title: 'Disclaimer of Accuracy & Liability',
@@ -37,7 +37,7 @@ Official Resources:
 Academic Outcomes:
 - Learnmates is not liable for academic outcomes or grades
 - Use of the platform is at your own risk
-- No guarantees regarding examination results`,
+- No guarantees regarding examination results`
     },
     {
       title: 'Acceptable Use Policy',
@@ -52,7 +52,7 @@ Academic Outcomes:
 - Violating any applicable laws or regulations
 
 Consequences:
-- Violations may result in immediate suspension or termination of access`,
+- Violations may result in immediate suspension or termination of access`
     },
     {
       title: 'Limitation of Liability',
@@ -68,7 +68,7 @@ Specific Exclusions:
 
 Use at Your Own Risk:
 - Your use of the platform is entirely at your own risk
-- No warranties are provided regarding availability or fitness`,
+- No warranties are provided regarding availability or fitness`
     },
     {
       title: 'Termination of Access',
@@ -83,22 +83,36 @@ Use at Your Own Risk:
 Effect of Termination:
 - Upon termination, all rights to use the platform cease immediately
 - You must cease using the platform
-- You may not attempt to regain access`,
+- You may not attempt to regain access`
     },
     {
-      title: 'Privacy & Data',
+      title: 'Privacy & Data Storage',
       content: `Your use of Learnmates is governed by our Privacy Policy.
 
-What This Means:
-- Review the Privacy Policy to understand data collection practices
-- Learn how we protect your information
-- Understand what data we store and retention periods
-- Know your rights regarding your personal data
+Data We Store (with your consent via account creation):
+- Account information: email, name, username (stored in Supabase Auth)
+- Learning progress: topic completion percentages (stored in Supabase database)
+- Streak data: daily visit dates for streak tracking (stored in Supabase database)
+- Recent topics: last 3 opened topics for "continue where you left off" (stored in Supabase database)
+- Favorite subjects: your selected subjects and boards (stored in Supabase database)
+- Theme preference: dark/light mode (stored locally in browser)
 
-Data Protection:
-- We are committed to protecting your privacy
-- We comply with applicable privacy laws and regulations
-- For complete details, please refer to our full Privacy Policy`,
+Authentication:
+- Google OAuth via Supabase Auth (we receive email, name, profile picture)
+- Email/password authentication via Supabase Auth
+
+What We Do NOT Store:
+- Passwords (handled by Supabase Auth)
+- Payment information (no payments on platform)
+- Precise location data
+- Browsing history beyond the 3 recent topics
+
+Data Retention:
+- Account data retained while account is active
+- Deleted upon account deletion request
+- Anonymous analytics may be retained
+
+For complete details, please refer to our full Privacy Policy.`
     },
     {
       title: 'No Warranties',
@@ -121,7 +135,7 @@ Your Responsibility:
 
 To the Fullest Extent Permitted:
 - We disclaim all other warranties, expressed or implied
-- Including merchantability and fitness for a particular purpose`,
+- Including merchantability and fitness for a particular purpose`
     },
     {
       title: 'Indemnification',
@@ -146,7 +160,7 @@ Exceptions:
 Your Obligation:
 - Promptly notify Learnmates of any claim
 - Grant Learnmates control of defense and settlement
-- Provide reasonable cooperation in defense`,
+- Provide reasonable cooperation in defense`
     },
     {
       title: 'Governing Law & Jurisdiction',
@@ -167,7 +181,7 @@ Severability:
 Whole Agreement:
 - These Terms of Service constitute the entire agreement between you and Learnmates
 - Any previous agreements or understandings are superseded
-- Any amendments must be made in writing and agreed upon by both parties`,
+- Any amendments must be made in writing and agreed upon by both parties`
     },
     {
       title: 'Changes to Terms',
@@ -182,7 +196,7 @@ How to Stay Informed:
 
 Notification:
 - For significant changes, we will attempt to notify users
-- Continued use indicates acceptance of updated terms`,
+- Continued use indicates acceptance of updated terms`
     },
     {
       title: 'Contact Us',
@@ -198,7 +212,7 @@ Response Time:
 - We strive to respond to all inquiries within a reasonable timeframe
 
 Feedback:
-- We welcome your feedback and suggestions for improving our terms`,
+- We welcome your feedback and suggestions for improving our terms`
     },
   ];
 
@@ -331,10 +345,10 @@ Feedback:
           <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-400 rounded-full opacity-10 blur-3xl -translate-y-1/2 -translate-x-1/2"></div>
           <div className="relative">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Questions About Our Terms?
+              Questions About These Terms?
             </h2>
             <p className="text-indigo-100 mb-8 max-w-xl mx-auto text-lg">
-              We're happy to clarify any aspect. Reach out anytime with your questions.
+              We're here to help clarify any questions you may have about our terms of service.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
@@ -352,18 +366,6 @@ Feedback:
             </div>
           </div>
         </div>
-      </motion.div>
-
-      {/* Acknowledgment */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.45 }}
-        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center"
-      >
-        <p className="text-gray-600 dark:text-gray-400">
-          By using Learnmates, you acknowledge that you have read, understood, and agree to these Terms of Service.
-        </p>
       </motion.div>
     </div>
   );
