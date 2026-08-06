@@ -9,7 +9,7 @@
 // subjects we keep the same workflow but limit the available options to papers 1, 2 and 4.
 const normalizeSubject = (subject: string) => subject.trim().toLowerCase();
 
-export const PAPER_FILTER_SUBJECTS = ['Biology', 'Physics', 'Chemistry', 'Math'];
+export const PAPER_FILTER_SUBJECTS = ['Biology', 'Physics', 'Chemistry', 'Math', 'Additional Mathematics','Mathematics'];
 export const CAMBRIDGE_SCIENCE_MCQ_SUBJECTS = ['Biology', 'Physics', 'Chemistry'];
 
 export const isPaperFilterSubject = (level: string, board: string, subject: string) =>
@@ -126,9 +126,39 @@ export const compareByRecency = (a: { title?: string }, b: { title?: string }): 
   return aQNum - bQNum;
 };
 
+export const compareByOldest = (a: { title?: string }, b: { title?: string }): number => {
+  const aKey = getSessionSortKeyFromFileName(a.title);
+  const bKey = getSessionSortKeyFromFileName(b.title);
+
+  if (aKey === null && bKey === null) return 0;
+  if (aKey === null) return 1;
+  if (bKey === null) return -1;
+  if (aKey !== bKey) return aKey - bKey; // older (smaller key) first
+
+  const aPaper = getPaperNumberFromFileName(a.title) ?? 0;
+  const bPaper = getPaperNumberFromFileName(b.title) ?? 0;
+  if (aPaper !== bPaper) return aPaper - bPaper;
+
+  const aQNum = getQuestionNumberFromFileName(a.title) ?? 0;
+  const bQNum = getQuestionNumberFromFileName(b.title) ?? 0;
+  return aQNum - bQNum;
+};
+
 // Non-mutating: returns a new array sorted newest -> oldest.
 export const sortQuestionsByRecency = <T extends { title?: string }>(questions: T[]): T[] =>
   [...questions].sort(compareByRecency);
+
+export const sortQuestionsByOldest = <T extends { title?: string }>(questions: T[]): T[] =>
+  [...questions].sort(compareByOldest);
+
+export const shuffleArray = <T>(array: T[]): T[] => {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
 
 export const makeKey = (level: string, board: string, subject: string, unit: string, name: string) =>
   `${level}||${board}||${subject}||${unit}||${name}`;

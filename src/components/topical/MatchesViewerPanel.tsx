@@ -14,6 +14,7 @@ interface MatchesViewerPanelProps {
   showExtraPageOption?: boolean;
   extraPageEnabled?: boolean;
   onExtraPageToggle?: (enabled: boolean) => void;
+  loadId?: number;
 }
 
 const EmptyState: React.FC<{ title: string; body: string }> = ({ title, body }) => (
@@ -34,6 +35,7 @@ const MatchesViewerPanel: React.FC<MatchesViewerPanelProps> = ({
   showExtraPageOption = false,
   extraPageEnabled = false,
   onExtraPageToggle,
+  loadId,
 }) => {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-5 h-full flex flex-col">
@@ -97,6 +99,7 @@ const MatchesViewerPanel: React.FC<MatchesViewerPanelProps> = ({
           </div>
         ) : topicalQuiz.length > 0 ? (
           <TopicalQuiz
+            key={loadId}
             questions={topicalQuiz}
             title={`Topical Matches (${topicalQuiz.length})`}
             quizId="topical"

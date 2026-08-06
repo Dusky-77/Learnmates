@@ -4,6 +4,7 @@ import { Flag, Trophy, FileText, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MediaViewer from './MediaViewer';
 import { deriveMarkSchemeUrl } from '../utils/quizLoader';
+import { QuestionViewTracker } from './QuestionViewTracker';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { fetchR2AsBlobUrl, resolveFromR2, getAssetAuthHeaders } from '../utils/r2Utils';
 
@@ -1046,7 +1047,7 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
       <div className="flex flex-col flex-1 overflow-hidden min-h-0">
         <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
           {/* Navigation at the top (only Previous / Next) */}
-          <div className="flex gap-2 sm:gap-4 justify-between">
+          <div className="flex gap-2 sm:gap-4 justify-between items-center">
             <button
               onClick={handlePrevious}
               disabled={currentQuestion === 0}
@@ -1055,9 +1056,14 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
               Previous
             </button>
 
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              {currentQuestion + 1} out of {questions.length}
+            </div>
+
             <button
               onClick={handleNext}
-              className="px-3 sm:px-6 py-2 text-base bg-gray-700 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors"
+              disabled={currentQuestion === questions.length - 1}
+              className="px-3 sm:px-6 py-2 text-base bg-gray-700 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next Question
             </button>
@@ -1185,29 +1191,31 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
           {/* Question Content Display (wraps to content height) */}
           <div className="w-full border-2 border-gray-300 dark:border-gray-600 rounded-lg p-1 bg-gray-50 dark:bg-gray-900 overflow-hidden">
             {currentQ.questionContent ? (
-              <div className="w-full max-h-[60vh] overflow-y-auto overflow-x-hidden">
-                <MediaViewer
-                  url={currentQ.questionContent}
-                  type={(currentQ.questionContentType || 'pdf') as 'pdf' | 'image'}
-                  markSchemeUrl={currentQ.markScheme}
-                  markSchemeType={(currentQ.markSchemeType || currentQ.questionContentType || 'pdf') as 'pdf' | 'image'}
-                  hasMarkScheme={Boolean(currentQ.markScheme)}
-                  markSchemeOpen={showMarkScheme}
-                  onToggleMarkScheme={(open: boolean) => setShowMarkScheme(open)}
-                  showMarkingButtons={false}
-                  savedAnnotation={annotations.get(getAnnotationKey(currentQuestion, false))}
-                  savedMarkSchemeAnnotation={annotations.get(getAnnotationKey(currentQuestion, true))}
-                  onSaveAnnotation={(data) => handleSaveAnnotation(data, false)}
-                  onSaveMarkSchemeAnnotation={(data) => handleSaveAnnotation(data, true)}
-                  questionList={questionsWithMarkSchemes}
-                  questionIndex={currentQuestion}
-                  onChangeQuestion={(i) => setCurrentQuestion(i)}
-                  disableR2={false}
-                  hideToolbar={true}
-                  onLoadComplete={handlePageCountChange}
-                  forceAnnotationMode={annotationMode}
-                />
-              </div>
+              <QuestionViewTracker questionId={currentQ.id}>
+                <div className="w-full max-h-[60vh] overflow-y-auto overflow-x-hidden">
+                  <MediaViewer
+                    url={currentQ.questionContent}
+                    type={(currentQ.questionContentType || 'pdf') as 'pdf' | 'image'}
+                    markSchemeUrl={currentQ.markScheme}
+                    markSchemeType={(currentQ.markSchemeType || currentQ.questionContentType || 'pdf') as 'pdf' | 'image'}
+                    hasMarkScheme={Boolean(currentQ.markScheme)}
+                    markSchemeOpen={showMarkScheme}
+                    onToggleMarkScheme={(open: boolean) => setShowMarkScheme(open)}
+                    showMarkingButtons={false}
+                    savedAnnotation={annotations.get(getAnnotationKey(currentQuestion, false))}
+                    savedMarkSchemeAnnotation={annotations.get(getAnnotationKey(currentQuestion, true))}
+                    onSaveAnnotation={(data) => handleSaveAnnotation(data, false)}
+                    onSaveMarkSchemeAnnotation={(data) => handleSaveAnnotation(data, true)}
+                    questionList={questionsWithMarkSchemes}
+                    questionIndex={currentQuestion}
+                    onChangeQuestion={(i) => setCurrentQuestion(i)}
+                    disableR2={false}
+                    hideToolbar={true}
+                    onLoadComplete={handlePageCountChange}
+                    forceAnnotationMode={annotationMode}
+                  />
+                </div>
+              </QuestionViewTracker>
             ) : (
               <p className="text-gray-500 dark:text-gray-400">No question content provided</p>
             )}

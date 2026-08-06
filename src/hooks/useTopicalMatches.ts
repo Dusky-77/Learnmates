@@ -7,6 +7,8 @@ import {
   getPaperKeyFromFileName,
   getYearFromFileName,
   sortQuestionsByRecency,
+  sortQuestionsByOldest,
+  shuffleArray,
 } from '../utils/topicalHelpers';
 import { deriveMarkSchemeUrl } from '../utils/quizLoader';
 import { resolveFromR2, getAssetAuthHeaders } from '../utils/r2Utils';
@@ -25,6 +27,8 @@ interface ComputeParams {
   paperFilter: Set<number>;
   yearFilter: Set<number>;
   isPaperMode: boolean;
+  orderFilter?: 'newest' | 'oldest' | 'random';
+  limitFilter?: number | null;
 }
 
 const normalizeTopicMatchTerm = (value: string) => value.trim().toLowerCase();
@@ -177,7 +181,7 @@ export function useTopicalMatches() {
     setAvailableYears(yearsFound);
   };
 
-  const computeMatches = async ({ configs, checked, matches, mcqFilter, paperFilter, yearFilter, isPaperMode }: ComputeParams) => {
+  const computeMatches = async ({ configs, checked, matches, mcqFilter, paperFilter, yearFilter, isPaperMode, orderFilter = 'newest', limitFilter = null }: ComputeParams) => {
     const selectedTopicsByUnit = buildSelectedTopicsByUnit(checked, configs);
     const baseUrlPrefix = ((import.meta as any).env?.BASE_URL as string) || '/';
 
@@ -207,6 +211,29 @@ export function useTopicalMatches() {
     // Second pass: load questions progressively
     let currentCount = 0;
     const newQuestions: Question[] = [];
+
+    const applyOrderingAndLimit = (qs: Question[], isFinal: boolean) => {
+      let result = qs;
+      if (orderFilter === 'oldest') {
+        result = sortQuestionsByOldest(result);
+      } else if (orderFilter === 'random') {
+        // Only shuffle at the very end to prevent flickering during progressive load,
+        // unless you want the "slot machine" effect. For stability, we'll wait for final.
+        if (isFinal) {
+          result = shuffleArray(result);
+        } else {
+          // While loading, just show newest so it's stable
+          result = sortQuestionsByRecency(result);
+        }
+      } else {
+        result = sortQuestionsByRecency(result);
+      }
+
+      if (limitFilter !== null && limitFilter > 0) {
+        result = result.slice(0, limitFilter);
+      }
+      return result;
+    };
 
     for (const cfg of matches) {
       const isMcqSubject = isCambridgeScienceMcqSubject(cfg.level, cfg.board, cfg.subject);
@@ -301,7 +328,7 @@ export function useTopicalMatches() {
               currentCount++;
               if (currentCount % 5 === 0 || currentCount === totalQuestions) {
                 setLoadingProgress({ current: currentCount, total: totalQuestions, isLoading: true });
-                setTopicalQuiz(sortQuestionsByRecency(newQuestions));
+                setTopicalQuiz(applyOrderingAndLimit(newQuestions, false));
               }
             } else {
               currentCount++;
@@ -315,9 +342,9 @@ export function useTopicalMatches() {
     }
 
     setLoadingProgress({ current: currentCount, total: totalQuestions, isLoading: false });
-    const sortedQuestions = sortQuestionsByRecency(newQuestions);
-    setTopicalQuiz(sortedQuestions);
-    return sortedQuestions;
+    const finalQuestions = applyOrderingAndLimit(newQuestions, true);
+    setTopicalQuiz(finalQuestions);
+    return finalQuestions;
   };
 
   const resetResults = () => {

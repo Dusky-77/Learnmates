@@ -24,6 +24,12 @@ interface FilterBarProps {
   isAllYearsSelected: boolean;
   selectedYearSummary: string;
   onToggleYear: (year: number | 'all') => void;
+
+  // Order & Limit
+  orderFilter?: 'newest' | 'oldest' | 'random';
+  onOrderFilterChange?: (order: 'newest' | 'oldest' | 'random') => void;
+  limitFilter?: string;
+  onLimitFilterChange?: (limit: string) => void;
 }
 
 // Previously the MCQ/Theory control was a bare native <select> sitting next
@@ -96,7 +102,7 @@ const PaperFilterDropdown: React.FC<{
               type="checkbox"
               checked={isAllPapersSelected}
               onChange={() => onToggle('all')}
-              className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <span>All</span>
           </label>
@@ -106,7 +112,7 @@ const PaperFilterDropdown: React.FC<{
                 type="checkbox"
                 checked={paperFilter.has(paperNum)}
                 onChange={() => onToggle(paperNum)}
-                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span>P{paperNum}</span>
             </label>
@@ -155,7 +161,7 @@ const YearFilterDropdown: React.FC<{
               type="checkbox"
               checked={isAllYearsSelected}
               onChange={() => onToggle('all')}
-              className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <span>All</span>
           </label>
@@ -165,7 +171,7 @@ const YearFilterDropdown: React.FC<{
                 type="checkbox"
                 checked={yearFilter.has(year)}
                 onChange={() => onToggle(year)}
-                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span>{year}</span>
             </label>
@@ -193,6 +199,10 @@ const FilterBar: React.FC<FilterBarProps> = ({
   isAllYearsSelected,
   selectedYearSummary,
   onToggleYear,
+  orderFilter,
+  onOrderFilterChange,
+  limitFilter,
+  onLimitFilterChange,
 }) => {
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -219,6 +229,36 @@ const FilterBar: React.FC<FilterBarProps> = ({
         selectedYearSummary={selectedYearSummary}
         onToggle={onToggleYear}
       />
+
+      {onOrderFilterChange && (
+        <select
+          className={`${btnToggleBase} bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none min-h-[38px]`}
+          value={orderFilter}
+          onChange={(e) => onOrderFilterChange(e.target.value as any)}
+          title="Order of matching questions"
+        >
+          <option value="newest">New → old (default)</option>
+          <option value="oldest">Old → new</option>
+          <option value="random">Random / shuffle</option>
+        </select>
+      )}
+
+      {onLimitFilterChange && (
+        <input
+          type="number"
+          min="1"
+          placeholder="Max questions"
+          className={`${btnToggleBase} bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 w-32 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none min-h-[38px]`}
+          value={limitFilter}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === '' || (Number(val) >= 1 && !val.includes('-'))) {
+              onLimitFilterChange(val);
+            }
+          }}
+          title="Leave empty to show all matches"
+        />
+      )}
     </div>
   );
 };
