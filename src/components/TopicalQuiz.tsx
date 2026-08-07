@@ -1192,7 +1192,7 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
           <div className="w-full border-2 border-gray-300 dark:border-gray-600 rounded-lg p-1 bg-gray-50 dark:bg-gray-900 overflow-hidden">
             {currentQ.questionContent ? (
               <QuestionViewTracker questionId={currentQ.id}>
-                <div className="w-full max-h-[60vh] overflow-y-auto overflow-x-hidden">
+                <div className="w-full  aspect-[2/2] overflow-y-auto overflow-x-hidden">
                   <MediaViewer
                     url={currentQ.questionContent}
                     type={(currentQ.questionContentType || 'pdf') as 'pdf' | 'image'}

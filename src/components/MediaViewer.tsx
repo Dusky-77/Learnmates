@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Pen } from 'lucide-react';
+import { Pen, Maximize2 } from 'lucide-react';
 import { pdfjs, pdfGetDocumentOptions } from '../utils/pdfjsConfig';
 import { resolveFromR2, fetchR2AsBlobUrl, getAssetAuthHeaders } from '../utils/r2Utils';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 interface MediaViewerProps {
   url: string;
@@ -76,7 +77,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
   const [numPages, setNumPages] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const ZOOM_SCALE = 3.0;
-  const pdfRef = useRef<any>(null);
+  const pdfRef = useRef<PDFDocumentProxy | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const renderedPagesRef = useRef<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +95,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
     try {
       const v = localStorage.getItem(STORAGE_PEN_KEY);
       return v ? Number(v) : 3;
-    } catch (e) {
+    } catch {
       return 3;
     }
   });
@@ -102,7 +103,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
     try {
       const v = localStorage.getItem(STORAGE_ERASER_KEY);
       return v ? Number(v) : 20;
-    } catch (e) {
+    } catch {
       return 20;
     }
   });
@@ -111,31 +112,23 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
     try {
       const c = localStorage.getItem(STORAGE_COLOR_KEY);
       if (c) setDrawColor(c);
-    } catch (e) {
+    } catch {
       // ignore
     }
   }, []);
   const [currentDrawingPageNum, setCurrentDrawingPageNum] = useState<number | null>(null);
   // viewer always shows primary content (question). Parent handles mark-scheme pane.
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageLoadAttempt, setImageLoadAttempt] = useState(0);
   const imageFallbackUrlRef = useRef<string>('');
 
   // Minimum width (px) required before annotation is enabled; below this, annotation is disabled
   const MIN_ANNOTATION_WIDTH_PX = 360;
   const [canAnnotate, setCanAnnotate] = useState(true);
-  // Zoom modal state (opens via long-press or double-click/double-tap)
+  // Zoom modal state (opens via the Large View button overlay)
   const [zoomOpen, setZoomOpen] = useState(false);
 
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const pdfCanvasObserverRef = useRef<ResizeObserver | null>(null);
-
-  // Gesture detection: long-press and double-tap
-  const LONG_PRESS_MS = 600;
-  const DOUBLE_TAP_MS = 300;
-  const longPressTimerRef = useRef<number | null>(null);
-  const lastTapRef = useRef<number | null>(null);
-  const longPressActiveRef = useRef(false);
 
   // Zoom modal refs/state (view-only)
   const zoomImageRef = useRef<HTMLImageElement | null>(null);
@@ -145,10 +138,15 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
   const [modalMode, setModalMode] = useState<'question' | 'markscheme'>('question');
   const [modalQuestionIndex, setModalQuestionIndex] = useState<number>(0);
   const modalWrapperRef = useRef<HTMLDivElement | null>(null);
-  const [modalImageWidth, setModalImageWidth] = useState<number | null>(null);
   const modalContentRef = useRef<HTMLDivElement | null>(null);
   const [modalZoom, setModalZoom] = useState<number>(1);
   const [topicTags, setTopicTags] = useState<string[]>([]);
+
+  // Modal (Large View) annotation state
+  const [modalAnnotate, setModalAnnotate] = useState(false);
+  const modalCanvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
+  const modalImgRefs = useRef<Map<number, HTMLImageElement>>(new Map());
+  const modalDrawingPageRef = useRef<number | null>(null);
 
   // Sync external annotation mode when provided (mainly when toolbar is hidden)
   useEffect(() => {
@@ -161,23 +159,6 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
   // Helper to remove file extension
   const removeExtension = (url: string): string => {
     return url.replace(/\.(pdf|png|jpg|jpeg|gif|webp)$/i, '');
-  };
-
-  // Helper to try loading image with different extensions
-  const tryImageWithExtensions = (baseUrl: string, attempt: number = 0) => {
-    const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
-    
-    if (attempt < imageExtensions.length) {
-      const ext = imageExtensions[attempt];
-      const withoutExt = removeExtension(baseUrl);
-      const newUrl = `${withoutExt}.${ext}`;
-      
-      console.log(`Trying extension ${attempt}: ${newUrl}`);
-      if (imageRef.current) {
-        imageFallbackUrlRef.current = newUrl;
-        imageRef.current.src = newUrl;
-      }
-    }
   };
 
   // Load topic tags from info.json
@@ -218,7 +199,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
         
         // Find the entry that matches this file name
         const matchingEntry = Array.isArray(infoData) 
-          ? infoData.find((item: any) => item.file_name === baseFileName)
+          ? infoData.find((item) => item.file_name === baseFileName)
           : null;
         
         if (matchingEntry && Array.isArray(matchingEntry.topic_matches)) {
@@ -248,8 +229,8 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
     const signal = abortControllerRef.current.signal;
 
     const load = async () => {
-      let currentUrl = effectiveUrl;
-      let currentType = effectiveType;
+      const currentUrl = effectiveUrl;
+      const currentType = effectiveType;
       
       try {
         setLoading(true);
@@ -282,7 +263,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
             pdfUrl = new URL(pdfUrl, window.location.origin).href;
           }
 
-          let pdf: any = null;
+          let pdf: PDFDocumentProxy | null = null;
           if (shouldUseR2(currentUrl) && !disableR2) {
             const r2Url = await resolveFromR2(currentUrl);
             if (!r2Url) {
@@ -327,7 +308,6 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
           // Image - for Questions paths, try R2 first
           setNumPages(1);
           setImageLoaded(false);
-          setImageLoadAttempt(0); // Reset attempts for new image
           imageFallbackUrlRef.current = removeExtension(currentUrl); // Store base URL without extension
           
           if (shouldUseR2(currentUrl) && !disableR2) {
@@ -358,23 +338,23 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
             imageRef.current.src = currentUrl;
           }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (signal.aborted) return;
+        const errMsg = err instanceof Error ? err.message : String(err);
 
         // If PDF parsing fails for a managed asset, surface the direct R2 error instead of falling back to the legacy host.
         if (currentType === 'pdf' && shouldUseR2(currentUrl)) {
-          console.error('[MediaViewer] Managed asset load failed:', err?.message || err);
-          setError(`Failed to load managed asset from R2: ${err?.message || String(err)}`);
+          console.error('[MediaViewer] Managed asset load failed:', errMsg);
+          setError(`Failed to load managed asset from R2: ${errMsg}`);
           return;
         }
         
         // If PDF parsing fails (or R2 fallback failed), try treating it as an image instead
         if (currentType === 'pdf') {
-          console.warn('PDF parsing failed, attempting to load as image:', err?.message);
+          console.warn('PDF parsing failed, attempting to load as image:', errMsg);
           try {
             setNumPages(1);
             setImageLoaded(false);
-            setImageLoadAttempt(0); // Reset image load attempts
             
             // Extract base URL without extension
             const baseUrl = removeExtension(currentUrl);
@@ -388,12 +368,12 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
             }
             setError(null);
             return;
-          } catch (imageErr) {
+          } catch {
             // Both PDF and image load failed
           }
         }
         
-        const errorMsg = err?.message || String(err);
+        const errorMsg = errMsg;
         setError(`Failed to load: ${errorMsg}`);
         console.error('Error loading:', err);
       } finally {
@@ -415,7 +395,6 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
   useEffect(() => {
     // reset draw mode when content changes but keep user's chosen sizes/colors
     setDrawMode('pen');
-    setImageLoadAttempt(0); // Reset image load attempt for new URLs
     imageFallbackUrlRef.current = ''; // Reset fallback URL
   }, [url, type]);
 
@@ -499,7 +478,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       localStorage.setItem(STORAGE_PEN_KEY, String(penSize));
       localStorage.setItem(STORAGE_ERASER_KEY, String(eraserSize));
       localStorage.setItem(STORAGE_COLOR_KEY, drawColor);
-    } catch (e) {
+    } catch {
       // ignore storage errors
     }
   }, [penSize, eraserSize, drawColor]);
@@ -508,59 +487,32 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
   useEffect(() => {
     const annotationToRestore = markSchemeOpen ? savedMarkSchemeAnnotation : savedAnnotation;
     if (!annotationToRestore) return;
-    
+
     // Delay restoration to allow canvases to be properly sized
     const restoreTimer = setTimeout(() => {
-      // For PDFs: restore to the first page's annotation canvas
-      const firstPageRef = canvasRefsMap.current.get(1);
-      if (firstPageRef?.annotationCanvas) {
-        const canvas = firstPageRef.annotationCanvas;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          const img = new Image();
-          img.onload = () => {
-            // Draw saved annotation into the annotation canvas, scaled to canvas size
-            try {
-              ctx.clearRect(0, 0, canvas.width, canvas.height);
-              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            } catch (e) {
-              // fallback to default draw
-              ctx.drawImage(img, 0, 0);
-            }
-          };
-          img.onerror = () => console.warn('Failed to restore annotation');
-          img.src = annotationToRestore;
+      // Make sure annotation canvases match the page canvases before drawing
+      canvasRefsMap.current.forEach((pageRef) => {
+        if (pageRef.canvas && pageRef.annotationCanvas && pageRef.canvas.width > 0
+          && pageRef.annotationCanvas.width !== pageRef.canvas.width) {
+          pageRef.annotationCanvas.width = pageRef.canvas.width;
+          pageRef.annotationCanvas.height = pageRef.canvas.height;
         }
+      });
+      if (effectiveType === 'image' && imageRef.current && annotationCanvasRef.current
+        && imageRef.current.naturalWidth > 0) {
+        annotationCanvasRef.current.width = imageRef.current.naturalWidth;
+        annotationCanvasRef.current.height = imageRef.current.naturalHeight;
       }
-      
-      // For images: restore to image annotation canvas
-      if (annotationCanvasRef.current && imageLoaded) {
-        const canvas = annotationCanvasRef.current;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          const img = new Image();
-          img.onload = () => {
-            try {
-              ctx.clearRect(0, 0, canvas.width, canvas.height);
-              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            } catch (e) {
-              ctx.drawImage(img, 0, 0);
-            }
-          };
-          img.onerror = () => console.warn('Failed to restore annotation');
-          img.src = annotationToRestore;
-        }
-      }
+      restoreAnnotationToPageCanvases(annotationToRestore);
     }, 50);
-    
+
     return () => clearTimeout(restoreTimer);
   }, [savedAnnotation, savedMarkSchemeAnnotation, imageLoaded, numPages, markSchemeOpen, annotationMode]);
 
   useEffect(() => {
-    if (!annotationMode) return;
     setTimeout(() => {
       canvasRefsMap.current.forEach((pageRef) => {
-        if (pageRef.canvas && pageRef.annotationCanvas) {
+        if (pageRef.canvas && pageRef.annotationCanvas && pageRef.canvas.width > 0) {
           pageRef.annotationCanvas.width = pageRef.canvas.width;
           pageRef.annotationCanvas.height = pageRef.canvas.height;
         }
@@ -589,10 +541,12 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
 
         // Save current annotation before rendering new PDF
         let savedAnnotationData: string | null = null;
-        const firstPageRef = canvasRefsMap.current.get(1);
-        if (firstPageRef?.annotationCanvas) {
-          savedAnnotationData = firstPageRef.annotationCanvas.toDataURL();
+        try {
+          savedAnnotationData = compositeMainAnnotations();
+        } catch {
+          savedAnnotationData = null;
         }
+        const currentPropAnnotation = markSchemeOpen ? savedMarkSchemeAnnotation : savedAnnotation;
 
         // Render page 1 first for immediate visual feedback
         const firstPageRef_render = canvasRefsMap.current.get(1);
@@ -645,15 +599,8 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
         }
 
         // Restore annotation after rendering
-        if (savedAnnotationData && firstPageRef?.annotationCanvas) {
-          const ctx = firstPageRef.annotationCanvas.getContext('2d');
-          if (ctx) {
-            const img = new Image();
-            img.onload = () => {
-              if (!signal?.aborted) ctx.drawImage(img, 0, 0);
-            };
-            img.src = savedAnnotationData;
-          }
+        if (savedAnnotationData || currentPropAnnotation) {
+          restoreAnnotationToPageCanvases(savedAnnotationData || (currentPropAnnotation as string));
         }
 
         setError(null);
@@ -828,11 +775,14 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
     lastPointRef.current = null;
     
     // Save annotation after stroke ends
-    const canvas = effectiveType === 'pdf'
-      ? canvasRefsMap.current.get(1)?.annotationCanvas
-      : annotationCanvasRef.current;
-    if (canvas) {
-      const data = canvas.toDataURL();
+    let data: string | null = null;
+    if (effectiveType === 'pdf') {
+      data = compositeMainAnnotations();
+    } else {
+      const canvas = annotationCanvasRef.current;
+      if (canvas) data = canvas.toDataURL();
+    }
+    if (data) {
       if (markSchemeOpen) {
         if (onSaveMarkSchemeAnnotation) onSaveMarkSchemeAnnotation(data);
       } else {
@@ -978,6 +928,312 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
     stopDrawing();
   };
 
+  // --- Modal (Large View) annotation ---
+  const getModalCoords = (e: React.MouseEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width || 1);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height || 1);
+    return { x, y };
+  };
+
+  const strokeModalSegment = (ctx: CanvasRenderingContext2D, from: { x: number; y: number }, to: { x: number; y: number }, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const scale = canvas.width / rect.width || 1;
+    if (drawMode === 'pen') {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = drawColor;
+      ctx.lineWidth = penSize * scale;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      if (from.x === to.x && from.y === to.y) {
+        ctx.beginPath();
+        ctx.arc(to.x, to.y, (penSize / 2) * scale, 0, 2 * Math.PI);
+        ctx.fillStyle = drawColor;
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+    } else {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth = eraserSize * scale;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  };
+
+  const sizeModalCanvas = (index: number) => {
+    const canvas = modalCanvasRefs.current.get(index);
+    const imgEl = modalImgRefs.current.get(index);
+    if (canvas && imgEl && imgEl.naturalWidth && imgEl.naturalHeight) {
+      if (canvas.width !== imgEl.naturalWidth || canvas.height !== imgEl.naturalHeight) {
+        canvas.width = imgEl.naturalWidth;
+        canvas.height = imgEl.naturalHeight;
+      }
+    }
+  };
+
+  const startModalDrawing = (e: React.MouseEvent<HTMLCanvasElement>, index: number) => {
+    if (!modalAnnotate) return;
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    modalDrawingPageRef.current = index;
+    const canvas = modalCanvasRefs.current.get(index);
+    if (!canvas) return;
+    const { x, y } = getModalCoords(e, canvas);
+    lastPointRef.current = { x, y };
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+  };
+
+  const drawModal = (e: React.MouseEvent<HTMLCanvasElement>, index: number) => {
+    if (modalDrawingPageRef.current !== index || !lastPointRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const canvas = modalCanvasRefs.current.get(index);
+    if (!canvas) return;
+    const { x, y } = getModalCoords(e, canvas);
+    const ctx = canvas.getContext('2d');
+    if (ctx && lastPointRef.current) {
+      strokeModalSegment(ctx, lastPointRef.current, { x, y }, canvas);
+    }
+    lastPointRef.current = { x, y };
+  };
+
+  const stopModalDrawing = () => {
+    if (modalDrawingPageRef.current === null) return;
+    modalDrawingPageRef.current = null;
+    lastPointRef.current = null;
+    // Save the combined annotation layer back to the parent
+    const combined = compositeModalAnnotations();
+    if (combined) {
+      if (modalMode === 'question') {
+        if (onSaveAnnotation) onSaveAnnotation(combined);
+      } else {
+        if (onSaveMarkSchemeAnnotation) onSaveMarkSchemeAnnotation(combined);
+      }
+    }
+  };
+
+  const startModalDrawingTouch = (e: React.TouchEvent<HTMLCanvasElement>, index: number) => {
+    if (!modalAnnotate) return;
+    e.preventDefault();
+    e.stopPropagation();
+    modalDrawingPageRef.current = index;
+    const canvas = modalCanvasRefs.current.get(index);
+    if (!canvas) return;
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = (touch.clientX - rect.left) * (canvas.width / rect.width || 1);
+    const y = (touch.clientY - rect.top) * (canvas.height / rect.height || 1);
+    lastPointRef.current = { x, y };
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+  };
+
+  const drawModalTouch = (e: React.TouchEvent<HTMLCanvasElement>, index: number) => {
+    if (modalDrawingPageRef.current !== index || !lastPointRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const canvas = modalCanvasRefs.current.get(index);
+    if (!canvas) return;
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = (touch.clientX - rect.left) * (canvas.width / rect.width || 1);
+    const y = (touch.clientY - rect.top) * (canvas.height / rect.height || 1);
+    const ctx = canvas.getContext('2d');
+    if (ctx && lastPointRef.current) {
+      strokeModalSegment(ctx, lastPointRef.current, { x, y }, canvas);
+    }
+    lastPointRef.current = { x, y };
+  };
+
+  // Combine the modal page annotation canvases into one full-height annotation layer
+  const compositeModalAnnotations = (): string | null => {
+    const canvases = Array.from(modalCanvasRefs.current.keys())
+      .sort((a, b) => a - b)
+      .map((i) => modalCanvasRefs.current.get(i))
+      .filter((c): c is HTMLCanvasElement => !!c);
+    if (canvases.length === 0) return null;
+
+    const totalW = Math.max(...canvases.map((c) => c.width));
+    const totalH = canvases.reduce((sum, c) => sum + c.height, 0);
+    const out = document.createElement('canvas');
+    out.width = totalW;
+    out.height = totalH;
+    const octx = out.getContext('2d');
+    if (!octx) return null;
+
+    let y = 0;
+    for (const c of canvases) {
+      octx.drawImage(c, 0, y, c.width, c.height);
+      y += c.height;
+    }
+    return out.toDataURL('image/png');
+  };
+
+  // Restore the saved annotation layer into the modal canvases (sliced per page)
+  const restoreModalAnnotations = () => {
+    const ann = modalMode === 'question' ? savedAnnotation : savedMarkSchemeAnnotation;
+    if (!ann) return;
+    const keys = Array.from(modalCanvasRefs.current.keys()).sort((a, b) => a - b);
+    if (keys.length === 0) return;
+    const img = new Image();
+    img.onload = () => {
+      const first = modalCanvasRefs.current.get(keys[0]);
+      if (!first) return;
+      // Single-frame annotation: draw whole layer on the first page
+      if (keys.length === 1 || img.height <= first.height + 2) {
+        const canvas = first;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        }
+        return;
+      }
+      // Tall per-page-stacked layer: slice each page's band proportionally
+      const totalH = keys.reduce((sum, k) => {
+        const c = modalCanvasRefs.current.get(k);
+        return sum + (c ? c.height : 0);
+      }, 0);
+      if (totalH === 0) return;
+      let y = 0;
+      for (const k of keys) {
+        const canvas = modalCanvasRefs.current.get(k);
+        if (!canvas) continue;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) continue;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const srcY = Math.round(img.height * (y / totalH));
+        const srcH = Math.round(img.height * (canvas.height / totalH));
+        if (srcH > 0) {
+          ctx.drawImage(img, 0, srcY, img.width, srcH, 0, 0, canvas.width, canvas.height);
+        }
+        y += canvas.height;
+      }
+    };
+    img.src = ann;
+  };
+
+  // Size + restore modal annotation canvases whenever modal content is ready
+  const refreshModalAnnotations = () => {
+    modalCanvasRefs.current.forEach((_, i) => sizeModalCanvas(i));
+    restoreModalAnnotations();
+  };
+  useEffect(() => {
+    if (!zoomOpen) return;
+    const t = setTimeout(refreshModalAnnotations, 60);
+    return () => clearTimeout(t);
+  }, [zoomOpen, modalPages, zoomImageSrc]);
+
+  const clearModalAnnotations = () => {
+    modalCanvasRefs.current.forEach((canvas) => {
+      const ctx = canvas.getContext('2d');
+      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+    // Persist the cleared annotation layer
+    const combined = compositeModalAnnotations();
+    if (combined) {
+      if (modalMode === 'question') {
+        if (onSaveAnnotation) onSaveAnnotation(combined);
+      } else {
+        if (onSaveMarkSchemeAnnotation) onSaveMarkSchemeAnnotation(combined);
+      }
+    }
+  };
+
+  // --- Main viewer annotation layer helpers (per-page slicing) ---
+
+  // Stack all PDF page annotation canvases into one tall annotation layer
+  const compositeMainAnnotations = (): string | null => {
+    const canvases = Array.from(canvasRefsMap.current.entries())
+      .filter(([, ref]) => ref.annotationCanvas)
+      .sort(([a], [b]) => a - b)
+      .map(([, ref]) => ref.annotationCanvas as HTMLCanvasElement);
+    if (canvases.length === 0) return null;
+    const totalW = Math.max(...canvases.map((c) => c.width));
+    const totalH = canvases.reduce((sum, c) => sum + c.height, 0);
+    const out = document.createElement('canvas');
+    out.width = totalW;
+    out.height = totalH;
+    const octx = out.getContext('2d');
+    if (!octx) return null;
+    let y = 0;
+    for (const c of canvases) {
+      octx.drawImage(c, 0, y, c.width, c.height);
+      y += c.height;
+    }
+    return out.toDataURL('image/png');
+  };
+
+  // Restore a (possibly tall, per-page-stacked) annotation layer into the main viewer canvases
+  const restoreAnnotationToPageCanvases = (annotationData: string) => {
+    if (effectiveType === 'image') {
+      const canvas = annotationCanvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      const img = new Image();
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      };
+      img.onerror = () => console.warn('Failed to restore annotation');
+      img.src = annotationData;
+      return;
+    }
+
+    const refs = Array.from(canvasRefsMap.current.entries())
+      .filter(([, ref]) => ref.annotationCanvas)
+      .sort(([a], [b]) => a - b);
+    if (refs.length === 0) return;
+    const img = new Image();
+    img.onload = () => {
+      const firstCanvas = refs[0][1].annotationCanvas as HTMLCanvasElement;
+      // Single-frame annotation (e.g. saved by the main viewer): draw whole layer on the first page
+      if (refs.length === 1 || img.height <= firstCanvas.height + 2) {
+        const ctx = firstCanvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, firstCanvas.width, firstCanvas.height);
+          ctx.drawImage(img, 0, 0, firstCanvas.width, firstCanvas.height);
+        }
+        return;
+      }
+      // Tall per-page-stacked layer: slice each page's band proportionally
+      const totalH = refs.reduce((sum, [, ref]) => sum + (ref.annotationCanvas as HTMLCanvasElement).height, 0);
+      if (totalH === 0) return;
+      let y = 0;
+      for (const [, ref] of refs) {
+        const canvas = ref.annotationCanvas as HTMLCanvasElement;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) continue;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const srcY = Math.round(img.height * (y / totalH));
+        const srcH = Math.round(img.height * (canvas.height / totalH));
+        if (srcH > 0) {
+          ctx.drawImage(img, 0, srcY, img.width, srcH, 0, 0, canvas.width, canvas.height);
+        }
+        y += canvas.height;
+      }
+    };
+    img.onerror = () => console.warn('Failed to restore annotation');
+    img.src = annotationData;
+  };
+
   // --- Zoom modal helpers ---
   const absUrl = (u: string) => u.startsWith('/') ? new URL(u, window.location.origin).href : u;
 
@@ -1042,48 +1298,16 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
   };
 
   const closeZoomModal = () => {
-    // View-only modal: don't save or change annotations from within the zoom view
     setZoomOpen(false);
     setModalZoom(1); // Reset zoom when closing modal
+    setModalAnnotate(false);
+    modalDrawingPageRef.current = null;
+    lastPointRef.current = null;
+    modalCanvasRefs.current.clear();
+    modalImgRefs.current.clear();
     // If main content is too small, disable annotation mode
     if (!canAnnotate) setAnnotationMode(false);
   }; 
-
-  // Gesture handlers (mouse & touch) to open zoom modal
-  const startLongPress = (e?: React.MouseEvent | React.TouchEvent) => {
-    if (annotationMode) return; // don't intercept drawing
-    longPressActiveRef.current = false;
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    longPressTimerRef.current = window.setTimeout(() => {
-      longPressActiveRef.current = true;
-      openZoomModal();
-    }, LONG_PRESS_MS);
-  };
-
-  const cancelLongPress = () => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    longPressActiveRef.current = false;
-  };
-
-  const handleDoubleTap = () => {
-    if (annotationMode) return;
-    const now = Date.now();
-    if (lastTapRef.current && (now - lastTapRef.current) < DOUBLE_TAP_MS) {
-      // double-tap detected
-      openZoomModal();
-      lastTapRef.current = null;
-    } else {
-      lastTapRef.current = now;
-    }
-  };
-
-  // Zoom modal is view-only: drawing in the zoom modal has been removed to avoid duplicate/accidental annotations.
 
   // Load PDF pages for modal - same as normal but with higher zoom
   const loadPdfPagesForModal = async (pdfUrl: string) => {
@@ -1095,7 +1319,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
         url = new URL(url, window.location.origin).href;
       }
       
-      let pdf: any;
+      let pdf: PDFDocumentProxy;
       
       if (shouldUseR2(pdfUrl) && !disableR2) {
         const r2Url = await resolveFromR2(pdfUrl);
@@ -1144,8 +1368,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
           if (ctx) {
             // Use the original viewport but set exact canvas dimensions
             // This ensures pdfjs renders all pages consistently at the same pixel width
-            const renderContext: any = { canvasContext: ctx, viewport };
-            await (page as any).render(renderContext).promise;
+            await page.render({ canvasContext: ctx, viewport }).promise;
             const data = canvas.toDataURL('image/png');
             setModalPages(prev => [...prev, data]);
           }
@@ -1171,7 +1394,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
         url = new URL(url, window.location.origin).href;
       }
       
-      let pdf: any;
+      let pdf: PDFDocumentProxy;
       
       if (shouldUseR2(pdfUrl) && !disableR2) {
         const r2Url = await resolveFromR2(pdfUrl);
@@ -1203,8 +1426,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
           canvas.height = Math.max(1, Math.floor(viewport.height));
           const ctx = canvas.getContext('2d');
           if (ctx) {
-            const renderContext: any = { canvasContext: ctx, viewport };
-            await (page as any).render(renderContext).promise;
+            await page.render({ canvasContext: ctx, viewport }).promise;
             const data = canvas.toDataURL('image/png');
             setModalPages(prev => [...prev, data]);
           }
@@ -1273,38 +1495,6 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
     return () => window.removeEventListener('keydown', onKey);
   }, [zoomOpen, modalQuestionIndex, modalMode, questionList, onChangeQuestion]);
   
-  // Compute a consistent modal image width so all pages render at the same width
-  useEffect(() => {
-    if (!zoomOpen) {
-      setModalImageWidth(null);
-      return;
-    }
-
-    const compute = () => {
-      try {
-        const wrapper = modalWrapperRef.current;
-        let avail = Math.min(window.innerWidth * 0.95, 1200);
-        if (wrapper) {
-          const rect = wrapper.getBoundingClientRect();
-          avail = Math.min(rect.width, avail);
-        }
-        // subtract internal paddings/margins to find content width
-        const target = Math.max(320, Math.floor(avail - 48));
-        setModalImageWidth(target);
-      } catch (e) {
-        setModalImageWidth(Math.min(900, Math.floor(window.innerWidth * 0.9)));
-      }
-    };
-
-    compute();
-    const ro = new ResizeObserver(compute);
-    if (modalWrapperRef.current) ro.observe(modalWrapperRef.current);
-    window.addEventListener('resize', compute);
-    return () => {
-      try { ro.disconnect(); } catch (e) {}
-      window.removeEventListener('resize', compute);
-    };
-  }, [zoomOpen, modalPages.length]);
   const clearAnnotations = () => {
     canvasRefsMap.current.forEach((pageRef) => {
       if (pageRef.annotationCanvas) {
@@ -1318,6 +1508,21 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       const ctx = annotationCanvasRef.current.getContext('2d');
       if (ctx) {
         ctx.clearRect(0, 0, annotationCanvasRef.current.width, annotationCanvasRef.current.height);
+      }
+    }
+    // Persist the cleared annotation layer so it stays cleared
+    let data: string | null = null;
+    if (effectiveType === 'pdf') {
+      data = compositeMainAnnotations();
+    } else {
+      const canvas = annotationCanvasRef.current;
+      if (canvas) data = canvas.toDataURL();
+    }
+    if (data) {
+      if (markSchemeOpen) {
+        if (onSaveMarkSchemeAnnotation) onSaveMarkSchemeAnnotation(data);
+      } else {
+        if (onSaveAnnotation) onSaveAnnotation(data);
       }
     }
   }; 
@@ -1445,10 +1650,10 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
         </div>
       )}
 
-      {/* Zoom Modal (in-app, opens via long-press or double-click) */}
+      {/* Zoom Modal (in-app, opens via the Large View button) */}
       {zoomOpen && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black bg-opacity-60 p-6">
-          <div ref={modalWrapperRef} className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden max-w-[95vw] max-h-[95vh] w-full" style={{ maxWidth: 1200 }}>
+          <div ref={modalWrapperRef} className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden max-w-[90vw] max-h-[90vh] w-full">
                   <div className="p-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
                 <h3 className="text-lg font-semibold">Large View</h3>
@@ -1531,6 +1736,20 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
                   </button>
                 )}
 
+                {/* Annotate toggle inside modal */}
+                <button
+                  onClick={() => setModalAnnotate(prev => !prev)}
+                  className={`flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm md:text-base transition-colors ${
+                    modalAnnotate
+                      ? 'bg-purple-500 text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                  title="Toggle annotation mode"
+                >
+                  <Pen className="w-4 h-4" />
+                  Annotate
+                </button>
+
                 {/* Zoom controls */}
                 <button
                   onClick={() => setModalZoom(prev => Math.max(0.5, prev - 0.1))}
@@ -1552,10 +1771,71 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
               </div>
             </div>
 
+            {/* Modal annotation toolbar */}
+            {modalAnnotate && (
+              <div className="bg-gray-300 dark:bg-gray-700 p-2 flex flex-wrap items-center gap-2 border-b border-gray-400 dark:border-gray-600">
+                <button
+                  onClick={() => setDrawMode('pen')}
+                  className={`px-2 py-1 rounded text-sm ${
+                    drawMode === 'pen'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200'
+                  }`}
+                >
+                  Pen
+                </button>
+                <button
+                  onClick={() => setDrawMode('eraser')}
+                  className={`px-2 py-1 rounded text-sm ${
+                    drawMode === 'eraser'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200'
+                  }`}
+                >
+                  Eraser
+                </button>
+                <label className="flex items-center gap-1 text-xs">
+                  <span>Size</span>
+                  <input
+                    type="range"
+                    min={1}
+                    max={20}
+                    value={penSize}
+                    onChange={e => setPenSize(Number(e.target.value))}
+                    disabled={drawMode !== 'pen'}
+                  />
+                </label>
+                <label className="flex items-center gap-1 text-xs">
+                  <span>Eraser</span>
+                  <input
+                    type="range"
+                    min={5}
+                    max={60}
+                    value={eraserSize}
+                    onChange={e => setEraserSize(Number(e.target.value))}
+                    disabled={drawMode !== 'eraser'}
+                  />
+                </label>
+                <input
+                  type="color"
+                  value={drawColor}
+                  onChange={(e) => setDrawColor(e.target.value)}
+                  className="w-8 h-8 cursor-pointer rounded"
+                  title="Pen color"
+                />
+                <button
+                  onClick={clearModalAnnotations}
+                  className="px-2 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
             <div 
               ref={modalContentRef} 
               className="p-4 overflow-auto flex flex-col items-center justify-start" 
-              style={{ minHeight: 320, maxHeight: '72vh' }}
+              style={{ minHeight: 320, maxHeight: 'calc(90vh - 80px)' }}
             >
               {modalLoading ? (
                 <div className="text-center text-gray-500">Loading pages…</div>
@@ -1571,33 +1851,109 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
                     const widthRem = 2 * marginMultiplier;
                     
                     return (
-                      <img
-                        key={i}
-                        src={p}
-                        alt={`Page ${i + 1}`}
-                        className="block"
-                        style={{
-                          maxWidth: `calc(100% - max(${widthVw}vw, ${widthRem}rem))`,
-                          height: 'auto',
-                          marginLeft: `max(${marginVw}vw, ${marginRem}rem)`,
-                          marginRight: `max(${marginVw}vw, ${marginRem}rem)`
-                        }}
-                      />
+                      <div key={i} className="relative" style={{
+                        maxWidth: `calc(100% - max(${widthVw}vw, ${widthRem}rem))`,
+                        marginLeft: `max(${marginVw}vw, ${marginRem}rem)`,
+                        marginRight: `max(${marginVw}vw, ${marginRem}rem)`
+                      }}>
+                        <img
+                          src={p}
+                          alt={`Page ${i + 1}`}
+                          ref={(el) => {
+                            if (el) {
+                              modalImgRefs.current.set(i, el);
+                              sizeModalCanvas(i);
+                            } else {
+                              modalImgRefs.current.delete(i);
+                            }
+                          }}
+                          onLoad={() => { sizeModalCanvas(i); setTimeout(refreshModalAnnotations, 0); }}
+                          className="block"
+                          style={{
+                            maxWidth: '100%',
+                            height: 'auto',
+                            display: 'block'
+                          }}
+                        />
+                        <canvas
+                          ref={(el) => {
+                            if (el) {
+                              modalCanvasRefs.current.set(i, el);
+                              sizeModalCanvas(i);
+                            } else {
+                              modalCanvasRefs.current.delete(i);
+                            }
+                          }}
+                          className={`absolute top-0 left-0 ${modalAnnotate ? 'cursor-crosshair' : 'pointer-events-none'}`}
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            height: '100%',
+                            zIndex: 10
+                          }}
+                          onMouseDown={(e) => startModalDrawing(e, i)}
+                          onMouseMove={(e) => drawModal(e, i)}
+                          onMouseUp={(e) => { e.stopPropagation(); stopModalDrawing(); }}
+                          onMouseLeave={(e) => { e.stopPropagation(); stopModalDrawing(); }}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                          onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                          onTouchStart={(e) => startModalDrawingTouch(e, i)}
+                          onTouchMove={(e) => drawModalTouch(e, i)}
+                          onTouchEnd={(e) => { e.stopPropagation(); stopModalDrawing(); }}
+                          onTouchCancel={(e) => { e.stopPropagation(); stopModalDrawing(); }}
+                        />
+                      </div>
                     );
                   })}
                 </div>
               ) : zoomImageSrc ? (
                 <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
                   <img
-                    ref={zoomImageRef}
+                    ref={(el) => {
+                      zoomImageRef.current = el;
+                      if (el) {
+                        modalImgRefs.current.set(0, el);
+                        sizeModalCanvas(0);
+                      } else {
+                        modalImgRefs.current.delete(0);
+                      }
+                    }}
                     src={zoomImageSrc}
                     alt="Zoomed content"
+                    onLoad={() => { sizeModalCanvas(0); setTimeout(refreshModalAnnotations, 0); }}
                     className="block"
                     style={{
                       maxWidth: '100%',
                       height: 'auto',
                       maxHeight: '80vh'
                     }}
+                  />
+                  <canvas
+                    ref={(el) => {
+                      if (el) {
+                        modalCanvasRefs.current.set(0, el);
+                        sizeModalCanvas(0);
+                      } else {
+                        modalCanvasRefs.current.delete(0);
+                      }
+                    }}
+                    className={`absolute top-0 left-0 ${modalAnnotate ? 'cursor-crosshair' : 'pointer-events-none'}`}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      height: '100%',
+                      zIndex: 10
+                    }}
+                    onMouseDown={(e) => startModalDrawing(e, 0)}
+                    onMouseMove={(e) => drawModal(e, 0)}
+                    onMouseUp={(e) => { e.stopPropagation(); stopModalDrawing(); }}
+                    onMouseLeave={(e) => { e.stopPropagation(); stopModalDrawing(); }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onTouchStart={(e) => startModalDrawingTouch(e, 0)}
+                    onTouchMove={(e) => drawModalTouch(e, 0)}
+                    onTouchEnd={(e) => { e.stopPropagation(); stopModalDrawing(); }}
+                    onTouchCancel={(e) => { e.stopPropagation(); stopModalDrawing(); }}
                   />
                 </div>
               ) : (
@@ -1672,12 +2028,13 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       )}
 
       {/* Content Container */}
-      <div
-        ref={pagesContainerRef}
-        data-type={markSchemeOpen ? 'marking_scheme' : 'question'}
-        className={`flex-1 min-h-0 w-full bg-gray-50 dark:bg-gray-950 p-0 overflow-y-auto overflow-x-hidden`}
-        style={{ minHeight: 0 }}
-      >
+      <div className="relative flex-1 min-h-0 w-full">
+        <div
+          ref={pagesContainerRef}
+          data-type={markSchemeOpen ? 'marking_scheme' : 'question'}
+          className={`h-full w-full bg-gray-50 dark:bg-gray-950 p-0 overflow-y-auto overflow-x-hidden`}
+          style={{ minHeight: 0 }}
+        >
         <div className="flex flex-col gap-2 items-start w-full justify-start">
           {effectiveType === 'pdf' && numPages ? (
             Array.from({ length: numPages }, (_, i) => i + 1).map((pageNum) => {
@@ -1690,14 +2047,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
 
               return (
                 <div key={pageNum} className="relative inline-block">
-                  <div style={{ position: 'relative', display: 'inline-block' }}
-                     onMouseDown={(e) => { if (!annotationMode) startLongPress(); }}
-                     onMouseUp={(e) => { if (!annotationMode) { e.preventDefault(); e.stopPropagation(); cancelLongPress(); } }}
-                     onMouseLeave={(e) => { if (!annotationMode) { e.preventDefault(); e.stopPropagation(); cancelLongPress(); } }}
-                     onTouchStart={(e) => { if (!annotationMode) startLongPress(e); }}
-                     onTouchEnd={(e) => { if (!annotationMode) { cancelLongPress(); handleDoubleTap(); } }}
-                     onTouchCancel={() => { if (!annotationMode) cancelLongPress(); }}
-                >
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
                     <canvas
                       ref={(el) => {
                         if (el) {
@@ -1716,52 +2066,35 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
                         width: '100%'
                       }}
                     />
-                    {annotationMode ? (
-                      <canvas
-                        ref={(el) => {
-                          if (el) {
-                            const pageRef = canvasRefsMap.current.get(pageNum) || {
-                              canvas: null,
-                              annotationCanvas: null
-                            };
-                            pageRef.annotationCanvas = el;
-                            canvasRefsMap.current.set(pageNum, pageRef);
-                          }
-                        }}
-                        className="absolute top-0 left-0 cursor-crosshair rounded"
-                        style={{
-                          display: 'block',
-                          pointerEvents: 'auto',
-                          width: '100%',
-                          height: '100%',
-                          zIndex: 10
-                        }}
-                        onMouseDown={(e) => { e.stopPropagation(); startDrawing(e, pageNum); }}
-                        onMouseMove={(e) => { e.stopPropagation(); draw(e, pageNum); }}
-                        onMouseUp={(e) => { e.stopPropagation(); stopDrawing(e); }}
-                        onMouseLeave={(e) => { e.stopPropagation(); stopDrawing(e); }}
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                        onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                        onTouchStart={(e) => { e.stopPropagation(); startDrawingTouch(e, pageNum); }}
-                        onTouchMove={(e) => { e.stopPropagation(); drawTouch(e, pageNum); }}
-                        onTouchEnd={(e) => { e.stopPropagation(); stopDrawingTouch(); }}
-                        onTouchCancel={(e) => { e.stopPropagation(); stopDrawingTouch(); }} 
-                      />
-                    ) : (
-                      // when not annotating, show saved annotation image overlay if available
-                      (markSchemeOpen ? savedMarkSchemeAnnotation : savedAnnotation) ? (
-                        <img
-                          src={markSchemeOpen ? savedMarkSchemeAnnotation as string : savedAnnotation as string}
-                          alt="Annotation overlay"
-                          className="absolute top-0 left-0 pointer-events-none rounded"
-                          style={{
-                            display: 'block',
-                            width: '100%',
-                            height: '100%'
-                          }}
-                        />
-                      ) : null
-                    )}
+                    <canvas
+                      ref={(el) => {
+                        if (el) {
+                          const pageRef = canvasRefsMap.current.get(pageNum) || {
+                            canvas: null,
+                            annotationCanvas: null
+                          };
+                          pageRef.annotationCanvas = el;
+                          canvasRefsMap.current.set(pageNum, pageRef);
+                        }
+                      }}
+                      className={`absolute top-0 left-0 rounded ${annotationMode ? 'cursor-crosshair' : 'pointer-events-none'}`}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        height: '100%',
+                        zIndex: 10
+                      }}
+                      onMouseDown={(e) => { e.stopPropagation(); startDrawing(e, pageNum); }}
+                      onMouseMove={(e) => { e.stopPropagation(); draw(e, pageNum); }}
+                      onMouseUp={(e) => { e.stopPropagation(); stopDrawing(e); }}
+                      onMouseLeave={(e) => { e.stopPropagation(); stopDrawing(e); }}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onTouchStart={(e) => { e.stopPropagation(); startDrawingTouch(e, pageNum); }}
+                      onTouchMove={(e) => { e.stopPropagation(); drawTouch(e, pageNum); }}
+                      onTouchEnd={(e) => { e.stopPropagation(); stopDrawingTouch(); }}
+                      onTouchCancel={(e) => { e.stopPropagation(); stopDrawingTouch(); }} 
+                    />
                   </div>
                   <div className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">
                     Page {pageNum}
@@ -1783,12 +2116,6 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
                     setError('Failed to load image from R2 storage');
                     setLoading(false);
                   }}
-                  onMouseDown={() => startLongPress()}
-                  onMouseUp={() => cancelLongPress()}
-                  onMouseLeave={() => cancelLongPress()}
-                  onTouchStart={(e) => { startLongPress(e); }}
-                  onTouchEnd={(e) => { cancelLongPress(); handleDoubleTap(); }}
-                  onTouchCancel={() => cancelLongPress()}
                   className="bg-white shadow-lg rounded max-w-full h-auto"
                   alt="Content"
                   style={{
@@ -1796,56 +2123,47 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
                     width: '100%'
                   }}
                 />
-                {annotationMode && imageLoaded ? (
-                  <canvas
-                    ref={annotationCanvasRef}
-                    className="absolute top-0 left-0 cursor-crosshair rounded"
-                    style={{
-                      display: 'block',
-                      pointerEvents: 'auto',
-                      width: '100%',
-                      height: '100%',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      zIndex: 10
-                    }}
-                    width={imageRef.current?.width || 0}
-                    height={imageRef.current?.height || 0}
-                    onMouseDown={(e) => { e.stopPropagation(); startImageDrawing(e); }}
-                    onMouseMove={(e) => { e.stopPropagation(); drawImage(e); }}
-                    onMouseUp={(e) => { e.stopPropagation(); stopDrawing(e); }}
-                    onMouseLeave={(e) => { e.stopPropagation(); stopDrawing(e); }}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                    onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                    onTouchStart={(e) => { e.stopPropagation(); startImageDrawingTouch(e); }}
-                    onTouchMove={(e) => { e.stopPropagation(); drawImageTouch(e); }}
-                    onTouchEnd={(e) => { e.stopPropagation(); stopDrawingTouch(); }}
-                    onTouchCancel={(e) => { e.stopPropagation(); stopDrawingTouch(); }}
-                  />
-                ) : (
-                  imageLoaded && (markSchemeOpen ? savedMarkSchemeAnnotation : savedAnnotation) ? (
-                    <img
-                      src={markSchemeOpen ? savedMarkSchemeAnnotation as string : savedAnnotation as string}
-                      alt="Annotation overlay"
-                      className="absolute top-0 left-0 pointer-events-none rounded"
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        height: '100%',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0
-                      }}
-                    />
-                  ) : null
-                )}
+                <canvas
+                  ref={annotationCanvasRef}
+                  className={`absolute top-0 left-0 rounded ${annotationMode && imageLoaded ? 'cursor-crosshair' : 'pointer-events-none'}`}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    height: '100%',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    zIndex: 10
+                  }}
+                  width={imageRef.current?.width || 0}
+                  height={imageRef.current?.height || 0}
+                  onMouseDown={(e) => { e.stopPropagation(); startImageDrawing(e); }}
+                  onMouseMove={(e) => { e.stopPropagation(); drawImage(e); }}
+                  onMouseUp={(e) => { e.stopPropagation(); stopDrawing(e); }}
+                  onMouseLeave={(e) => { e.stopPropagation(); stopDrawing(e); }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onTouchStart={(e) => { e.stopPropagation(); startImageDrawingTouch(e); }}
+                  onTouchMove={(e) => { e.stopPropagation(); drawImageTouch(e); }}
+                  onTouchEnd={(e) => { e.stopPropagation(); stopDrawingTouch(); }}
+                  onTouchCancel={(e) => { e.stopPropagation(); stopDrawingTouch(); }}
+                />
               </div>
             </div>
           ) : null}
+          </div>
         </div>
-      </div>
 
+        {/* Large View button overlay */}
+        <button
+          onClick={openZoomModal}
+          title="Large View"
+          aria-label="Open large view"
+          className="absolute top-3 right-3 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
+        >
+          <Maximize2 className="w-5 h-5" />
+        </button>
+      </div>
 
     </div>
   );

@@ -12,7 +12,7 @@ export function PublicLayout({ children }: { children?: React.ReactNode }) {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex flex-col text-gray-900 dark:text-gray-100 transition-colors duration-200">
       <DiscordPopup />
       <Header />
-      <main className="flex-grow" key={location.key}>
+      <main className="flex-grow">
         <ScrollToTop />
         {children ?? <Outlet />}
       </main>
