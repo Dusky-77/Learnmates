@@ -137,7 +137,7 @@ export function ProtectedRoute({ children, requireCompleteProfile = false }: Pro
           </motion.div>
 
           {/* Loading text with shimmer */}
-          <motion.p
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.4 }}
@@ -149,7 +149,7 @@ export function ProtectedRoute({ children, requireCompleteProfile = false }: Pro
               transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12"
             />
-          </motion.p>
+          </motion.div>
         </div>
       </div>
     );

@@ -91,7 +91,21 @@ const TopicalPages: React.FC = () => {
     if (!topicsStr) return new Set();
 
     const topicKeys = new Set<string>();
-    topicsStr.split(',').forEach(key => {
+    
+    let keysArray: string[] = [];
+    if (topicsStr.includes(';;')) {
+      keysArray = topicsStr.split(';;');
+    } else {
+      const partsByComma = topicsStr.split(',');
+      const allPartsHaveDoublePipe = partsByComma.every(p => p.includes('||'));
+      if (allPartsHaveDoublePipe && partsByComma.length > 1) {
+        keysArray = partsByComma;
+      } else {
+        keysArray = [topicsStr];
+      }
+    }
+
+    keysArray.forEach(key => {
       if (!key) return;
       const parts = key.split('||');
       if (parts.length === 5) {
@@ -161,7 +175,7 @@ const TopicalPages: React.FC = () => {
           const parts = key.split('||');
           return parts.length > 3 ? parts.slice(3).join('||') : key;
         })
-        .join(',');
+        .join(';;');
       params.set('topics', simplifiedTopics);
     }
     if (newMcqFilter !== 'all') params.set('mcq', newMcqFilter);

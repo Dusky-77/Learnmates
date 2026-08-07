@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import { Document } from 'react-pdf';
 import { pdfDocumentOptions } from '../utils/pdfjsConfig';
+import { supabase } from '../lib/supabaseClient';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import { Link } from 'react-router-dom';
@@ -44,7 +45,8 @@ import {
   StoredAnnotationPage,
 } from '../utils/pdfIndexedDBStorage';
 import { useMeaningfulReadTracker } from '../hooks/useMeaningfulReadTracker';
-import { setEngagementFlag } from '../utils/resourceEngagement';
+import { useEngagement } from '../context/EngagementContext';
+import { triggerXPNotification } from './XPRewardNotification';
 
 type PdfFileSource = string | { data: Uint8Array };
 
@@ -127,6 +129,9 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
   const [renderZoom, setRenderZoom] = useState<number>(100);
   const [, startTransition] = useTransition();
 
+  const engagementContextAPI = useEngagement();
+  const setEngagementFlag = engagementContextAPI?.setEngagementFlag;
+
   const {
     registerCanvas,
     pushAction,
@@ -178,14 +183,18 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
   useEffect(() => {
     if (!engagementContext || engagementRecordedRef.current.opened) return;
     engagementRecordedRef.current.opened = true;
-    setEngagementFlag(engagementContext.topicId, engagementContext.resourceId, pdfUrl, 'opened');
-  }, [engagementContext, pdfUrl]);
+    if (setEngagementFlag) {
+      setEngagementFlag(engagementContext.topicId, engagementContext.resourceId, pdfUrl, 'opened');
+    }
+  }, [engagementContext, pdfUrl, setEngagementFlag]);
 
   const handleMeaningfulRead = useCallback(() => {
     if (!engagementContext || engagementRecordedRef.current.read) return;
     engagementRecordedRef.current.read = true;
-    setEngagementFlag(engagementContext.topicId, engagementContext.resourceId, pdfUrl, 'meaningfulRead');
-  }, [engagementContext, pdfUrl]);
+    if (setEngagementFlag) {
+      setEngagementFlag(engagementContext.topicId, engagementContext.resourceId, pdfUrl, 'meaningfulRead');
+    }
+  }, [engagementContext, pdfUrl, setEngagementFlag]);
 
   useMeaningfulReadTracker({
     numPages,
@@ -629,10 +638,40 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
     };
   }, [applyZoomAtPoint, drawingEnabled, touchScrollInDrawMode]);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (engagementContext && !engagementRecordedRef.current.downloaded) {
       engagementRecordedRef.current.downloaded = true;
-      setEngagementFlag(engagementContext.topicId, engagementContext.resourceId, pdfUrl, 'downloaded');
+      if (setEngagementFlag) {
+        setEngagementFlag(engagementContext.topicId, engagementContext.resourceId, pdfUrl, 'downloaded');
+      }
+      
+      // Award XP for downloading
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const response = await fetch('/api/xp/download', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            keepalive: true,
+            body: JSON.stringify({ 
+              resourceId: engagementContext.resourceId,
+              resourceName: fileName,
+              resourceType: 'file'
+            })
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.xpAwarded > 0) {
+              triggerXPNotification(data.xpAwarded, 'download');
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to award download XP from viewer', err);
+      }
     }
 
     const link = document.createElement('a');

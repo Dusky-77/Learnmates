@@ -63,24 +63,24 @@ const Home: React.FC = () => {
 
   const features = [
     {
-      icon: <BookOpen className="h-7 w-7" />,
-      title: 'Learn with structure',
-      description: 'Explore curriculum-aligned subjects and step-by-step topics for IGCSE and A-Level study.',
-    },
-    {
-      icon: <CheckCircle className="h-7 w-7" />,
-      title: 'Practise and improve',
-      description: 'Use quizzes, videos, topicals, and other resources to turn understanding into progress.',
+      icon: <Sparkles className="h-7 w-7" />,
+      title: 'Fastest Topical Questions',
+      description: 'Generate the fastest topical questions for free instantly to test your knowledge on specific subjects.',
     },
     {
       icon: <Users className="h-7 w-7" />,
-      title: 'Study your way',
-      description: 'Save your subjects, track your streak, and continue learning at your own pace.',
+      title: 'Community Curated Notes',
+      description: 'Access high-quality resources and notes built and curated by other successful students.',
+    },
+    {
+      icon: <CheckCircle className="h-7 w-7" />,
+      title: 'Progress Tracking',
+      description: 'Keep track of your learning journey, maintain streaks, and monitor your improvement over time.',
     },
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
       <Helmet>
         <title>Learnmates | Free IGCSE and A-Level Learning Resources</title>
         <meta
@@ -94,54 +94,64 @@ const Home: React.FC = () => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 w-full"
+        className="flex-1 w-full"
       >
-        <motion.section variants={itemVariants} className="text-center max-w-4xl mx-auto">
+        {/* Hero Section */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 dark:from-blue-900 dark:via-blue-800 dark:to-slate-900">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-400 rounded-full opacity-10 blur-3xl -translate-y-1/2 -translate-x-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500 rounded-full opacity-5 blur-3xl translate-y-1/2 translate-x-1/2"></div>
           
-          <h1 className="mt-7 text-5xl font-extrabold tracking-tight text-neutral-900 dark:text-white sm:text-7xl">
-            Meet{' '}
-            <span className="text-primary-600 dark:text-primary-400">
-              Learnmates
-            </span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-3xl text-xl leading-relaxed text-neutral-600 dark:text-neutral-300">
-            Learnmates is a free learning platform that helps IGCSE and A-Level students understand difficult topics,
-            practise with confidence, and keep their learning journey organised.
-          </p>
-          <div className="mt-9 flex flex-col justify-center gap-4 sm:flex-row">
-            <Button size="lg" asChild variant="secondary">
-              <Link to="/login" className="flex items-center gap-2">
-                Start your journey
-                <ArrowRight className="h-5 w-5" />
-              </Link>
-            </Button>
-            <Button size="lg" asChild variant="outline">
-              <Link to="/curriculum" className="flex items-center">
-                Explore curriculum
-              </Link>
-            </Button>
-          </div>
-        </motion.section>
-
-        <motion.section variants={itemVariants} className="mt-16 grid gap-6 md:grid-cols-3">
-          {features.map((feature) => (
-            <Card key={feature.title} variant="elevated" padding="lg">
-              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
-                {feature.icon}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative">
+            <motion.section variants={itemVariants} className="text-center max-w-4xl mx-auto">
+              <h1 className="mt-7 text-5xl font-extrabold tracking-tight text-white sm:text-7xl">
+                Meet{' '}
+                <span className="text-blue-200">
+                  Learnmates
+                </span>
+              </h1>
+              <p className="mx-auto mt-6 max-w-3xl text-xl leading-relaxed text-blue-50">
+                Learnmates is a free learning platform that helps IGCSE and A-Level students understand difficult topics,
+                practise with confidence, and keep their learning journey organised.
+              </p>
+              <div className="mt-9 flex flex-col justify-center gap-4 sm:flex-row">
+                <Button size="lg" asChild variant="primary" className="bg-white text-blue-700 hover:bg-blue-50 dark:bg-white dark:text-blue-800 dark:hover:bg-blue-100">
+                  <Link to="/login" className="flex items-center gap-2">
+                    Start your journey
+                    <ArrowRight className="h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button size="lg" asChild variant="outline" className="border-white text-white hover:bg-white/10 dark:hover:bg-white/10 dark:border-white dark:text-white">
+                  <Link to="/curriculum" className="flex items-center">
+                    Explore curriculum
+                  </Link>
+                </Button>
               </div>
-              <h2 className="text-xl font-bold text-neutral-900 dark:text-white">{feature.title}</h2>
-              <p className="mt-3 leading-relaxed text-neutral-600 dark:text-neutral-300">{feature.description}</p>
-            </Card>
-          ))}
-        </motion.section>
+            </motion.section>
+          </div>
+        </div>
 
-        <motion.p variants={itemVariants} className="mt-10 text-center text-sm text-neutral-500 dark:text-neutral-400">
-          Learn more about our mission and resources on the{' '}
-          <Link to="/about" className="font-semibold text-primary-600 hover:underline dark:text-primary-400">
-            About Learnmates
-          </Link>{' '}
-          page.
-        </motion.p>
+        {/* Features Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <motion.section variants={itemVariants} className="grid gap-6 md:grid-cols-3">
+            {features.map((feature) => (
+              <Card key={feature.title} variant="elevated" padding="lg">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400">
+                  {feature.icon}
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{feature.title}</h2>
+                <p className="mt-3 leading-relaxed text-slate-600 dark:text-slate-300">{feature.description}</p>
+              </Card>
+            ))}
+          </motion.section>
+
+          <motion.p variants={itemVariants} className="mt-16 text-center text-sm text-slate-500 dark:text-slate-400">
+            Learn more about our mission and resources on the{' '}
+            <Link to="/about" className="font-semibold text-blue-600 hover:underline dark:text-blue-400">
+              About Learnmates
+            </Link>{' '}
+            page.
+          </motion.p>
+        </div>
       </motion.div>
     </div>
   );

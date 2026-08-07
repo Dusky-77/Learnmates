@@ -1674,6 +1674,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       {/* Content Container */}
       <div
         ref={pagesContainerRef}
+        data-type={markSchemeOpen ? 'marking_scheme' : 'question'}
         className={`flex-1 min-h-0 w-full bg-gray-50 dark:bg-gray-950 p-0 overflow-y-auto overflow-x-hidden`}
         style={{ minHeight: 0 }}
       >

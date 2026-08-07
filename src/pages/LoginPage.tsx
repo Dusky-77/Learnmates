@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CheckCircle, BookOpen,  Loader2, FlaskConical, Dna, Rocket, Sigma, PieChart, Gauge, User, FileText, Settings, Check } from 'lucide-react';
+import { ArrowLeft, CheckCircle, BookOpen, Loader2, FlaskConical, Dna, Rocket, Sigma, PieChart, Gauge, User, FileText, Settings, Check } from 'lucide-react';
 import {
   getAvailableLevels,
   getAvailableBoardsForLevel,
@@ -12,8 +12,6 @@ import {
 } from '../utils/curriculumData';
 import {
   ensureProfile,
-  getAuthConflictMessage,
-  getEmailAuthInfo,
   isUsernameAvailable,
 } from '../utils/authHelpers';
 import { saveFavoriteSubjects } from '../utils/favoriteSubjects';
@@ -36,27 +34,27 @@ const SUBJECT_ICONS: Record<string, React.ReactNode> = {
 const LEVEL_COLORS: Record<string, string> = {
   'IGCSE': 'bg-blue-500',
   'A-Level': 'bg-purple-500',
-  
+
 };
 
 const BOARD_COLORS: Record<string, string> = {
   cambridge: 'bg-gray-800',
   edexcel: 'bg-gray-800',
-  
+
 };
 
 const CambridgeLogo = () => (
-  <img 
-    src="/logos/Cambridge.svg" 
-    alt="Cambridge Logo" 
+  <img
+    src="/logos/Cambridge.svg"
+    alt="Cambridge Logo"
     className="w-9 h-9 text-white"
   />
 );
 
 const EdexcelLogo = () => (
-  <img 
-    src="/logos/Pearson.svg" 
-    alt="Edexcel Logo" 
+  <img
+    src="/logos/Pearson.svg"
+    alt="Edexcel Logo"
     className="w-9 h-9 text-white"
   />
 );
@@ -64,15 +62,15 @@ const EdexcelLogo = () => (
 
 const AQALogo = () => (
   <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" stroke="currentColor" strokeWidth="2.5"/>
-    <path d="M8 12H16M12 8V16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" stroke="currentColor" strokeWidth="2.5" />
+    <path d="M8 12H16M12 8V16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
   </svg>
 );
 
 const OCALogo = () => (
   <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" stroke="currentColor" strokeWidth="2.5"/>
-    <path d="M8 12L11 15L16 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" stroke="currentColor" strokeWidth="2.5" />
+    <path d="M8 12L11 15L16 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -123,11 +121,11 @@ export function LoginPage() {
   const availableBoards = modalLevel ? getAvailableBoardsForLevel(modalLevel) : [];
   const availableSubjects = modalLevel && selectedBoards.length > 0
     ? selectedBoards.flatMap((board) =>
-        getAvailableSubjectsForLevelAndBoard(modalLevel, board).map((subject) => ({
-          subject,
-          board,
-        }))
-      )
+      getAvailableSubjectsForLevelAndBoard(modalLevel, board).map((subject) => ({
+        subject,
+        board,
+      }))
+    )
     : [];
 
   const [checkingSession, setCheckingSession] = useState(true);
@@ -135,6 +133,14 @@ export function LoginPage() {
   const checkedAuthUserId = useRef<string | null>(null);
 
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  useEffect(() => {
+    const oauthError = sessionStorage.getItem('oauth_error');
+    if (!oauthError) return;
+
+    sessionStorage.removeItem('oauth_error');
+    setError(oauthError);
+  }, []);
 
   // Check if user just logged in and needs onboarding
   useEffect(() => {
@@ -208,38 +214,28 @@ export function LoginPage() {
     }
 
     try {
-      const authInfo = await getEmailAuthInfo(normalizedEmail);
-
       if (isCreatingAccount) {
-        const conflictMessage = getAuthConflictMessage(authInfo, 'signup');
-        if (conflictMessage) {
-          setError(conflictMessage);
-          setLoading(false);
-          return;
-        }
-
-        const { error } = await signUp(normalizedEmail, password);
+        const { error, data } = await signUp(normalizedEmail, password);
         if (error) {
           setError(error);
+        } else if (data?.user?.identities?.length === 0) {
+          // Supabase returns a fake success if the email already exists.
+          setError('An account with this email already exists. Try signing in.');
+          setLoading(false);
+          return;
+        } else if (data?.session) {
+          setSuccess('Account created successfully!');
+          // useEffect will redirect to onboarding
         } else {
           setSuccess('We sent a verification code to your email. Please check your inbox and enter the code below.');
           setShowOtpInput(true);
         }
       } else {
-        const signInConflict = getAuthConflictMessage(authInfo, 'signin');
-        if (signInConflict) {
-          setError(signInConflict);
-          setLoading(false);
-          return;
-        }
-
         const { error } = await signIn(normalizedEmail, password);
         if (error) {
           if (error.toLowerCase().includes('email not confirmed')) {
             setError('Please verify your email first. Enter the code we sent you, or request a new one.');
             setShowOtpInput(true);
-          } else if (authInfo.exists && authInfo.providers.includes('google')) {
-            setError('This account uses Google sign-in. Please use the "Sign in with Google" button.');
           } else {
             setError(error);
           }
@@ -411,7 +407,7 @@ export function LoginPage() {
       }
 
       setSetupStep('complete');
-      
+
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
       }, 1500);
@@ -425,7 +421,7 @@ export function LoginPage() {
 
   if (authLoading || checkingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="text-center">
           <Loader2 className="w-16 h-16 text-primary-500 animate-spin mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">Loading...</p>
@@ -517,7 +513,7 @@ export function LoginPage() {
   const completedSteps = new Set<string>();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <AnimatePresence mode="wait">
         {!showOnboarding ? (
           <motion.div
@@ -551,16 +547,6 @@ export function LoginPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-24 h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(currentStepIndex / (steps.length - 1)) * 100}%` }}
-                      transition={{ duration: 0.5, ease: 'easeOut' }}
-                    />
-                  </div>
-                </div>
               </div>
 
               {/* Step Indicator Line */}
@@ -573,39 +559,39 @@ export function LoginPage() {
                     transition={{ delay: index * 0.1 }}
                     className="flex flex-col items-center flex-1 relative"
                   >
-                    <div className="relative flex items-center">
-                      {/* Connecting line */}
-                      {index < steps.length - 1 && (
-                        <motion.div
-                          className="absolute top-1/2 left-1/2 w-full h-0.5 -translate-y-1/2"
-                          initial={{ scaleX: 0 }}
-                          animate={{ scaleX: index < currentStepIndex ? 1 : 0 }}
-                          transition={{ duration: 0.3, delay: 0.2 }}
-                          style={{ transformOrigin: 'left center' }}
-                        >
-                          <div
-                            className="w-full h-full bg-neutral-200 dark:bg-neutral-700 rounded-full"
-                            style={{
-                              background: index < currentStepIndex
-                                ? 'linear-gradient(90deg, #3b82f6, #a855f7)'
-                                : 'transparent'
-                            }}
-                          />
-                        </motion.div>
-                      )}
-                      
+                    {/* Connecting line */}
+                    {index < steps.length - 1 && (
+                      <motion.div
+                        className="absolute top-[20px] left-1/2 w-full h-0.5 -translate-y-1/2"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: index < currentStepIndex ? 1 : 0 }}
+                        transition={{ duration: 0.3, delay: 0.2 }}
+                        style={{ transformOrigin: 'left center' }}
+                      >
+                        <div
+                          className="w-full h-full bg-neutral-200 dark:bg-neutral-700 rounded-full"
+                          style={{
+                            background: index < currentStepIndex
+                              ? '#2563eb'
+                              : 'transparent'
+                          }}
+                        />
+                      </motion.div>
+                    )}
+
+                    <div className="relative flex items-center justify-center w-full">
+
                       {/* Step circle/square */}
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 20, delay: index * 0.1 }}
-                        className={`relative w-10 h-10 rounded-full flex items-center justify-center z-10 transition-all ${
-                          index < currentStepIndex
-                            ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white'
-                            : index === currentStepIndex
+                        className={`relative w-10 h-10 rounded-full flex items-center justify-center z-10 transition-all ${index < currentStepIndex
+                          ? 'bg-primary-600 text-white'
+                          : index === currentStepIndex
                             ? 'bg-white dark:bg-neutral-800 border-3 border-blue-500 text-blue-500'
                             : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-400 dark:text-neutral-500'
-                        }`}
+                          }`}
                       >
                         {index < currentStepIndex ? (
                           <CheckCircle className="w-5 h-5" />
@@ -614,11 +600,10 @@ export function LoginPage() {
                         )}
                       </motion.div>
                     </div>
-                    <span className={`text-xs font-medium mt-2 transition-colors ${
-                      index <= currentStepIndex
-                        ? 'text-neutral-900 dark:text-neutral-50'
-                        : 'text-neutral-400 dark:text-neutral-500'
-                    }`}>
+                    <span className={`text-xs font-medium mt-2 transition-colors ${index <= currentStepIndex
+                      ? 'text-neutral-900 dark:text-neutral-50'
+                      : 'text-neutral-400 dark:text-neutral-500'
+                      }`}>
                       {step.label}
                     </span>
                   </motion.div>
@@ -879,13 +864,12 @@ function PreferencesStep({
             key={tab.id}
             onClick={() => !tab.disabled && setActiveTab(tab.id as typeof activeTab)}
             disabled={tab.disabled}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-              activeTab === tab.id
-                ? 'bg-white dark:bg-neutral-700 shadow-sm text-neutral-900 dark:text-neutral-50'
-                : tab.disabled
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
+              ? 'bg-white dark:bg-neutral-700 shadow-sm text-neutral-900 dark:text-neutral-50'
+              : tab.disabled
                 ? 'text-neutral-400 dark:text-neutral-500 cursor-not-allowed'
                 : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-500'
-            }`}
+              }`}
           >
             {tab.label}
           </button>
@@ -969,11 +953,10 @@ function BoardSelection({ availableBoards, selectedBoards, onToggle, modalLevel 
             <button
               key={board.id}
               onClick={() => onToggle(board.id)}
-              className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-center justify-between ${
-                isSelected
-                  ? `border-${BOARD_COLORS[board.id] || 'blue'}-500 bg-${BOARD_COLORS[board.id] || 'blue'}-50 dark:bg-${BOARD_COLORS[board.id] || 'blue'}-900/20`
-                  : 'border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-700'
-              }`}
+              className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-center justify-between ${isSelected
+                ? `border-${BOARD_COLORS[board.id] || 'blue'}-500 bg-${BOARD_COLORS[board.id] || 'blue'}-50 dark:bg-${BOARD_COLORS[board.id] || 'blue'}-900/20`
+                : 'border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-700'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${BOARD_COLORS[board.id] || 'bg-blue-500'}`}>
@@ -1008,15 +991,14 @@ function LevelSelection({ availableLevels, onSelect, modalLevel }: { availableLe
           <button
             key={level}
             onClick={() => onSelect(level)}
-            className={`p-4 rounded-xl border-2 text-left transition-all ${
-              modalLevel === level
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                : 'border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-700'
-            }`}
+            className={`p-4 rounded-xl border-2 text-left transition-all ${modalLevel === level
+              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+              : 'border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-700'
+              }`}
           >
             <div className="flex items-center gap-3">
               <div className={`w-5 h-5 rounded-xl flex items-center justify-center ${LEVEL_COLORS[level] || 'bg-blue-500'}`}>
-                
+
               </div>
               <span className="font-medium text-neutral-900 dark:text-neutral-50">{level}</span>
             </div>
@@ -1070,11 +1052,10 @@ function SubjectSelection({ availableSubjects, selectedSubjects, onToggle }: { a
                     <button
                       key={`${item.board}-${item.subject}`}
                       onClick={() => onToggle(item.subject, item.board)}
-                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-start gap-1 h-full min-h-[80px] ${
-                        isSelected
-                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                          : 'border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-700'
-                      }`}
+                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-start gap-1 h-full min-h-[80px] ${isSelected
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                        : 'border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-700'
+                        }`}
                     >
                       <div className="flex items-center w-full">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconBgColor} flex-shrink-0 w-14yas h-14 dark:text-white text-neutral-900`}>
@@ -1105,9 +1086,9 @@ function SubjectSelection({ availableSubjects, selectedSubjects, onToggle }: { a
 function SessionSelection({ sessionOptions, selectedBoards, selectedSession, onSelect }: { sessionOptions: string[]; selectedBoards: BoardKey[]; selectedSession: string | null; onSelect: (session: string) => void }) {
   const filteredSessions = sessionOptions.filter((session) =>
     (session === 'Jan' && selectedBoards.includes('edexcel')) ||
-    (session === 'Oct/Nov' && selectedBoards.includes('cambridge')) ||
+    (session === 'Feb/Mar' && selectedBoards.includes('cambridge')) ||
     session === 'May/Jun' ||
-    session === 'Feb/Mar'
+    session === 'Oct/Nov'
   );
 
   return (
@@ -1121,11 +1102,10 @@ function SessionSelection({ sessionOptions, selectedBoards, selectedSession, onS
           <button
             key={session}
             onClick={() => onSelect(session)}
-            className={`p-4 rounded-xl border-2 text-center transition-all font-medium ${
-              selectedSession === session
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                : 'border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-700 text-neutral-900 dark:text-neutral-50'
-            }`}
+            className={`p-4 rounded-xl border-2 text-center transition-all font-medium ${selectedSession === session
+              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+              : 'border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-700 text-neutral-900 dark:text-neutral-50'
+              }`}
           >
             {session}
           </button>
@@ -1143,7 +1123,7 @@ function CompleteStep({ onFinish }: { onFinish: () => void }) {
       transition={{ type: 'spring', stiffness: 200, damping: 15 }}
       className="max-w-md mx-auto text-center py-12"
     >
-      <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+      <div className="w-24 h-24 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
         <CheckCircle className="w-12 h-12 text-white" />
       </div>
       <h2 className="text-3xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">All set!</h2>
@@ -1192,7 +1172,7 @@ function VerificationForm({
           Enter verification code
         </h1>
         <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-300 max-w-xl mx-auto">
-          We sent an 8-character verification code to{' '}
+          We sent an 8-digit verification code to{' '}
           <span className="font-medium">{email}</span>
           . Please enter it below to complete your registration.
         </p>
@@ -1208,7 +1188,7 @@ function VerificationForm({
           </label>
           <input
             type="text"
-            placeholder="Enter 8-character code"
+            placeholder="Enter 8-Digit code"
             value={verificationToken}
             onChange={(e) => {
               const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
@@ -1220,7 +1200,7 @@ function VerificationForm({
             autoFocus
           />
           <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400 text-center">
-            {verificationToken.length}/8 characters
+            {verificationToken.length}/8 Digits
           </p>
         </div>
 

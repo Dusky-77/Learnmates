@@ -5,6 +5,7 @@ import {
   Bell,
   BookOpen,
   Flame,
+  Lock,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -30,9 +31,9 @@ const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Curriculum', href: '/curriculum', icon: LibraryBig },
   { name: 'Topicals', href: '/topicals', icon: Layers },
-  { name: 'Chat', href: '#', icon: MessageCircle, disabled: true },
-  { name: 'Leaderboard', href: '#', icon: Trophy, disabled: true },
-  { name: 'Lock in', href: '#', icon: Flame, disabled: true },
+  { name: 'Lock in', href: '/lock_in', icon: Lock, beta: true },
+  { name: 'Leaderboard', href: '#', icon: Trophy, disabled: true }
+  ,
 ];
 
 interface ProfileSectionProps {
@@ -46,12 +47,12 @@ interface ProfileSectionProps {
 function ProfileSection({ displayName, username, sidebarExpanded, isMobile = false, onClose }: ProfileSectionProps) {
   const textTransition = isMobile ? '' : `overflow-hidden transition-all duration-500 ease-in-out ${sidebarExpanded ? 'max-w-[220px] opacity-100 ml-3' : 'max-w-0 opacity-0 ml-0'}`;
   const textClassName = isMobile ? 'ml-3 overflow-hidden' : textTransition;
-  
+
   return (
     <Link
       to="/dashboard/profile"
       onClick={onClose}
-      className={isMobile 
+      className={isMobile
         ? 'flex items-center rounded-xl px-4 py-3 transition-colors hover:bg-blue-50 dark:hover:bg-gray-800'
         : 'flex items-center rounded-xl -mx-2 px-2 py-1.5 transition-colors hover:bg-blue-50 dark:hover:bg-gray-800'
       }
@@ -94,17 +95,15 @@ function SignOutButton({ onClick, sidebarExpanded, isMobile = false, onClose }: 
     <button
       type="button"
       onClick={onClick}
-      className={`relative mt-3 flex h-12 items-center rounded-xl bg-red-600 text-white transition-all duration-300 ease-in-out overflow-hidden hover:bg-red-700 dark:hover:bg-red-500 ${
-        sidebarExpanded ? 'w-full px-3 justify-start' : 'w-12 justify-center'
-      }`}
+      className={`relative mt-3 flex h-12 items-center rounded-xl bg-red-600 text-white transition-all duration-300 ease-in-out overflow-hidden hover:bg-red-700 dark:hover:bg-red-500 ${sidebarExpanded ? 'w-full px-3 justify-start' : 'w-12 justify-center'
+        }`}
       aria-label="Sign out"
     >
       <span className="absolute left-3 flex h-12 items-center justify-center">
         <LogOut className="h-6 w-6" />
       </span>
-      <span className={`absolute left-14 top-1/2 -translate-y-1/2 w-[96px] transition-opacity duration-500 ease-in-out ${
-        sidebarExpanded ? 'opacity-100' : 'opacity-0'
-      }`}>
+      <span className={`absolute left-14 top-1/2 -translate-y-1/2 w-[96px] transition-opacity duration-500 ease-in-out ${sidebarExpanded ? 'opacity-100' : 'opacity-0'
+        }`}>
         log out
       </span>
     </button>
@@ -150,6 +149,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleSignOut = async () => {
     await signOut();
+    localStorage.clear();
     navigate('/login');
   };
 
@@ -164,9 +164,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <aside
         onMouseEnter={() => setSidebarExpanded(true)}
         onMouseLeave={() => setSidebarExpanded(false)}
-        className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-40 border-r border-gray-200/80 dark:border-gray-700/80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm overflow-hidden transition-[width,box-shadow,background-color] duration-500 ease-in-out ${
-          sidebarExpanded ? 'w-72 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/50' : 'w-20'
-        }`}
+        className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-40 border-r border-gray-200/80 dark:border-gray-700/80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm overflow-hidden transition-[width,box-shadow,background-color] duration-500 ease-in-out ${sidebarExpanded ? 'w-72 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/50' : 'w-20'
+          }`}
       >
         <div className="flex h-20 items-center border-b border-gray-200/80 dark:border-gray-700/80 transition-all duration-500 px-4 justify-start">
           <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center">
@@ -211,17 +210,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 key={item.name}
                 to={item.href}
                 title={item.name}
-                className={`group flex items-center rounded-xl py-3.5 text-sm font-medium transition-all duration-300 ease-in-out ${
-                  active
-                    ? 'bg-blue-400 dark:bg-blue-900 text-white shadow-md shadow-blue-500/20'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-800'
-                } px-0 justify-start`}
+                className={`group flex items-center rounded-xl py-3.5 text-sm font-medium transition-all duration-300 ease-in-out ${active
+                  ? 'bg-blue-400 dark:bg-blue-900 text-white shadow-md shadow-blue-500/20'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-800'
+                  } px-0 justify-start`}
               >
                 <span className="flex h-6 w-20 min-w-[5rem] flex-shrink-0 items-center justify-start pl-5">
                   <Icon className="h-6 w-6" />
                 </span>
-                <span className={`overflow-hidden transition-all duration-500 ease-in-out ${sidebarExpanded ? 'opacity-100 max-w-[220px] ml-1' : 'opacity-0 max-w-0'}`}>
-                  {item.name}
+                <span className={`flex items-center gap-2 overflow-hidden transition-all duration-500 ease-in-out ${sidebarExpanded ? 'opacity-100 max-w-[220px] ml-1' : 'opacity-0 max-w-0'}`}>
+                  <span className="whitespace-nowrap">{item.name}</span>
+                  {item.beta && (
+                    <span className="whitespace-nowrap rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                      Beta
+                    </span>
+                  )}
                 </span>
               </Link>
             );
@@ -299,10 +302,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       key={item.name}
                       to={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-800"
+                      className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-800"
                     >
-                      <Icon className="h-6 w-6" />
-                      {item.name}
+                      <span className="flex items-center gap-3">
+                        <Icon className="h-6 w-6" />
+                        {item.name}
+                      </span>
+                      {item.beta && (
+                        <span className="rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                          Beta
+                        </span>
+                      )}
                     </Link>
                   );
                 })}
@@ -339,7 +349,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               >
                 <Menu className="h-6 w-6" />
               </button>
-              
+
             </div>
 
             <div className="flex items-center gap-3">

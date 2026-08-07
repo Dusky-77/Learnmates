@@ -21,7 +21,7 @@ import {
   getLevelKey,
 } from '../utils/favoriteSubjects';
 import { getSubjectIcon } from '../utils/subjectIcons';
-import { updateStreak, StreakData, getLast30Days, DayData } from '../utils/streakUtils';
+import { updateStreakAndDays, StreakData, DayData } from '../utils/streakUtils';
 import AddSubjectModal from '../components/AddSubjectModal';
 import SubjectProgressBars from '../components/SubjectProgressBars';
 import { useEngagementRevision } from '../hooks/useEngagementRevision';
@@ -84,6 +84,7 @@ const Dashboard: React.FC = () => {
   const [isEditingSubjects, setIsEditingSubjects] = useState(false);
   const [streak, setStreak] = useState<StreakData | null>(null);
   const [dayData, setDayData] = useState<DayData[]>([]);
+  const [streakLoading, setStreakLoading] = useState(true);
   const [displayName, setDisplayName] = useState(user?.name ?? 'Student');
   const [randomWelcome] = useState(getRandomWelcome);
   const [randomMessage] = useState(getRandomMessage);
@@ -122,8 +123,14 @@ const Dashboard: React.FC = () => {
   }, [authUser]);
 
   useEffect(() => {
-    updateStreak().then(setStreak).catch(console.error);
-    getLast30Days().then(setDayData).catch(console.error);
+    setStreakLoading(true);
+    updateStreakAndDays()
+      .then(({ streak, days }) => {
+        setStreak(streak);
+        setDayData(days);
+      })
+      .catch(console.error)
+      .finally(() => setStreakLoading(false));
   }, []);
 
   useEffect(() => {
@@ -327,7 +334,28 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div className="lg:col-span-1 space-y-8">
-            {streak && dayData.length > 0 && (
+            {streakLoading ? (
+              <motion.div variants={itemVariants}>
+                <Card variant="elevated" padding="lg" className="border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+                  <div className="animate-pulse space-y-3">
+                    <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded mx-auto" />
+                    <div className="h-6 w-8 bg-slate-200 dark:bg-slate-700 rounded mx-auto" />
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div className="h-12 bg-slate-200 dark:bg-slate-700 rounded" />
+                      <div className="h-12 bg-slate-200 dark:bg-slate-700 rounded" />
+                    </div>
+                    <div className="border-t border-slate-200 dark:border-slate-700 pt-3">
+                      <div className="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded mb-2" />
+                      <div className="grid grid-cols-7 gap-1">
+                        {Array.from({ length: 35 }).map((_, i) => (
+                          <div key={i} className="w-5 h-5 bg-slate-200 dark:bg-slate-800/50 rounded" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ) : streak && dayData.length > 0 ? (
               <motion.div variants={itemVariants}>
                 <Card variant="elevated" padding="lg" className="border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
                   <div className="space-y-3 mb-4">
@@ -367,11 +395,10 @@ const Dashboard: React.FC = () => {
                           title={day.date}
                         >
                           <div
-                            className={`w-5 h-5 rounded text-xs flex items-center justify-center font-semibold ${
-                              day.isVisited
+                            className={`w-5 h-5 rounded text-xs flex items-center justify-center font-semibold ${day.isVisited
                                 ? 'bg-green-400 text-white shadow-sm'
                                 : 'bg-slate-100 dark:bg-slate-800/30 text-slate-700 dark:text-slate-200 text-[0.6rem]'
-                            }`}
+                              }`}
                           >
                             {day.dayOfMonth}
                           </div>
@@ -381,7 +408,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 </Card>
               </motion.div>
-            )}
+            ) : null}
 
             {user && user.recentCourses.length > 0 && (
               <motion.div variants={itemVariants}>
@@ -413,16 +440,16 @@ const Dashboard: React.FC = () => {
                                 </div>
                               )}
                               <div className="flex-1">
-                                    <div className="flex items-start justify-between mb-2">
-                                      <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 mr-3">
-                                        {course.title}
-                                      </h4>
-                                      {course.type && (
-                                        <Badge variant="outline" size="xs" className="ml-2 flex-shrink-0 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700">
-                                          {course.type}
-                                        </Badge>
-                                      )}
-                                    </div>
+                                <div className="flex items-start justify-between mb-2">
+                                  <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 mr-3">
+                                    {course.title}
+                                  </h4>
+                                  {course.type && (
+                                    <Badge variant="outline" size="xs" className="ml-2 flex-shrink-0 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700">
+                                      {course.type}
+                                    </Badge>
+                                  )}
+                                </div>
                                 {metadata?.tags && (
                                   <div className="flex flex-wrap gap-1 mb-2">
                                     {metadata.tags.slice(0, 2).map((tag) => (

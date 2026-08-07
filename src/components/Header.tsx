@@ -57,12 +57,12 @@ const Header: React.FC = () => {
   const displayName = name || user?.email?.split('@')[0] || 'Account';
 
   return (
-    <header className="bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-700 sticky top-0 z-50">
+    <header className="bg-white/95 dark:bg-gray-800 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-700 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity min-w-0 flex-shrink-0">
             <div className="flex items-center justify-center overflow-hidden min-w-[2.5rem] min-h-[2.5rem] w-10 h-10 flex-shrink-0">
-              <img 
+              <img
                 src="/logo.svg"
                 alt="Learnmates Logo"
                 className="w-full h-full object-contain"
@@ -78,25 +78,24 @@ const Header: React.FC = () => {
             {navigation
               .filter((item) => !('authOnly' in item && item.authOnly) || authUser)
               .map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
-                  isActive(item.href)
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${isActive(item.href)
                     ? 'text-primary-600'
                     : 'text-neutral-700 hover:text-primary-600 dark:text-neutral-300 dark:hover:text-white'
-                }`}
-              >
-                {item.name}
-                {isActive(item.href) && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute -bottom-px left-0 right-0 h-0.5 bg-primary-600"
-                    initial={false}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
-              </Link>
+                    }`}
+                >
+                  {item.name}
+                  {isActive(item.href) && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute -bottom-px left-0 right-0 h-0.5 bg-blue-500"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                </Link>
               ))}
           </nav>
 
@@ -119,7 +118,7 @@ const Header: React.FC = () => {
                 variant="primary"
                 size="sm"
                 onClick={() => window.location.href = '/dashboard'}
-                className="gap-2"
+                className="gap-2 text-black dark:text-white"
                 leftIcon={<User className="w-4 h-4" />}
               >
                 {displayName}
@@ -127,7 +126,7 @@ const Header: React.FC = () => {
             ) : (
               <Link
                 to="/login"
-                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-primary-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-black dark:text-white shadow-md transition hover:bg-primary-700"
               >
                 <User className="h-4 w-4" />
                 Sign in
@@ -157,19 +156,18 @@ const Header: React.FC = () => {
               {navigation
                 .filter((item) => !('authOnly' in item && item.authOnly) || authUser)
                 .map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`block px-3 py-2 text-base font-medium transition-colors ${
-                    isActive(item.href)
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`block px-3 py-2 text-base font-medium transition-colors ${isActive(item.href)
                       ? 'text-primary-600 bg-primary-50 dark:bg-neutral-800'
                       : 'text-neutral-700 dark:text-neutral-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-neutral-700'
-                  }`}
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  {item.name}
-                </Link>
-              ))}
+                      }`}
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
             </motion.nav>
           )}
         </AnimatePresence>

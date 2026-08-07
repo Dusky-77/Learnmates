@@ -18,16 +18,26 @@ import CurriculumPdfViewerPage from './pages/CurriculumPdfViewerPage';
 import TopicalPages from './pages/TopicalPages';
 import { UserProvider } from './context/UserContext';
 import { DarkModeProvider } from './context/DarkModeContext';
+import { EngagementProvider } from './context/EngagementContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import ProfilePage from './pages/ProfilePage';
+import LockIn from './pages/LockIn';
 import { DashboardShell } from './layouts/DashboardShell';
+import { XPRewardNotification } from './components/XPRewardNotification';
+import { useXP } from './hooks/useXP';
+import { LockInProvider } from './components/lock-in/LockInContext';
+import { GlobalLockInManager } from './components/lock-in/GlobalLockInManager';
 
 function AppContent() {
+  // Global XP tracking
+  useXP();
   return (
-    <Routes>
-      <Route element={<AuthLayout />}> 
+    <>
+      <XPRewardNotification />
+      <Routes>
+        <Route element={<AuthLayout />}> 
         {/* Public routes - rendered inside AuthLayout's PublicLayout */}
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
@@ -43,6 +53,7 @@ function AppContent() {
         <Route element={<ProtectedRoute requireCompleteProfile />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/profile" element={<ProfilePage />} />
+          <Route path="/lock_in" element={<LockIn />} />
         </Route>
 
         {/* Conditional layout routes - DashboardShell if logged in, PublicLayout if not */}
@@ -56,8 +67,9 @@ function AppContent() {
           <Route path="/topicals" element={<TopicalPages />} />
           <Route path="/topicals/:level/:board/:subject" element={<TopicalPages />} />
         </Route>
-      </Route>
-    </Routes>
+        </Route>
+      </Routes>
+    </>
   );
 }
 
@@ -70,9 +82,15 @@ function App() {
     <DarkModeProvider>
       <UserProvider>
         <AuthProvider>
-          <Router>
-            <AppContent />
-          </Router>
+          <EngagementProvider>
+            <Router>
+              <LockInProvider>
+                <GlobalLockInManager>
+                  <AppContent />
+                </GlobalLockInManager>
+              </LockInProvider>
+            </Router>
+          </EngagementProvider>
         </AuthProvider>
       </UserProvider>
     </DarkModeProvider>

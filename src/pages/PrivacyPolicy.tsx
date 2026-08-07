@@ -71,7 +71,7 @@ Platform Operations:
 What We Do NOT Do:
 - We do NOT sell your personal information to third parties
 - We do NOT use your information for targeted advertising
-- We do NOT share your learning data with external services
+- We do NOT share your learning data with external services, except for anonymous usage analytics via Google Analytics
 - We do NOT send marketing emails unless you contact us first`
     },
     {
@@ -195,19 +195,20 @@ Local Storage (browser):
 
 Cookies:
 - Supabase Auth session cookies (secure, httpOnly, sameSite)
-- No tracking or advertising cookies
-- No third-party analytics cookies (we don't use Google Analytics, etc.)
+- Google Analytics cookies for aggregated, anonymous usage tracking
+- No third-party marketing or advertising cookies
 
 How to Manage:
 - Clear cookies anytime through browser settings
 - Clear local storage in browser developer tools
 - Disabling cookies will prevent authentication from working
 - Disabling local storage may affect theme persistence
+- You can opt out of Google Analytics via browser extensions
 
-No Third-Party Tracking:
-- We do not use cookies to track your behavior
-- We do not use cookies for advertising or analytics
-- Your browsing activity is private to your device`
+Analytics & Tracking:
+- We use Google Analytics to understand how users interact with our platform to improve our services
+- We do not use cookies for targeted advertising
+- Your personal learning data is not shared with Google Analytics`
     },
     {
       title: 'International Data Transfers',

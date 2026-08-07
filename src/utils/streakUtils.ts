@@ -40,23 +40,33 @@ export const updateStreak = async (): Promise<StreakData> => {
   return getStreakData();
 };
 
-export const getLast30Days = async (): Promise<DayData[]> => {
-  const streak = await getStreakData();
+export const getLast30DaysFromStreak = (streak: StreakData): DayData[] => {
   const today = new Date();
   const days: DayData[] = [];
-  
+
   for (let i = 29; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
     const dateStr = date.toISOString().split('T')[0];
-    
+
     days.push({
       date: dateStr,
       dayOfMonth: date.getDate(),
       isVisited: streak.visitedDates.includes(dateStr),
-      month: date.toLocaleString('default', { month: 'short' })
+      month: date.toLocaleString('default', { month: 'short' }),
     });
   }
-  
+
   return days;
+};
+
+/**
+ * Calls updateStreak once and derives both the streak data and the last-30-days
+ * calendar from that single Supabase RPC round-trip. This is equivalent to
+ * calling updateStreak() + getLast30Days() but avoids the duplicate getStreakData call.
+ */
+export const updateStreakAndDays = async (): Promise<{ streak: StreakData; days: DayData[] }> => {
+  const streak = await updateStreak();
+  const days = getLast30DaysFromStreak(streak);
+  return { streak, days };
 };

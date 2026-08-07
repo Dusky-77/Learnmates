@@ -12,7 +12,8 @@ import { getTopicSlug } from '../utils/curriculumData';
 import { topicData } from '../data/topicData';
 import { resolveTopicKeyFromParams } from '../utils/curriculumTopicResolver';
 import { PdfViewerBasePath } from '../utils/pdfViewerPaths';
-import { DoneItem, loadDoneItems, isDoneItem, toggleDoneItem, videoDoneUrl } from '../utils/doneItems';
+import { DoneItem, isDoneItem, videoDoneUrl } from '../utils/doneItems';
+import { useEngagement } from '../context/EngagementContext';
 import { useRouteBase, withBase } from '../utils/routeBase';
 import { Card, Badge, Button } from '@/components/ui';
 
@@ -34,15 +35,7 @@ const TopicPage: React.FC = () => {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState<'videos' | 'resources' | 'quiz'>('resources');
 
-  const [doneVideos, setDoneVideos] = useState<DoneItem[]>(() => loadDoneItems('doneVideos'));
-  useEffect(() => {
-    localStorage.setItem('doneVideos', JSON.stringify(doneVideos));
-  }, [doneVideos]);
-
-  const [doneResources, setDoneResources] = useState<DoneItem[]>(() => loadDoneItems('doneResources'));
-  useEffect(() => {
-    localStorage.setItem('doneResources', JSON.stringify(doneResources));
-  }, [doneResources]);
+  const { doneVideos, doneResources, toggleDoneVideo, toggleDoneResource } = useEngagement();
 
   const [resourcesViewMode, setResourcesViewMode] = useState<ResourcesViewMode>(() => {
     try {
@@ -241,7 +234,7 @@ const TopicPage: React.FC = () => {
   const topicSlug = topic ? getTopicSlug({ title: topic.title, group: topic.group }) : '';
   const canonicalPath = topic ? curriculumPath(routeType, routeBoard, encodeURIComponent(topic.subject || ''), topicSlug) : '';
 
-  const [pageMeta, setPageMeta] = useState<PageMeta | null>(null);
+  const [pageMeta, setPageMeta] = useState<any | null>(null);
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -249,8 +242,8 @@ const TopicPage: React.FC = () => {
         const res = await fetch('/metadata.json');
         if (!res.ok) return;
         const data = await res.json();
-        const topicsMap = (data?.topics ?? {}) as Record<string, PageMeta>;
-        const meta = topicsMap[canonicalPath] || Object.values(topicsMap).find((t) => t.url === canonicalPath);
+        const topicsMap = (data?.topics ?? {}) as Record<string, any>;
+        const meta = topicsMap[canonicalPath] || Object.values(topicsMap).find((t: any) => t.url === canonicalPath);
         if (mounted) setPageMeta(meta || null);
       } catch {
         // ignore
@@ -310,7 +303,7 @@ const TopicPage: React.FC = () => {
         </div>
 
         <Card variant="elevated" padding="none" className="overflow-hidden">
-          <div className={`bg-gradient-to-r ${topic.color ? topic.color : getSubjectColor(topic.subject)} p-8 text-white`}>
+          <div className={`dark:bg-gray-700 bg-gray-200 ${topic.color ? topic.color : getSubjectColor(topic.subject)} p-8 text-white`}>
             <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
                 {(() => {
@@ -320,7 +313,7 @@ const TopicPage: React.FC = () => {
                   if (topic.group && !seen[topic.group]) {
                     seen[topic.group] = true;
                     badgeNodes.push(
-                      <Badge key={topic.group} variant="outline" size="sm" className="bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-200">
+                      <Badge key={topic.group} variant="outline" size="lg" className="bg-primary-100 dark:bg-primary-900  text-gray-800 dark:text-white">
                         {topic.group}
                       </Badge>
                     );
@@ -331,7 +324,7 @@ const TopicPage: React.FC = () => {
                       if (!tag.name || seen[tag.name]) return;
                       seen[tag.name] = true;
                       badgeNodes.push(
-                        <Badge key={tag.name} variant="primary" size="sm" className="text-xs">
+                        <Badge key={tag.name} variant="primary" size="sm" className=" text-gray-800 dark:text-white">
                           {tag.name}
                         </Badge>
                       );
@@ -345,11 +338,11 @@ const TopicPage: React.FC = () => {
                 <span className="text-sm font-medium bg-white dark:bg-neutral-800 bg-opacity-20 px-3 py-1 rounded-full">{progress}% Complete</span>
               )}
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">{topic.title}</h1>
-            <p className="text-sm sm:text-base opacity-90 mb-4 sm:mb-6">{topic.description}</p>
+            <h1 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4 text-gray-800 dark:text-white">{topic.title}</h1>
+            <p className="text-sm sm:text-base opacity-90 mb-4 sm:mb-6  text-gray-800 dark:text-white">{topic.description}</p>
             {progress > 0 && (
-              <div className="w-full bg-white dark:bg-neutral-800 bg-opacity-20 rounded-full h-2">
-                <div className="bg-white dark:bg-neutral-800 h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+              <div className="w-full bg-white dark:bg-gray-800 bg-opacity-20 rounded-full h-2">
+                <div className="bg-gray-200 dark:bg-gray-800 h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
               </div>
             )}
           </div>
@@ -359,7 +352,7 @@ const TopicPage: React.FC = () => {
       <motion.div variants={itemVariants} className="mb-8">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
           <div />
-          <div className="flex space-x-1 bg-neutral-100 dark:bg-neutral-700 p-1 rounded-lg text-xs sm:text-sm">
+          <div className="flex space-x-1 bg-gray-200 dark:bg-gray-700 p-1 rounded-lg text-xs sm:text-sm">
             {[
               { id: 'videos', label: 'Videos', icon: Play, count: topic.videos.length },
               { id: 'resources', label: 'Resources', icon: FileText, count: topic.resources.length },
@@ -382,7 +375,7 @@ const TopicPage: React.FC = () => {
           </div>
           <div className="flex justify-end">
             {activeTab === 'resources' && topic.resources.length > 0 && (
-              <div className="flex items-center bg-neutral-100 dark:bg-neutral-700 p-1 rounded-lg text-xs sm:text-sm">
+              <div className="flex items-center bg-gray-200 dark:bg-gray-700 p-1 rounded-lg text-xs sm:text-sm">
                 <Button
                   variant={resourcesViewMode === 'list' ? 'primary' : 'ghost'}
                   size="sm"
@@ -417,7 +410,6 @@ const TopicPage: React.FC = () => {
             ) : (
               topic.videos.map((v: any) => {
                 const videoUrl = videoDoneUrl(v);
-                const isDone = isDoneItem(doneVideos, v.id, videoUrl);
                 return (
                   <VideoPlayer
                     key={`${v.id}:${videoUrl}`}
@@ -425,8 +417,8 @@ const TopicPage: React.FC = () => {
                     description={v.description ?? ''}
                     englishUrl={v.englishUrl}
                     arabicUrl={v.arabicUrl}
-                    done={isDone}
-                    onToggleDone={() => setDoneVideos((prev) => toggleDoneItem(prev, v.id, videoUrl))}
+                    done={isDoneItem(doneVideos, v.id, videoUrl)}
+                    onToggleDone={() => toggleDoneVideo(v.id, videoUrl)}
                   />
                 );
               })
@@ -439,7 +431,7 @@ const TopicPage: React.FC = () => {
             resources={topic.resources}
             topicId={topicKey}
             doneResources={doneResources}
-            setDoneResources={setDoneResources}
+            toggleDoneResource={toggleDoneResource}
             viewMode={resourcesViewMode}
             pdfViewerBasePath={pdfViewerBasePath}
           />

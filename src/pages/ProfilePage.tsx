@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import {
@@ -14,6 +14,9 @@ import {
   Check,
   Loader2,
   Lock,
+  HeartHandshake,
+  AlertTriangle,
+  Trash2,
 } from "lucide-react";
 import { type BoardKey } from "../utils/curriculumData";
 import { useAuth } from "../context/AuthContext";
@@ -24,8 +27,9 @@ import {
   type UserProfile,
   updateProfile,
 } from "../utils/profileSync";
+import { supabase } from '../lib/supabaseClient';
 import type { FavoriteSubject } from "../utils/favoriteSubjects";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const MATE_LEVELS = [
   { name: "Curious Mate", threshold: 0 },
@@ -100,6 +104,7 @@ const ProfilePageSkeleton = () => (
 const ProfilePage = () => {
   const { user: authUser } = useAuth();
   const { user } = useUser();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [favoriteSubjects, setFavoriteSubjects] = useState<FavoriteSubject[]>(
     [],
@@ -144,7 +149,38 @@ const ProfilePage = () => {
     load();
   }, [authUser, user?.name]);
 
-  const matePoints = 0;
+  const [matePoints, setMatePoints] = useState(0);
+  const [isLoadingXP, setIsLoadingXP] = useState(true);
+
+  useEffect(() => {
+    async function fetchXP() {
+      setIsLoadingXP(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const { data, error } = await supabase
+          .from('user_xp')
+          .select('total_xp')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Failed to fetch XP data from Supabase:', error);
+        }
+
+        setMatePoints(data?.total_xp || 0);
+      } catch (error) {
+        console.error('Failed to fetch XP data', error);
+      } finally {
+        setIsLoadingXP(false);
+      }
+    }
+
+    if (authUser) {
+      fetchXP();
+    }
+  }, [authUser]);
   const currentMateLevelIndex = MATE_LEVELS.reduce(
     (acc, lvl, i) => (matePoints >= lvl.threshold ? i : acc),
     0,
@@ -153,14 +189,14 @@ const ProfilePage = () => {
   const nextMateLevel = MATE_LEVELS[currentMateLevelIndex + 1];
   const mateProgressPercent = nextMateLevel
     ? Math.min(
+      100,
+      Math.max(
+        0,
+        ((matePoints - currentMateLevel.threshold) /
+          (nextMateLevel.threshold - currentMateLevel.threshold)) *
         100,
-        Math.max(
-          0,
-          ((matePoints - currentMateLevel.threshold) /
-            (nextMateLevel.threshold - currentMateLevel.threshold)) *
-            100,
-        ),
-      )
+      ),
+    )
     : 100;
 
   const openEditView = () => {
@@ -235,11 +271,36 @@ const ProfilePage = () => {
   );
   const subjectPreview = uniqueSubjects.length
     ? uniqueSubjects.slice(0, 3).join(", ") +
-      (uniqueSubjects.length > 3 ? "..." : "")
+    (uniqueSubjects.length > 3 ? "..." : "")
     : "—";
   const subjectSummary = uniqueSubjects.length
     ? uniqueSubjects.join(", ")
     : "—";
+
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
+
+  const handleDeleteAccount = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { error } = await supabase.rpc('delete_user_account');
+
+      if (!error) {
+        await supabase.auth.signOut();
+        localStorage.clear();
+        alert('Account successfully deleted.');
+        navigate('/');
+      } else {
+        console.error('Failed to delete account:', error);
+        alert('Failed to delete account. Please try again later.');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('An error occurred while deleting your account.');
+    }
+  };
 
   // Edit Mode Component
   const EditMode = () => (
@@ -290,7 +351,7 @@ const ProfilePage = () => {
           </div>
         </div>
         <p className="-mt-3 text-xs text-slate-400 dark:text-slate-500">
-          Your username and email can't be changed here.
+          Your username and email can't be changed.
         </p>
 
         {/* Editable fields */}
@@ -345,11 +406,10 @@ const ProfilePage = () => {
             {ALL_BOARDS.map((board) => (
               <label
                 key={board}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
-                  draftBoards.includes(board)
-                    ? "bg-blue-600 border-blue-600 text-white"
-                    : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                }`}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition ${draftBoards.includes(board)
+                  ? "bg-blue-600 border-blue-600 text-white"
+                  : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  }`}
               >
                 <input
                   type="checkbox"
@@ -449,7 +509,7 @@ const ProfilePage = () => {
                 >
                   {displayName || "Student"}
                 </p>
-                <span className="flex items-center gap-1 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-300 border border-amber-500/30 shrink-0">
+                <span className="flex items-center gap-1 rounded-full bg-blue-900 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-400 border-2 border-purple-800/50 shrink-0">
                   {currentMateLevel.name}
                 </span>
               </div>
@@ -463,28 +523,43 @@ const ProfilePage = () => {
 
             {/* Progress bar — spans both columns, below avatar and name */}
             <div className="col-span-2">
-              {/* Progress label: points/total + "Mate Points" */}
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <span className="text-xs text-blue-200/70 tabular-nums">
-                  {matePoints.toLocaleString()} /{" "}
-                  {nextMateLevel
-                    ? nextMateLevel.threshold.toLocaleString()
-                    : "—"}{" "}
-                  XP
-                </span>
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-white/60">
-                  Mate Points
-                </span>
-              </div>
-              {/* Progress bar */}
-              <div className="w-full h-2.5 rounded-full bg-white/10 overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${mateProgressPercent}%` }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="h-full rounded-full bg-blue-500"
-                />
-              </div>
+              {isLoadingXP ? (
+                <div className="w-full space-y-2">
+                  <div className="flex justify-between">
+                    <div className="h-3 w-20 animate-pulse rounded bg-white/10" />
+                    <div className="h-3 w-16 animate-pulse rounded bg-white/10" />
+                  </div>
+                  <div className="w-full h-2.5 rounded-full bg-white/10 animate-pulse" />
+                </div>
+              ) : (
+                <>
+                  {/* Progress label: points/total + "Mate Points" */}
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-xs text-blue-200/70 tabular-nums">
+                      {matePoints.toLocaleString()} /{" "}
+                      {nextMateLevel
+                        ? nextMateLevel.threshold.toLocaleString()
+                        : "—"}{" "}
+                      XP
+                    </span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-white/60">
+                      Mate Points
+                    </span>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="w-full h-2.5 rounded-full bg-white/10 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${mateProgressPercent}%` }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      className="h-full rounded-full bg-blue-500"
+                    />
+                  </div>
+                  <p className="mt-2 text-[10px] text-white/50 text-right leading-tight">
+                    *During the beta testing phase, accumulated points are temporary and will be reset prior to official release.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -540,28 +615,43 @@ const ProfilePage = () => {
 
             {/* Progress bar — spans both columns, below avatar and name */}
             <div className="col-span-2">
-              {/* Progress label: points/total + "Mate Points" */}
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <span className="text-xs text-slate-500 tabular-nums">
-                  {matePoints.toLocaleString()} /{" "}
-                  {nextMateLevel
-                    ? nextMateLevel.threshold.toLocaleString()
-                    : "—"}{" "}
-                  XP
-                </span>
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                  Mate Points
-                </span>
-              </div>
-              {/* Progress bar */}
-              <div className="w-full h-2.5 rounded-full bg-slate-200 overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${mateProgressPercent}%` }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="h-full rounded-full bg-blue-500"
-                />
-              </div>
+              {isLoadingXP ? (
+                <div className="w-full space-y-2">
+                  <div className="flex justify-between">
+                    <div className="h-3 w-20 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+                    <div className="h-3 w-16 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+                  </div>
+                  <div className="w-full h-2.5 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                </div>
+              ) : (
+                <>
+                  {/* Progress label: points/total + "Mate Points" */}
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-xs text-slate-500 tabular-nums">
+                      {matePoints.toLocaleString()} /{" "}
+                      {nextMateLevel
+                        ? nextMateLevel.threshold.toLocaleString()
+                        : "—"}{" "}
+                      XP
+                    </span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Mate Points
+                    </span>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="w-full h-2.5 rounded-full bg-slate-200 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${mateProgressPercent}%` }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      className="h-full rounded-full bg-blue-500"
+                    />
+                  </div>
+                  <p className="mt-2 text-[10px] text-slate-400 text-right leading-tight">
+                    *During the beta testing phase, accumulated points are temporary and will be reset prior to official release.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -684,6 +774,134 @@ const ProfilePage = () => {
           </div>
         </div>
       </motion.div>
+
+      {/* Help Us section */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="mt-6"
+      >
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-rose-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 text-slate-900 dark:text-white mb-4">
+            <HeartHandshake className="h-5 w-5 text-rose-500 dark:text-rose-400" />
+            <h3
+              className="text-lg font-semibold"
+              style={{ fontFamily: "'Fraunces', serif" }}
+            >
+              Help Us
+            </h3>
+          </div>
+          <div className="space-y-3">
+            <Link
+              to="/contribute"
+              className="group flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors border border-gray-100 dark:border-gray-700"
+            >
+              <div className="flex-1 min-w-0 pr-4">
+                <p className="font-medium text-gray-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+                  Contribute
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Help us add more materials and features
+                </p>
+              </div>
+              <ChevronDown className="h-5 w-5 text-gray-400 group-hover:text-rose-500 dark:group-hover:text-rose-400 transition-colors flex-shrink-0 -rotate-90" />
+            </Link>
+            <Link
+              to="/donate"
+              className="group flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors border border-gray-100 dark:border-gray-700"
+            >
+              <div className="flex-1 min-w-0 pr-4">
+                <p className="font-medium text-gray-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+                  Donate
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Support the platform's running costs
+                </p>
+              </div>
+              <ChevronDown className="h-5 w-5 text-gray-400 group-hover:text-rose-500 dark:group-hover:text-rose-400 transition-colors flex-shrink-0 -rotate-90" />
+            </Link>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Danger Zone */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="mt-6"
+      >
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-red-200 dark:border-red-900/50">
+          <div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-4">
+            <AlertTriangle className="h-5 w-5" />
+            <h3
+              className="text-lg font-semibold"
+              style={{ fontFamily: "'Fraunces', serif" }}
+            >
+              Danger Zone
+            </h3>
+          </div>
+          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <p className="font-medium text-red-900 dark:text-red-400">
+                  Delete Account
+                </p>
+                <p className="text-sm text-red-700/70 dark:text-red-400/70 mt-0.5 max-w-md">
+                  Once you delete your account, there is no going back. Please be certain.
+                </p>
+              </div>
+              {!isConfirmingDelete ? (
+                <button
+                  type="button"
+                  onClick={() => setIsConfirmingDelete(true)}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 font-medium transition-colors select-none shrink-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete Account
+                </button>
+              ) : (
+                <div className="flex flex-col gap-3 sm:items-end w-full sm:w-auto">
+                  <div className="flex flex-col gap-1 w-full sm:w-64">
+                    <label className="text-xs font-medium text-red-700 dark:text-red-400">
+                      Type "delete" to confirm:
+                    </label>
+                    <input
+                      type="text"
+                      value={deleteConfirmationText}
+                      onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                      placeholder="delete"
+                      className="w-full rounded-lg border border-red-200 dark:border-red-800 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsConfirmingDelete(false);
+                        setDeleteConfirmationText("");
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteAccount}
+                      disabled={deleteConfirmationText.toLowerCase() !== 'delete'}
+                      className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50 text-sm disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Confirm Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </>
   );
 
@@ -728,9 +946,9 @@ const ProfilePage = () => {
         {isLoadingProfile ? (
           <ProfilePageSkeleton />
         ) : isEditing ? (
-          <EditMode />
+          EditMode()
         ) : (
-          <ViewMode />
+          ViewMode()
         )}
       </motion.div>
     </div>

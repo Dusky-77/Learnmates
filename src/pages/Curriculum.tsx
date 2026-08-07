@@ -25,7 +25,7 @@ const Curriculum: React.FC = () => {
     }
   };
 
-  const curriculums = [
+const curriculums = [
     {
       id: 'igcse',
       title: 'IGCSE',
@@ -34,7 +34,7 @@ const Curriculum: React.FC = () => {
       subjects: ['Mathematics', 'Physics', 'Chemistry', 'Biology'],
       icon: <BookText className="w-12 h-12" />,
       color: 'from-blue-500 to-blue-600',
-      bgColor: 'from-blue-50 to-blue-100'
+      bgColor: 'from-blue-500 to-blue-600'
     },
     {
       id: 'a-level',
@@ -44,7 +44,7 @@ const Curriculum: React.FC = () => {
       subjects: ['Mathematics', 'Physics', 'Chemistry', 'Biology'],
       icon: <GraduationCap className="w-12 h-12" />,
       color: 'from-teal-500 to-teal-600',
-      bgColor: 'from-teal-50 to-teal-100'
+      bgColor: 'from-teal-500 to-teal-600'
     }
   ];
 
@@ -86,7 +86,7 @@ const Curriculum: React.FC = () => {
               transition={{ delay: 0.3 + index * 0.2 }}
               className="group"
             >
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300 overflow-hidden">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300 overflow-hidden border border-slate-200 dark:border-slate-700">
                 {/* Header */}
                 <div className={`bg-gradient-to-r ${curriculum.bgColor} p-8`}>
                   <div className="flex items-center justify-between mb-6">
@@ -94,21 +94,21 @@ const Curriculum: React.FC = () => {
                       {curriculum.icon}
                     </div>
                     <div className="text-right">
-                      <h2 className="text-3xl font-bold text-gray-900 ">{curriculum.title}</h2>
-                      <p className="text-sm text-gray-600">{curriculum.fullName}</p>
+                      <h2 className="text-3xl font-bold text-white">{curriculum.title}</h2>
+                      <p className="text-sm text-blue-100">{curriculum.fullName}</p>
                     </div>
                   </div>
-                  <p className="text-gray-700 leading-relaxed">{curriculum.description}</p>
+                  <p className="text-blue-100 leading-relaxed">{curriculum.description}</p>
                 </div>
 
                 {/* Content */}
                 <div className="p-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4 dark:text-white mb-8">Available Subjects</h3>
+                  <h3 className="text-xl font-bold text-white mb-4 dark:text-white mb-8">Available Subjects</h3>
                   <div className="grid grid-cols-2 gap-3 mb-8">
                     {curriculum.subjects.map((subject, subIndex) => (
                       <div
                         key={subIndex}
-                        className="flex items-center space-x-2 text-gray-700 dark:text-gray-300"
+                        className="flex items-center space-x-2 text-white"
                       >
                         <div className={`w-4 h-1.5 bg-gradient-to-r ${curriculum.color} rounded-full`}></div>
                         <span className="text-lg">{subject}</span>
@@ -163,9 +163,9 @@ const Curriculum: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 + index * 0.1 }}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow duration-200 text-center"
+              className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow duration-200 text-center border border-slate-200 dark:border-slate-700"
             >
-              <div className={`w-16 h-16 bg-gradient-to-r ${feature.color} rounded-xl flex items-center justify-center text-black mx-auto mb-6`}>
+              <div className={`w-16 h-16 bg-gradient-to-r ${feature.color} rounded-xl flex items-center justify-center text-white mx-auto mb-6`}>
                 {feature.icon}
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4 dark:text-white">{feature.title}</h3>

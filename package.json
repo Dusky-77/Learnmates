@@ -22,7 +22,7 @@
     "upload:blob": "node scripts/uploadToBlob.js",
     "prebuild": "npm run generate:manifests && npm run copy:pdfjs",
     "build": "npm run generate-metadata && vite build && npm run generate-sitemap",
-    "postbuild": "npx serve -s dist -l 4173 & sleep 2 && node script/prerender.js; kill %1",
+    "postbuild": "echo 'postbuild disabled'",
     "generate-sitemap": "tsx script/sitemap.js",
     "lint": "eslint .",
     "preview": "vite preview"

@@ -15,8 +15,10 @@ import {
   hasServiceConsent,
   setServiceConsent,
 } from '../utils/privacyUtils';
-import { DoneItem, loadDoneItems, isDoneItem, toggleDoneItem } from '../utils/doneItems';
-import { notifyEngagementUpdated, setEngagementFlag } from '../utils/resourceEngagement';
+import { DoneItem, isDoneItem } from '../utils/doneItems';
+import { useEngagement } from '../context/EngagementContext';
+import { supabase } from '../lib/supabaseClient';
+import { triggerXPNotification } from './XPRewardNotification';
 
 interface Resource {
   id: string;
@@ -35,8 +37,6 @@ const isPdfUrl = (url: string): boolean => {
 interface ResourcesProps {
   resources: Resource[];
   topicId?: string;
-  doneResources?: DoneItem[];
-  setDoneResources?: React.Dispatch<React.SetStateAction<DoneItem[]>>;
   viewMode?: ResourcesViewMode;
   pdfViewerBasePath?: PdfViewerBasePath;
 }
@@ -44,8 +44,6 @@ interface ResourcesProps {
 const Resources: React.FC<ResourcesProps> = ({
   resources,
   topicId,
-  doneResources: externalDoneResources = [],
-  setDoneResources: externalSetDoneResources,
   viewMode = 'list',
   pdfViewerBasePath,
 }: ResourcesProps) => {
@@ -54,7 +52,7 @@ const Resources: React.FC<ResourcesProps> = ({
   const [privacyConsent, setPrivacyConsent] = useState<Record<string, boolean>>({});
   const [pendingLink, setPendingLink] = useState<string | null>(null);
 
-  const [localDoneResources, setLocalDoneResources] = useState<DoneItem[]>(() => loadDoneItems('doneResources'));
+  const { doneResources, toggleDoneResource, setEngagementFlag } = useEngagement();
   const [expandedResources, setExpandedResources] = useState<string[]>([]);
 
   useEffect(() => {
@@ -67,15 +65,6 @@ const Resources: React.FC<ResourcesProps> = ({
     });
     setPrivacyConsent(newConsent);
   }, [resources]);
-
-  useEffect(() => {
-    if (!externalDoneResources) {
-      localStorage.setItem('doneResources', JSON.stringify(localDoneResources));
-    }
-  }, [localDoneResources, externalDoneResources]);
-
-  const doneResources = externalDoneResources ?? localDoneResources;
-  const setDoneResources = externalSetDoneResources ?? setLocalDoneResources;
 
   const handleLinkClick = (e: React.MouseEvent, url: string) => {
     if (isPdfUrl(url) && pdfViewerBasePath) {
@@ -93,13 +82,40 @@ const Resources: React.FC<ResourcesProps> = ({
   };
 
   const toggleDone = (resource: Resource) => {
-    setDoneResources((prev) => toggleDoneItem(prev, resource.id, resource.url));
-    notifyEngagementUpdated();
+    if (toggleDoneResource) {
+      toggleDoneResource(resource.id, resource.url);
+    }
   };
 
-  const handleDownload = (resource: Resource) => {
+  const handleDownload = async (resource: Resource) => {
     if (topicId) {
       setEngagementFlag(topicId, resource.id, resource.url, 'downloaded');
+    }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const response = await fetch('/api/xp/download', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          keepalive: true,
+          body: JSON.stringify({ 
+            resourceId: resource.id,
+            resourceName: resource.title,
+            resourceType: 'file'
+          })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.xpAwarded > 0) {
+            triggerXPNotification(data.xpAwarded, 'download');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to track download XP', error);
     }
   };
 

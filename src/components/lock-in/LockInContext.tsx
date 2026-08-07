@@ -1,0 +1,252 @@
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../context/AuthContext';
+
+export interface UserDevice {
+  id: string;
+  device_id: string;
+  device_name: string;
+  status: 'lobby' | 'locked' | 'open';
+  lock_until: string | null;
+  last_active_at: string;
+  is_host: boolean;
+}
+
+export interface LockInSessionState {
+  user_id?: string;
+  status: 'active';
+  session_minutes: number;
+  started_at: string;
+  paused_duration_ms: number;
+  breaks_allowed: number;
+  breaks_taken: number;
+  current_break_started_at: string | null;
+  tab_left_at: string | null;
+  tab_left_device_id: string | null;
+}
+
+interface LockInContextType {
+  sessionState: LockInSessionState | null;
+  updateSessionState: (updates: Partial<LockInSessionState>) => Promise<void>;
+  endSessionContext: () => Promise<void>;
+  startSession: (minutes: number, deviceUpdates: any[]) => Promise<void>;
+  
+  devices: UserDevice[];
+  currentDevice: UserDevice | undefined;
+  deviceId: string;
+  fetchDevices: () => Promise<void>;
+}
+
+const LockInContext = createContext<LockInContextType | undefined>(undefined);
+
+const getDeviceId = () => {
+  let id = localStorage.getItem('lock_in_device_id');
+  if (!id) {
+    id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('lock_in_device_id', id);
+  }
+  return id;
+};
+
+const getDeviceName = () => {
+  const ua = navigator.userAgent;
+  let browser = "Browser";
+  if (ua.includes("Firefox")) browser = "Firefox";
+  else if (ua.includes("Chrome")) browser = "Chrome";
+  else if (ua.includes("Safari")) browser = "Safari";
+  
+  let os = "Device";
+  if (ua.includes("Win")) os = "Windows";
+  else if (ua.includes("Mac")) os = "Mac";
+  else if (ua.includes("Linux")) os = "Linux";
+  else if (ua.includes("iPhone")) os = "iPhone";
+  else if (ua.includes("iPad")) os = "iPad";
+  else if (ua.includes("Android")) os = "Android";
+
+  return `${browser} on ${os}`;
+};
+
+export const LockInProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  
+  const [devices, setDevices] = useState<UserDevice[]>([]);
+  const [deviceId, setDeviceId] = useState<string>('');
+  const [sessionState, setSessionState] = useState<LockInSessionState | null>(null);
+
+  const fetchSession = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('lock_in_sessions')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+      
+    setSessionState(data as LockInSessionState | null);
+  }, [user]);
+
+  const fetchDevices = useCallback(async () => {
+    if (!user) return;
+    const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { data, error } = await supabase
+      .from('user_devices')
+      .select('*')
+      .eq('user_id', user.id)
+      .gte('last_active_at', fiveMinsAgo)
+      .order('last_active_at', { ascending: false });
+
+    if (data && !error) {
+      setDevices(data as UserDevice[]);
+    }
+  }, [user]);
+
+  const heartbeat = useCallback(async (id: string, name: string) => {
+    if (!user) return;
+    
+    const now = new Date().toISOString();
+    const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    
+    // Check if we need to claim host
+    const { data: activeDevices } = await supabase
+      .from('user_devices')
+      .select('*')
+      .eq('user_id', user.id)
+      .gte('last_active_at', fiveMinsAgo)
+      .order('last_active_at', { ascending: false });
+      
+    let shouldBeHost = false;
+    if (activeDevices) {
+      const hasHost = activeDevices.some(d => d.is_host && d.device_id !== id);
+      const isAlreadyHost = activeDevices.some(d => d.is_host && d.device_id === id);
+      if (!hasHost && !isAlreadyHost) {
+         shouldBeHost = true;
+      }
+    }
+
+    const { data } = await supabase
+      .from('user_devices')
+      .update({ 
+        last_active_at: now, 
+        device_name: name,
+        ...(shouldBeHost ? { is_host: true } : {}) 
+      })
+      .eq('user_id', user.id)
+      .eq('device_id', id)
+      .select();
+
+    if (!data || data.length === 0) {
+      await supabase.from('user_devices').insert({
+        user_id: user.id,
+        device_id: id,
+        device_name: name,
+        status: 'lobby',
+        last_active_at: now,
+        is_host: shouldBeHost
+      });
+    }
+    fetchDevices();
+  }, [user, fetchDevices]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    fetchSession();
+
+    const id = getDeviceId();
+    const name = getDeviceName();
+    setDeviceId(id);
+
+    heartbeat(id, name);
+    const interval = setInterval(() => heartbeat(id, name), 60000);
+
+    const deviceChannel = supabase
+      .channel(`user_devices_${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_devices', filter: `user_id=eq.${user.id}` },
+        () => fetchDevices()
+      )
+      .subscribe();
+      
+    const sessionChannel = supabase
+      .channel(`lock_in_sessions_${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'lock_in_sessions', filter: `user_id=eq.${user.id}` },
+        () => fetchSession()
+      )
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(deviceChannel);
+      supabase.removeChannel(sessionChannel);
+    };
+  }, [user, heartbeat, fetchDevices, fetchSession]);
+
+  const currentDevice = devices.find(d => d.device_id === deviceId);
+
+  const updateSessionState = async (updates: Partial<LockInSessionState>) => {
+    if (!user) return;
+    
+    // Optimistic update
+    setSessionState(prev => prev ? { ...prev, ...updates } : null);
+
+    await supabase
+      .from('lock_in_sessions')
+      .update(updates)
+      .eq('user_id', user.id);
+  };
+
+  const startSession = async (minutes: number, deviceUpdates: any[]) => {
+    if (!user) return;
+    
+    await Promise.all(deviceUpdates);
+
+    const newSession = {
+      user_id: user.id,
+      session_minutes: minutes,
+      started_at: new Date().toISOString(),
+      paused_duration_ms: 0,
+      breaks_allowed: Math.round(minutes / 60),
+      breaks_taken: 0,
+      current_break_started_at: null,
+      tab_left_at: null,
+      tab_left_device_id: null,
+      status: 'active' as const
+    };
+
+    // Optimistic
+    setSessionState(newSession);
+
+    await supabase.from('lock_in_sessions').upsert(newSession);
+  };
+
+  const endSessionContext = async () => {
+    if (!user) return;
+    setSessionState(null);
+    await supabase.from('lock_in_sessions').delete().eq('user_id', user.id);
+  };
+
+  return (
+    <LockInContext.Provider value={{ 
+      sessionState, 
+      updateSessionState, 
+      endSessionContext,
+      startSession,
+      devices,
+      currentDevice,
+      deviceId,
+      fetchDevices
+    }}>
+      {children}
+    </LockInContext.Provider>
+  );
+};
+
+export const useLockInSession = () => {
+  const context = useContext(LockInContext);
+  if (!context) {
+    throw new Error('useLockInSession must be used within a LockInProvider');
+  }
+  return context;
+};

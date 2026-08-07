@@ -110,7 +110,7 @@ What We Do NOT Store:
 Data Retention:
 - Account data retained while account is active
 - Deleted upon account deletion request
-- Anonymous analytics may be retained
+- Anonymous analytics (e.g., via Google Analytics) may be retained
 
 For complete details, please refer to our full Privacy Policy.`
     },

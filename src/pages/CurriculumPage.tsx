@@ -14,7 +14,7 @@ import {
   loadResourceEngagements,
 } from '../utils/resourceEngagement';
 import { filterCountableTopics, isRevisionTopic } from '../utils/subjectProgressGroups';
-import { loadDoneItems } from '../utils/doneItems';
+import { useEngagement } from '../context/EngagementContext';
 import { useRouteBase, withBase } from '../utils/routeBase';
 import { Card, Badge, Button } from '@/components/ui';
 
@@ -23,33 +23,18 @@ const CurriculumPage: React.FC = () => {
   const base = useRouteBase();
   const curriculumPath = (...parts: string[]) => withBase(base, `/curriculum/${parts.join('/')}`);
   const { user, addRecentCourse } = useUser();
-  const [selectedBoard, setSelectedBoard] = useState<string | null>(null);
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-
   const params = useParams<{ type?: string; board?: string; subject?: string }>();
   const typeParam = params.type ? params.type.toLowerCase() : undefined;
   const boardParam = params.board ? params.board.toLowerCase() : undefined;
   const subjectParam = params.subject ? decodeURIComponent(params.subject) : undefined;
+
+  const selectedBoard = (boardParam === 'cambridge' || boardParam === 'edexcel') ? boardParam : null;
+  const selectedSubject = subjectParam || null;
+
   const availableLevels = Object.keys(curriculumData);
   const selectedLevel = typeParam && availableLevels.includes(typeParam) ? typeParam : 'igcse';
   const curriculum = curriculumData[selectedLevel as keyof typeof curriculumData];
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (boardParam === 'cambridge' || boardParam === 'edexcel') {
-      setSelectedBoard(boardParam);
-    } else {
-      setSelectedBoard(null);
-    }
-  }, [boardParam]);
-
-  useEffect(() => {
-    if (subjectParam) {
-      setSelectedSubject(subjectParam);
-    } else {
-      setSelectedSubject(null);
-    }
-  }, [subjectParam]);
 
   const boardTopics = useMemo<Topic[]>(() => {
     return (curriculum && selectedBoard && (selectedBoard === 'cambridge' || selectedBoard === 'edexcel'))
@@ -63,9 +48,9 @@ const CurriculumPage: React.FC = () => {
       : [];
   }, [selectedSubject, boardTopics]);
 
-  const engagementRevision = useEngagementRevision();
-
   const getTopicResources = (topicId: string) => topicData[topicId]?.resources ?? [];
+
+  const { doneResources, engagements } = useEngagement();
 
   const countableTopics = useMemo(
     () => filterCountableTopics(subjectTopics),
@@ -73,25 +58,21 @@ const CurriculumPage: React.FC = () => {
   );
 
   const subjectProgress = useMemo(() => {
-    void engagementRevision;
-    const doneResources = loadDoneItems('doneResources');
-    const engagements = loadResourceEngagements();
     return getSubjectProgress(
       countableTopics.map((topic) => topic.id),
       getTopicResources,
       doneResources,
       engagements
     );
-  }, [countableTopics, engagementRevision]);
+  }, [countableTopics, doneResources, engagements]);
 
   const isTopicDone = (topic: Topic) => {
-    void engagementRevision;
     if (isRevisionTopic(topic)) return false;
-    return isTopicComplete(topic.id, getTopicResources(topic.id));
+    return isTopicComplete(topic.id, getTopicResources(topic.id), doneResources, engagements);
   };
 
   const containerVariants = {
-    hidden: { opacity: 0, transition: { duration: 0 } },
+    hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: { staggerChildren: 0.1 }
@@ -99,7 +80,7 @@ const CurriculumPage: React.FC = () => {
   };
 
   const itemVariants = {
-    hidden: { y: 20, opacity: 0, transition: { duration: 0 } },
+    hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,
       opacity: 1,
@@ -147,32 +128,32 @@ const CurriculumPage: React.FC = () => {
         </motion.div>
         <div className="flex flex-col sm:flex-row gap-8 w-full justify-center">
           <motion.button
-            initial={{ opacity: 0, y: 20, transition: { duration: 0 } }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="flex-1 rounded-2xl shadow-sm bg-[#374151] border border-neutral-100 dark:border-neutral-700 px-8 py-8 text-left transform hover:-translate-y-1 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary-100 group"
+            className="flex-1 rounded-2xl shadow-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-8 py-8 text-left transform hover:-translate-y-1 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 group"
             onClick={() => navigate(curriculumPath(selectedLevel, 'cambridge'))}
           >
             <div className="flex items-start">
               <img src="/logos/Cambridge.svg" alt="Cambridge" className="w-12 h-12 mr-6 object-contain transform transition-transform group-hover:scale-105" />
               <div>
                 <span className="block mb-1 text-2xl font-semibold text-slate-900 dark:text-white">Cambridge</span>
-                <span className="block text-sm text-neutral-600 dark:text-neutral-300">International Examinations</span>
+                <span className="block text-sm text-slate-600 dark:text-slate-400">International Examinations</span>
               </div>
             </div>
           </motion.button>
           <motion.button
-            initial={{ opacity: 0, y: 20, transition: { duration: 0 } }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex-1 rounded-2xl shadow-sm bg-[#374151] border border-neutral-100 dark:border-neutral-700 px-8 py-8 text-left transform hover:-translate-y-1 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary-100 group"
+            className="flex-1 rounded-2xl shadow-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-8 py-8 text-left transform hover:-translate-y-1 hover:shadow-md hover:border-teal-300 dark:hover:border-teal-700 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-teal-100 dark:focus:ring-teal-900 group"
             onClick={() => navigate(curriculumPath(selectedLevel, 'edexcel'))}
           >
             <div className="flex items-start">
               <img src="/logos/Pearson.svg" alt="Pearson" className="w-12 h-12 mr-6 object-contain transform transition-transform group-hover:scale-105" />
               <div>
                 <span className="block mb-1 text-2xl font-semibold text-slate-900 dark:text-white">Edexcel</span>
-                <span className="block text-sm text-neutral-600 dark:text-neutral-300">Edexcel Board</span>
+                <span className="block text-sm text-slate-600 dark:text-slate-400">Edexcel Board</span>
               </div>
             </div>
           </motion.button>
@@ -223,19 +204,19 @@ const CurriculumPage: React.FC = () => {
           {subjects.map((subject: string) => (
             <motion.button
               key={subject}
-              initial={{ opacity: 0, y: 20, transition: { duration: 0 } }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="flex flex-col items-start rounded-2xl shadow-sm bg-[#374151] border border-neutral-100 dark:border-neutral-700 px-6 py-8 sm:px-8 sm:py-10 lg:px-8 lg:py-10 transform hover:-translate-y-1 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary-100 group"
+              className="flex flex-col items-start rounded-2xl shadow-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-8 sm:px-8 sm:py-10 lg:px-8 lg:py-10 transform hover:-translate-y-1 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900 group"
               onClick={() => navigate(curriculumPath(selectedLevel, selectedBoard!, encodeURIComponent(subject)))}
             >
               <div className="flex items-center mb-4">
-                <div className="bg-primary-100 w-12 h-12 dark:bg-neutral-900 p-2 rounded-md mr-2 transform transition-transform group-hover:scale-103">
+                <div className="bg-blue-100 dark:bg-blue-900 w-12 h-12 p-2 rounded-md mr-2 transform transition-transform group-hover:scale-103">
                   {getSubjectIcon(subject)}
                 </div>
                 <span className="font-semibold text-lg text-slate-900 dark:text-white">{subject}</span>
               </div>
-              <span className="text-xs text-neutral-500 dark:text-neutral-400">Explore topics and resources</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Explore topics and resources</span>
             </motion.button>
           ))}
         </div>
@@ -314,21 +295,23 @@ const CurriculumPage: React.FC = () => {
           const completed = isTopicDone(topic);
           const hasResources = getTopicResources(topic.id).length > 0;
           const countsTowardProgress = !isRevisionTopic(topic);
+          const mobileSidebarClass = topic.color ? `bg-gradient-to-b ${topic.color}` : 'bg-blue-600 dark:bg-blue-700';
+          const desktopSidebarClass = topic.color ? `bg-gradient-to-b ${topic.color}` : 'bg-blue-600 dark:bg-blue-700';
+          const buttonClass = topic.color
+            ? `bg-gradient-to-r ${topic.color} hover:brightness-110`
+            : 'bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600';
           return (
-            <motion.div
-              initial={{ opacity: 0, y: 20, transition: { duration: 0 } }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 + index * 0.1 }}
-              className="bg-[#374151] dark:bg-[#374151] rounded-xl shadow-lg border border-transparent hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 overflow-hidden group hover:border-2 hover:border-primary-500 dark:hover:border-primary-400"
+            <div
+              className="bg-white dark:bg-gray-700 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-blue-300 dark:hover:border-blue-700 transform hover:-translate-y-1 transition-all duration-200 overflow-hidden group h-full"
               style={{ minWidth: '0' }}
             >
               {/* Mobile List View */}
               <Link
                 to={curriculumPath(curriculum.title.toLowerCase(), selectedBoard!, topic.subject, getTopicSlug(topic))}
-                className="flex lg:hidden flex-col hover:bg-neutral-700 transition-colors"
+                className="flex lg:hidden flex-col hover:bg-slate-50 dark:hover:bg-gray-800/50 transition-colors"
               >
                 <div className="flex items-start p-4 gap-3">
-                  <div className="w-1 rounded-full flex-shrink-0 bg-teal-500" style={{ height: '100%', minHeight: '80px' }} />
+                  <div className={`w-1 rounded-full flex-shrink-0 ${mobileSidebarClass}`} style={{ height: '100%', minHeight: '80px' }} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                       <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">{topic.subject}</span>
@@ -363,14 +346,14 @@ const CurriculumPage: React.FC = () => {
 
               {/* Desktop Card View */}
               <div className="hidden lg:flex h-full flex-col">
-                <div className="flex">
-                    <div className="w-1.5 mr-4 rounded-full bg-[#1e48c7] transition-all duration-200 group-hover:w-3" />
-                    <div className="flex-1 p-5 flex flex-col bg-[#374151]">
+                <div className="flex flex-1">
+                  <div className={`w-1.5 mr-4 rounded-full ${desktopSidebarClass} transition-all duration-200 group-hover:w-3`} />
+                  <div className="flex-1 p-5 flex flex-col bg-white dark:bg-gray-700">
                     <div className="flex items-center gap-2 mb-3 flex-wrap">
-                        <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
-                          {topic.subject}
-                        </span>
-{topic.group && (
+                      <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
+                        {topic.subject}
+                      </span>
+                      {topic.group && (
                         <Badge variant="outline" size="xs" className="bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-200">
                           {topic.group}
                         </Badge>
@@ -386,12 +369,12 @@ const CurriculumPage: React.FC = () => {
                       )}
                     </div>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 leading-snug">{topic.title}</h3>
-                    <p className="text-sm text-neutral-600 dark:text-neutral-300 line-clamp-2 flex-grow">{topic.description}</p>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-300 line-clamp-2">{topic.description}</p>
                   </div>
                 </div>
 
                 {/* Desktop Content */}
-                <div className="p-5 pt-3 flex flex-col flex-grow justify-between">
+                <div className="p-5 pt-0 mt-auto flex flex-col justify-end">
                   {hasResources && countsTowardProgress && completed && (
                     <Badge variant="success" size="sm" className="mb-3 w-fit">
                       <CheckCircle className="w-4 h-4 mr-1.5" />
@@ -402,7 +385,7 @@ const CurriculumPage: React.FC = () => {
                   {/* CTA Button */}
                   <Link
                     to={curriculumPath(curriculum.title.toLowerCase(), selectedBoard!, topic.subject, getTopicSlug(topic))}
-                    className="block w-full text-center py-2.5 px-4 bg-[#1e48c7] text-white rounded-lg hover:bg-[#1a3fb3] hover:shadow-md transition-all duration-200 group-hover:scale-105 font-medium text-sm"
+                    className={`block w-full text-center py-2.5 px-4 ${buttonClass} text-white rounded-lg hover:shadow-md transition-all duration-200 group-hover:scale-105 font-medium text-sm`}
                   >
                     <span className="flex items-center justify-center">
                       {completed ? 'Review Topic' : hasResources ? 'Start Learning' : 'Open Topic'}
@@ -411,38 +394,13 @@ const CurriculumPage: React.FC = () => {
                   </Link>
                 </div>
               </div>
-            </motion.div>
+            </div>
           );
         }}
       />
 
       {/* Call to Action */}
-      <motion.section variants={itemVariants} className="mt-16 text-center">
-        <Card variant="elevated" padding="xl" className="bg-gradient-to-r from-primary-600 to-primary-500 text-white">
-          <h2 className="text-2xl font-bold mb-3">Ready to excel in {curriculum.title}?</h2>
-          <p className="text-base mb-6 opacity-90 max-w-2xl mx-auto">
-            Start with any topic that interests you, or follow the structured path for best results.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            {subjectTopics.length > 0 && (
-              <Button size="lg" asChild className="bg-white text-primary-600 hover:bg-neutral-100 shadow-lg">
-                <Link
-                  to={curriculumPath(curriculum.title.toLowerCase(), selectedBoard!, subjectTopics[0].subject, getTopicSlug(subjectTopics[0]))}
-                  className="flex items-center"
-                >
-                  Start with First Topic
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Link>
-              </Button>
-            )}
-            <Button variant="outline" size="lg" asChild className="border-white text-white hover:bg-white hover:text-primary-600">
-              <Link to="/contribute" className="flex items-center">
-                Contribute Content
-              </Link>
-            </Button>
-          </div>
-        </Card>
-      </motion.section>
+
     </motion.div>
   );
 };

@@ -2,11 +2,6 @@ import { User } from '@supabase/supabase-js';
 import { PostgrestError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 
-export type EmailAuthInfo = {
-  exists: boolean;
-  providers: string[];
-  emailConfirmed: boolean;
-};
 
 function isMissingRpcError(error: PostgrestError): boolean {
   return (
@@ -25,55 +20,7 @@ function displayNameFromUser(user: User): string {
   );
 }
 
-export async function getEmailAuthInfo(email: string): Promise<EmailAuthInfo> {
-  const { data, error } = await supabase.rpc('get_email_auth_info', {
-    check_email: email.trim().toLowerCase(),
-  });
 
-  if (error) {
-    if (isMissingRpcError(error)) {
-      return { exists: false, providers: [], emailConfirmed: false };
-    }
-    throw new Error(error.message);
-  }
-
-  const payload = data as {
-    exists?: boolean;
-    providers?: string[];
-    email_confirmed?: boolean;
-  };
-
-  return {
-    exists: Boolean(payload?.exists),
-    providers: payload?.providers ?? [],
-    emailConfirmed: Boolean(payload?.email_confirmed),
-  };
-}
-
-export function getAuthConflictMessage(info: EmailAuthInfo, mode: 'signup' | 'signin'): string | null {
-  if (!info.exists) {
-    return null;
-  }
-
-  const hasGoogle = info.providers.includes('google');
-  const hasEmail = info.providers.includes('email');
-
-  if (mode === 'signup') {
-    if (hasGoogle && !hasEmail) {
-      return 'This email is already registered with Google. Please sign in with Google instead.';
-    }
-    if (hasEmail) {
-      return 'An account with this email already exists. Sign in instead of creating a new account.';
-    }
-    return 'An account with this email already exists. Try signing in.';
-  }
-
-  if (hasGoogle && !hasEmail) {
-    return 'This account uses Google sign-in. Please use the "Sign in with Google" button.';
-  }
-
-  return null;
-}
 
 export async function ensureProfile(user: User): Promise<boolean> {
   const name = displayNameFromUser(user);
