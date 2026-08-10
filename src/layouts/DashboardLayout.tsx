@@ -337,7 +337,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 flex flex-col min-h-screen lg:pl-20">
+      <div className="flex-1 min-w-0 flex flex-col min-h-screen lg:pl-20">
         <header className="sticky top-0 z-30 h-20 border-b border-gray-200/80 dark:border-gray-700/80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
           <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">

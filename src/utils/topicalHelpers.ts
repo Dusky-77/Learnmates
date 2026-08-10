@@ -25,10 +25,17 @@ export const isEdexcelALevelPureMathSubject = (level: string, board: string, sub
   ['pure mathematics', 'pure maths', 'math', 'mathematics'].some(candidate => normalizeSubject(candidate) === normalizeSubject(subject));
 
 export const getDefaultPaperOptions = (level: string, board: string, subject: string): number[] => {
+  const normalized = normalizeSubject(subject);
+  
   if (level === 'a-level' && board === 'cambridge' &&
-      CAMBRIDGE_SCIENCE_MCQ_SUBJECTS.some(candidate => normalizeSubject(candidate) === normalizeSubject(subject))) {
+      CAMBRIDGE_SCIENCE_MCQ_SUBJECTS.some(candidate => normalizeSubject(candidate) === normalized)) {
     return [1, 2, 4];
   }
+  
+  if (normalized === 'additional mathematics' || normalized === 'add math' || normalized === 'add maths') {
+    return [1, 2];
+  }
+  
   return [1, 2, 3, 4];
 };
 

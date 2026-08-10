@@ -22,9 +22,14 @@ interface MediaViewerProps {
   savedMarkSchemeAnnotation?: string;
   onSaveMarkSchemeAnnotation?: (annotationData: string) => void;
   // Optional: allow modal to navigate between questions
-  questionList?: Array<{ questionContent?: string; questionContentType?: 'image' | 'pdf'; markScheme?: string; markSchemeType?: 'image' | 'pdf' }>;
+  questionList?: Array<{ questionContent?: string; questionContentType?: 'image' | 'pdf'; markScheme?: string; markSchemeType?: 'image' | 'pdf'; mcqAnswer?: string }>;
   questionIndex?: number;
   onChangeQuestion?: (newIndex: number) => void;
+  // Optional MCQ answer state (used to show A-D choices inside the Large View overlay)
+  mcqSelection?: string | null;
+  mcqLiveCheck?: boolean;
+  onMcqSelect?: (option: string) => void;
+  onMcqLiveCheckToggle?: () => void;
   disableR2?: boolean; // when true, skip all R2 fetch attempts
   // When true, hide the internal toolbar so parent can render its own controls
   hideToolbar?: boolean;
@@ -56,6 +61,10 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
   questionList,
   questionIndex,
   onChangeQuestion,
+  mcqSelection,
+  mcqLiveCheck = false,
+  onMcqSelect,
+  onMcqLiveCheckToggle,
   disableR2 = false,
   hideToolbar = false,
   forceAnnotationMode
@@ -547,6 +556,12 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
           savedAnnotationData = null;
         }
         const currentPropAnnotation = markSchemeOpen ? savedMarkSchemeAnnotation : savedAnnotation;
+        // Prefer the persisted annotation prop (it is authoritative). The freshly
+        // composited layer is only a fallback for strokes that have not been saved
+        // yet. A blank composite is still a truthy data URL and must never override
+        // a real saved annotation, otherwise toggling to the mark scheme and back
+        // would wipe the drawing (until annotation mode is re-enabled).
+        const annotationToRestore = currentPropAnnotation || savedAnnotationData;
 
         // Render page 1 first for immediate visual feedback
         const firstPageRef_render = canvasRefsMap.current.get(1);
@@ -599,8 +614,8 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
         }
 
         // Restore annotation after rendering
-        if (savedAnnotationData || currentPropAnnotation) {
-          restoreAnnotationToPageCanvases(savedAnnotationData || (currentPropAnnotation as string));
+        if (annotationToRestore) {
+          restoreAnnotationToPageCanvases(annotationToRestore);
         }
 
         setError(null);
@@ -1527,6 +1542,9 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
     }
   }; 
 
+  // Current MCQ answer for the modal question (if it is an MCQ question)
+  const currentMcqAnswer = questionList?.[modalQuestionIndex]?.mcqAnswer;
+
   if (error) {
     return (
       <div className="w-full rounded bg-red-100 dark:bg-red-900 p-4 text-red-700 dark:text-red-200">
@@ -1540,7 +1558,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
   return (
     <div
       ref={containerRef}
-      className="flex flex-col min-h-0 h-full overflow-hidden bg-gray-100 dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-700"
+      className="flex flex-col min-h-0 overflow-visible bg-gray-100 dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-700"
     >
       {/* Toolbar */}
       {!hideToolbar && (
@@ -1653,7 +1671,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       {/* Zoom Modal (in-app, opens via the Large View button) */}
       {zoomOpen && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black bg-opacity-60 p-6">
-          <div ref={modalWrapperRef} className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden max-w-[90vw] max-h-[90vh] w-full">
+          <div ref={modalWrapperRef} className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden max-w-[90vw] max-h-[90vh] w-full flex flex-col">
                   <div className="p-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
                 <h3 className="text-lg font-semibold">Large View</h3>
@@ -1706,8 +1724,8 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
                   </>
                 )}
 
-                {/* Toggle between Question and Mark Scheme inside modal */}
-                {hasMarkScheme && markSchemeUrl && (
+                {/* Toggle between Question and Mark Scheme inside modal (hidden for MCQ questions) */}
+                {hasMarkScheme && markSchemeUrl && !currentMcqAnswer && (
                   <button
                     onClick={async () => {
                       const nextMode = modalMode === 'question' ? 'markscheme' : 'question';
@@ -1834,8 +1852,8 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
 
             <div 
               ref={modalContentRef} 
-              className="p-4 overflow-auto flex flex-col items-center justify-start" 
-              style={{ minHeight: 320, maxHeight: 'calc(90vh - 80px)' }}
+              className="p-4 overflow-auto flex-1 min-h-0 flex flex-col items-center justify-start" 
+              style={{ minHeight: 320 }}
             >
               {modalLoading ? (
                 <div className="text-center text-gray-500">Loading pages…</div>
@@ -1960,6 +1978,73 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
                 <p className="text-gray-500">Unable to prepare zoom view</p>
               )}
             </div>
+
+            {/* MCQ practice panel (shown below content for MCQ questions) */}
+            {currentMcqAnswer && (
+              <div className="shrink-0 mt-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100/70 dark:bg-gray-800/60 p-3 sm:p-4 w-full">
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex flex-col gap-0.5">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">MCQ practice</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Choose A–D below. Live checking is optional.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { if (onMcqLiveCheckToggle) onMcqLiveCheckToggle(); }}
+                      className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs sm:text-sm font-semibold transition-colors mt-0.5 ${
+                        mcqLiveCheck
+                          ? 'bg-purple-500 text-white hover:bg-purple-600'
+                          : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
+                      }`}
+                    >
+                      {mcqLiveCheck ? 'Live check: On' : 'Live check: Off'}
+                    </button>
+                  </div>
+
+                  <div className="flex items-stretch justify-center py-4">
+                    <div className="flex items-stretch gap-4 w-full max-w-md mx-auto">
+                      {['A', 'B', 'C', 'D'].map(option => {
+                        const isSelected = mcqSelection === option;
+                        const isCorrect = mcqLiveCheck && isSelected && currentMcqAnswer === option;
+                        const isWrong = mcqLiveCheck && isSelected && currentMcqAnswer !== option;
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => { if (onMcqSelect) onMcqSelect(option); }}
+                            className={`flex-1 aspect-square min-w-[56px] max-w-[120px] rounded-full border text-lg font-bold uppercase transition-colors duration-200 flex items-center justify-center ${
+                              isCorrect
+                                ? 'border-green-600 bg-green-600 text-white'
+                                : isWrong
+                                  ? 'border-red-600 bg-red-600 text-white'
+                                  : isSelected
+                                    ? 'border-gray-700 bg-gray-700 dark:border-gray-500 dark:bg-gray-600 text-white'
+                                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    {mcqSelection ? (
+                      mcqLiveCheck ? (
+                        <p className={`text-xs sm:text-sm font-semibold ${mcqSelection === currentMcqAnswer ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-400'}`}>
+                          {mcqSelection === currentMcqAnswer ? 'Correct!' : `Correct answer: ${currentMcqAnswer}`}
+                        </p>
+                      ) : (
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Live check is off. Toggle it on to reveal the answer.</p>
+                      )
+                    ) : (
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Tap an option to check your answer.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -2029,6 +2114,17 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
 
       {/* Content Container */}
       <div className="relative flex-1 min-h-0 w-full">
+        {/* Large View button overlay — sticky so it stays put while the PDF scrolls */}
+        <div className="sticky top-0 z-20 flex justify-end pr-3 pointer-events-none" style={{ height: 0 }}>
+          <button
+            onClick={openZoomModal}
+            title="Large View"
+            aria-label="Open large view"
+            className="pointer-events-auto mt-3 flex items-center justify-center w-10 h-10 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
+          >
+            <Maximize2 className="w-5 h-5" />
+          </button>
+        </div>
         <div
           ref={pagesContainerRef}
           data-type={markSchemeOpen ? 'marking_scheme' : 'question'}
@@ -2153,16 +2249,6 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
           ) : null}
           </div>
         </div>
-
-        {/* Large View button overlay */}
-        <button
-          onClick={openZoomModal}
-          title="Large View"
-          aria-label="Open large view"
-          className="absolute top-3 right-3 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
-        >
-          <Maximize2 className="w-5 h-5" />
-        </button>
       </div>
 
     </div>

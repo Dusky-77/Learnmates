@@ -655,7 +655,7 @@ const TopicalPages: React.FC = () => {
                   </div>
 
                   {/* viewer column: grows to fill the space the picker gave up */}
-                  <div className="w-full md:flex-1 md:ml-0 pt-6 md:pt-0 transition-all duration-300 ease-in-out">
+                  <div className="w-full md:flex-1 md:min-w-0 md:ml-0 pt-6 md:pt-0 transition-all duration-300 ease-in-out">
                     <MatchesViewerPanel
                       topicalQuiz={topicalQuiz}
                       hasLoadedOnce={hasLoadedOnce}
