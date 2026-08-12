@@ -48,39 +48,34 @@ const AnimatedSelect: React.FC<AnimatedSelectProps> = ({ label, value, options, 
   return (
     <div className="relative w-full" ref={ref}>
       <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">{label}</label>
-      <motion.div 
-        whileTap={{ scale: 0.98 }}
-        className={`relative w-full cursor-pointer rounded-xl border ${isOpen ? 'border-blue-500 ring-4 ring-blue-500/10 dark:ring-blue-500/20' : 'border-gray-200 dark:border-gray-700'} bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-gray-100 shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 flex items-center justify-between group`}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <span className={`block truncate transition-colors duration-200 ${!selectedOption ? 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300' : 'font-medium'}`}>
-          {selectedOption ? selectedOption.label : placeholder}
-        </span>
-        <motion.div 
-          animate={{ rotate: isOpen ? 180 : 0 }} 
-          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+<button
+          whileTap={{ scale: 0.98 }}
+          className={`relative w-full cursor-pointer rounded-lg border ${isOpen ? 'border-blue-500' : 'border-gray-300 dark:border-gray-700'} bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:shadow-sm hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 flex items-center justify-between group py-2 text-base px-4`}
+          onClick={() => setIsOpen(!isOpen)}
         >
+          <span className={`block truncate transition-colors duration-200 ${!selectedOption ? 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300' : 'font-medium'}`}>
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
           <ChevronDown className={`w-5 h-5 transition-colors duration-300 ${isOpen ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'}`} />
-        </motion.div>
-      </motion.div>
+        </button>
 
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -15, scale: 0.95 }}
+            initial={{ opacity: 0, y: -10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 300, damping: 24, mass: 0.8 }}
-            className="absolute z-[100] w-full mt-3 origin-top rounded-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-xl shadow-blue-500/10 border border-gray-200/50 dark:border-gray-700/50 focus:outline-none overflow-hidden"
+            className="absolute z-20 w-full mt-2 origin-top rounded-xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200/50 dark:border-gray-700/50 focus:outline-none overflow-hidden"
           >
-            <div className="max-h-60 overflow-y-auto py-1.5 custom-scrollbar">
+            <div className="max-h-72 overflow-y-auto py-2 custom-scrollbar">
               {options.map((option) => (
-                <div
+                <label
                   key={option.value}
-                  className={`relative cursor-pointer select-none px-4 py-3 text-sm transition-all duration-200 ${
+                  className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-all duration-200 ${
                     option.value === value
                       ? 'bg-blue-50/80 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 font-semibold'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:pl-5'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                   }`}
                   onClick={() => {
                     onChange(option.value);
@@ -97,7 +92,7 @@ const AnimatedSelect: React.FC<AnimatedSelectProps> = ({ label, value, options, 
                     />
                   )}
                   {option.label}
-                </div>
+                </label>
               ))}
             </div>
           </motion.div>

@@ -91,7 +91,7 @@ const PaperFilterDropdown: React.FC<{
         whileTap={{ scale: 0.98 }}
         type="button"
         onClick={() => setOpen(prev => !prev)}
-        className={`${btnToggleBase} relative rounded-lg border ${open ? 'border-blue-500 ring-2 ring-blue-500/20 dark:ring-blue-500/10' : 'border-gray-300 dark:border-gray-700'} bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:shadow-sm hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 gap-2 flex items-center justify-between group`}
+        className={`${btnToggleBase} relative rounded-lg border ${open ? 'border-blue-500' : 'border-gray-300 dark:border-gray-700'} bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:shadow-sm hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 gap-2 flex items-center justify-between group`}
         title="Filter matches by paper"
       >
         <span>{selectedPaperSummary}</span>
@@ -100,17 +100,17 @@ const PaperFilterDropdown: React.FC<{
         </motion.div>
       </motion.button>
 
-      <AnimatePresence>
+<AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -15, scale: 0.95 }}
+            initial={{ opacity: 0, y: -10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 300, damping: 24, mass: 0.8 }}
-            className={`absolute z-20 w-48 mt-2 origin-top rounded-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-xl shadow-blue-500/10 border border-gray-200/50 dark:border-gray-700/50 focus:outline-none overflow-hidden`}
+            className={`absolute z-20 w-48 mt-2 origin-top rounded-xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200/50 dark:border-gray-700/50 focus:outline-none overflow-hidden`}
           >
-            <div className="max-h-60 overflow-y-auto py-1.5 custom-scrollbar">
-              <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-all duration-200 text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50 hover:pl-4">
+            <div className="max-h-72 overflow-y-auto py-2 custom-scrollbar">
+              <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-all duration-200 text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50">
                 <input
                   type="checkbox"
                   checked={isAllPapersSelected}
@@ -120,7 +120,7 @@ const PaperFilterDropdown: React.FC<{
                 <span>All</span>
               </label>
               {availablePaperNumbers.map(paperNum => (
-                <label key={paperNum} className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-all duration-200 text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50 hover:pl-4">
+                <label key={paperNum} className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-all duration-200 text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50">
                   <input
                     type="checkbox"
                     checked={paperFilter.has(paperNum)}
@@ -163,7 +163,7 @@ const YearFilterDropdown: React.FC<{
         type="button"
         onClick={() => setOpen(prev => !prev)}
         disabled={availableYears.length === 0}
-        className={`${btnToggleBase} relative rounded-lg border ${open ? 'border-blue-500 ring-2 ring-blue-500/20 dark:ring-blue-500/10' : 'border-gray-300 dark:border-gray-700'} bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:shadow-sm hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 gap-2 disabled:cursor-not-allowed disabled:opacity-60 max-w-[220px] flex items-center justify-between group`}
+        className={`${btnToggleBase} relative rounded-lg border ${open ? 'border-blue-500' : 'border-gray-300 dark:border-gray-700'} bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:shadow-sm hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 gap-2 disabled:cursor-not-allowed disabled:opacity-60 max-w-[220px] flex items-center justify-between group`}
         title="Filter matches by year"
       >
         <span className="truncate">{selectedYearSummary}</span>
@@ -172,17 +172,17 @@ const YearFilterDropdown: React.FC<{
         </motion.div>
       </motion.button>
 
-      <AnimatePresence>
+<AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -15, scale: 0.95 }}
+            initial={{ opacity: 0, y: -10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 300, damping: 24, mass: 0.8 }}
-            className={`absolute z-20 w-40 mt-2 origin-top rounded-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-xl shadow-blue-500/10 border border-gray-200/50 dark:border-gray-700/50 focus:outline-none overflow-hidden`}
+            className={`absolute z-20 w-48 mt-2 origin-top rounded-xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200/50 dark:border-gray-700/50 focus:outline-none overflow-hidden`}
           >
-            <div className="max-h-60 overflow-y-auto py-1.5 custom-scrollbar">
-              <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-all duration-200 text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50 hover:pl-4">
+            <div className="max-h-72 overflow-y-auto py-2 custom-scrollbar">
+              <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-all duration-200 text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50">
                 <input
                   type="checkbox"
                   checked={isAllYearsSelected}
@@ -192,7 +192,7 @@ const YearFilterDropdown: React.FC<{
                 <span>All</span>
               </label>
               {availableYears.map(year => (
-                <label key={year} className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-all duration-200 text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50 hover:pl-4">
+                <label key={year} className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-all duration-200 text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50">
                   <input
                     type="checkbox"
                     checked={yearFilter.has(year)}
@@ -233,12 +233,17 @@ const AnimatedOrderFilter: React.FC<{
 
   const selectedLabel = options.find(o => o.value === value)?.label || 'Order';
 
+  const toggleOrder = (orderValue: string) => {
+    onChange(orderValue);
+    setOpen(false);
+  };
+
   return (
     <div className="relative" ref={ref}>
       <motion.div
         whileTap={{ scale: 0.98 }}
         onClick={() => setOpen(prev => !prev)}
-        className={`${btnToggleBase} relative cursor-pointer rounded-lg border ${open ? 'border-blue-500 ring-2 ring-blue-500/20 dark:ring-blue-500/10' : 'border-gray-300 dark:border-gray-700'} bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:shadow-sm hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 gap-2 flex items-center justify-between group min-w-[140px]`}
+        className={`${btnToggleBase} relative cursor-pointer rounded-lg border ${open ? 'border-blue-500' : 'border-gray-300 dark:border-gray-700'} bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:shadow-sm hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 gap-2 flex items-center justify-between group min-w-[140px]`}
         title="Order of matching questions"
       >
         <span>{selectedLabel}</span>
@@ -250,37 +255,43 @@ const AnimatedOrderFilter: React.FC<{
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -15, scale: 0.95 }}
+            initial={{ opacity: 0, y: -10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 300, damping: 24, mass: 0.8 }}
-            className={`absolute z-20 w-48 mt-2 origin-top rounded-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-xl shadow-blue-500/10 border border-gray-200/50 dark:border-gray-700/50 focus:outline-none overflow-hidden`}
+            className={`absolute z-20 w-48 mt-2 origin-top rounded-xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200/50 dark:border-gray-700/50 focus:outline-none overflow-hidden`}
           >
-            <div className="max-h-60 overflow-y-auto py-1.5 custom-scrollbar">
-              {options.map((option) => (
-                <div
-                  key={option.value}
-                  className={`relative cursor-pointer select-none px-4 py-2.5 text-sm transition-all duration-200 ${option.value === value
-                    ? 'bg-blue-50/80 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 font-semibold'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:pl-5'
-                    }`}
-                  onClick={() => {
-                    onChange(option.value);
-                    setOpen(false);
-                  }}
-                >
-                  {option.value === value && (
-                    <motion.div
-                      layoutId="activeIndicator-order"
-                      className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r-full"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    />
-                  )}
-                  {option.label}
-                </div>
-              ))}
+            <div className="max-h-72 overflow-y-auto py-2 custom-scrollbar">
+              <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-all duration-200 text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50">
+                <input
+                  type="radio"
+                  name="order-filter"
+                  checked={value === 'newest'}
+                  onChange={() => toggleOrder('newest')}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span>New → old</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-all duration-200 text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50">
+                <input
+                  type="radio"
+                  name="order-filter"
+                  checked={value === 'oldest'}
+                  onChange={() => toggleOrder('oldest')}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span>Old → new</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-all duration-200 text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50">
+                <input
+                  type="radio"
+                  name="order-filter"
+                  checked={value === 'random'}
+                  onChange={() => toggleOrder('random')}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span>Random / shuffle</span>
+              </label>
             </div>
           </motion.div>
         )}

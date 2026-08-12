@@ -719,7 +719,8 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
 
   'physics-1': {
     videos: [],
-    resources: [{ id: 'r1', title: 'Energy, Work and Power (a.aseer)', url: '/documents/igcse/cambridge/Physics/1-Motion, forces and energy/Energy, work and power (a.aseer).pdf' },
+    resources: [{ id: 'r5', title: 'Motion, forces and energy Notes (@Jme)', url: '/documents/igcse/cambridge/Physics/1-Motion, forces and energy/Motion, forces and energy (@Jme).pdf' },
+    { id: 'r1', title: 'Energy, Work and Power (a.aseer)', url: '/documents/igcse/cambridge/Physics/1-Motion, forces and energy/Energy, work and power (a.aseer).pdf' },
     { id: 'r2', title: 'Forces, Motion and Momentum (a.aseer)', url: '/documents/igcse/cambridge/Physics/1-Motion, forces and energy/Forces, motion and momentum (a.aseer).pdf' },
     { id: 'r3', title: 'Physical Quantities and Measurement Techniques (a.aseer)', url: '/documents/igcse/cambridge/Physics/1-Motion, forces and energy/Physical quantities and measurement techniques (a.aseer).pdf' },
     { id: 'r4', title: 'Pressure (a.aseer)', url: '/documents/igcse/cambridge/Physics/1-Motion, forces and energy/Pressure (a.aseer).pdf' }
@@ -729,7 +730,7 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
 
   'physics-2': {
     videos: [],
-    resources: [
+    resources: [ { id: 'r3', title: 'Thermal Physics (@Jme)', url: '/documents/igcse/cambridge/Physics/2-Thermal physics/Thermal physics (@Jme).pdf' },
       { id: 'r1', title: 'Thermal Physics (a.aseer)', url: '/documents/igcse/cambridge/Physics/2-Thermal physics/Thermal physics (a.aseer).pdf' },
       { id: 'r2', title: 'Thermal Physics (Eshal)', url: '/documents/igcse/cambridge/Physics/2-Thermal physics/Thermal physics.pdf' }],
     quizzes: []
@@ -737,7 +738,7 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
 
   'physics-3': {
     videos: [],
-    resources: [
+    resources: [ {id: 'r3', title: 'Waves (@Jme)', url: '/documents/igcse/cambridge/Physics/3-Waves/Waves (@Jme).pdf' },
       { id: 'r1', title: 'Waves (a.aseer)', url: '/documents/igcse/cambridge/Physics/3-Waves/Waves (a.aseer).pdf' },
       { id: 'r2', title: 'Waves (Eshal)', url: '/documents/igcse/cambridge/Physics/3-Waves/Waves.pdf' }],
     quizzes: []
@@ -746,7 +747,7 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
   'physics-4': {
     description: 'Explore electric circuits, electric fields, magnetic fields, and electromagnetic induction.',
     videos: [],
-    resources: [
+    resources: [{ id: 'r5', title: 'Electricity and magnetism (@Jme)', url: '/documents/igcse/cambridge/Physics/4-Electricity and magnetism/Electricity & magnetism (@Jme).pdf' },
       { id: 'r1', title: 'Electricity (a.aseer)', url: '/documents/igcse/cambridge/Physics/4-Electricity and magnetism/Electricity (a.aseer).pdf' },
       { id: 'r2', title: 'Magnetism (a.aseer)', url: '/documents/igcse/cambridge/Physics/4-Electricity and magnetism/Magnetism (a.aseer).pdf' },
       { id: 'r3', title: 'Electricity and magnetism (Eshal)', url: '/documents/igcse/cambridge/Physics/4-Electricity and magnetism/Electricity and magnetism.pdf' },
@@ -757,7 +758,7 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
 
   'physics-5': {
     videos: [],
-    resources: [
+    resources: [{id: 'r3', title: 'Nuclear Physics (@Jme)', url: '/documents/igcse/cambridge/Physics/5-Nuclear physics/Nuclear physics (@Jme).pdf' },
       { id: 'r1', title: 'Nuclear Physics (a.aseer)', url: '/documents/igcse/cambridge/Physics/5-Nuclear physics/Nuclear physics (a.aseer).pdf' },
       { id: 'r2', title: 'Nuclear Physics (Eshal)', url: '/documents/igcse/cambridge/Physics/5-Nuclear physics/Nuclear physics.pdf' }],
     quizzes: []
@@ -765,7 +766,7 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
 
   'physics-6': {
     videos: [],
-    resources: [
+    resources: [ { id: 'r3', title: 'Space Physics (@Jme)', url: '/documents/igcse/cambridge/Physics/6-Space physics/Space physics (@Jme).pdf' },
       { id: 'r1', title: 'Space Physics (a.aseer)', url: '/documents/igcse/cambridge/Physics/6-Space physics/Space physics (a.aseer).pdf' },
       { id: 'r2', title: 'Space Physics (Eshal)', url: '/documents/igcse/cambridge/Physics/6-Space physics/Space physics.pdf' }],
     quizzes: []
@@ -1344,7 +1345,7 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
     description: 'Understand advanced mechanics concepts including circular motion, oscillations, and gravitation.',
     videos: [],
     resources: [{ id: 'r1', title: 'Further Mechanics Self-Study booklet(@Aeth_en)', url: '/documents/alevel/edexcel/Phyiscs/IAL Physics U4 topic 4.3 Self-Study booklet(@Aeth_en).pdf' },
-    { id: 'r2', title: 'Further Mechanics Notes (@Corinth)', url: 'public/documents/alevel/edexcel/Phyiscs/IAL Physics Unit 4.3 (@Corinth).pdf' }
+    { id: 'r2', title: 'Further Mechanics Notes (@Corinth)', url: '/documents/alevel/edexcel/Phyiscs/IAL Physics Unit 4.3 (@Corinth).pdf' }
     ],
     quizzes: []
   },
@@ -1355,7 +1356,7 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
     description: 'Explore electric and magnetic fields, forces, and electromagnetic induction.',
     videos: [],
     resources: [{ id: 'r1', title: 'Electric and Magnetic Fields Self-Study booklet(@Aeth_en)', url: '/documents/alevel/edexcel/Phyiscs/IAL Physics U4 topic 4.4 Self-Study booklet(@Aeth_en).pdf' },
-    { id: 'r2', title: 'Electric and Magnetic Fields Notes (@Corinth)', url: 'public/documents/alevel/edexcel/Phyiscs/IAL Physics Unit 4.4 (@Corinth).pdf' }
+    { id: 'r2', title: 'Electric and Magnetic Fields Notes (@Corinth)', url: '/documents/alevel/edexcel/Phyiscs/IAL Physics Unit 4.4 (@Corinth).pdf' }
     ],
     quizzes: []
   },
@@ -1366,7 +1367,7 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
     description: 'Study the structure of the nucleus, radioactivity, and nuclear reactions.',
     videos: [],
     resources: [{ id: 'r1', title: 'Nuclear and Particle Physics Self-Study booklet(@Aeth_en)', url: '/documents/alevel/edexcel/Phyiscs/IAL Physics U4 topic 4.5 Self-Study booklet(@Aeth_en).pdf' },
-    { id: 'r2', title: 'Nuclear and Particle Physics Notes (@Corinth)', url: 'public/documents/alevel/edexcel/Phyiscs/IAL Physics Unit 4.5 (@Corinth).pdf' }
+    { id: 'r2', title: 'Nuclear and Particle Physics Notes (@Corinth)', url: '/documents/alevel/edexcel/Phyiscs/IAL Physics Unit 4.5 (@Corinth).pdf' }
     ],
     quizzes: []
   },

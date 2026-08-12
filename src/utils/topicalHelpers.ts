@@ -36,7 +36,13 @@ export const getDefaultPaperOptions = (level: string, board: string, subject: st
     return [1, 2];
   }
   
-  return [1, 2, 3, 4];
+  if (level === 'a-level' && board === 'cambridge' &&
+      ['Mathematics', 'math', 'maths'].some(candidate => normalizeSubject(candidate) === normalized)) {
+    return [1, 2, 4, 5];  // Cambridge A-Level Math papers P1-P6
+  }
+  
+
+  return [1, 2, 3, 4, 5,6];
 };
 
 // Extracts the paper number (1-4, or whatever the first digit of the
@@ -46,7 +52,7 @@ export const getDefaultPaperOptions = (level: string, board: string, subject: st
 // pattern can be found.
 export const getPaperNumberFromFileName = (fileName: string | undefined | null): number | null => {
   if (!fileName) return null;
-  const match = fileName.match(/\b(?:qp|ms|p)(?:[-_ ]?)([1-4])\d\b/i);
+  const match = fileName.match(/\b(?:qp|ms|p)(?:[-_ ]?)([1-6])\d\b/i);
   if (match) {
     return parseInt(match[1], 10);
   }

@@ -1757,6 +1757,468 @@ export const topicalConfigs: SubjectConfig[] = [
     }
   ]
 },
+{
+  "subject": "Mathematics",
+  "board": "cambridge",
+  "level": "a-level",
+  "units": [
+    {
+      "unit": "Pure 1",
+      "topics": [
+        {
+          "topic": "1 Quadratics",
+          "subtopics": [
+            {
+              "subtopic": "1.1 Completing the square and using discriminant",
+              "search": "1.1 Completing the square and using discriminant"
+            },
+            {
+              "subtopic": "1.2 Solving quadratic equations and inequalities",
+              "search": "1.2 Solving quadratic equations and inequalities"
+            },
+            {
+              "subtopic": "1.3 Simultaneous equations (one linear, one quadratic)",
+              "search": "1.3 Simultaneous equations (one linear, one quadratic)"
+            }
+          ]
+        },
+        {
+          "topic": "2 Functions",
+          "subtopics": [
+            {
+              "subtopic": "2.1 Domain, range, and composite functions",
+              "search": "2.1 Domain, range, and composite functions"
+            },
+            {
+              "subtopic": "2.2 Inverse functions (one-one functions and graphs)",
+              "search": "2.2 Inverse functions (one-one functions and graphs)"
+            },
+            {
+              "subtopic": "2.3 Transformations of graphs (f(x)+a, f(x+a), af(x), f(ax))",
+              "search": "2.3 Transformations of graphs (f(x)+a, f(x+a), af(x), f(ax))"
+            }
+          ]
+        },
+        {
+          "topic": "3 Coordinate Geometry",
+          "subtopics": [
+            {
+              "subtopic": "3.1 Equation of a straight line (all forms)",
+              "search": "3.1 Equation of a straight line (all forms)"
+            },
+            {
+              "subtopic": "3.2 Circle equations (centre-radius and expanded form)",
+              "search": "3.2 Circle equations (centre-radius and expanded form)"
+            },
+            {
+              "subtopic": "3.3 Intersection problems (lines and circles)",
+              "search": "3.3 Intersection problems (lines and circles)"
+            }
+          ]
+        },
+        {
+          "topic": "4 Circular Measure",
+          "subtopics": [
+            {
+              "subtopic": "4.1 Radian measure and conversions",
+              "search": "4.1 Radian measure and conversions"
+            },
+            {
+              "subtopic": "4.2 Arc length and sector area formulae",
+              "search": "4.2 Arc length and sector area formulae"
+            }
+          ]
+        },
+        {
+          "topic": "5 Trigonometry",
+          "subtopics": [
+            {
+              "subtopic": "5.1 Graphs of sine, cosine, and tangent",
+              "search": "5.1 Graphs of sine, cosine, and tangent"
+            },
+            {
+              "subtopic": "5.2 Exact values and inverse trigonometric notation",
+              "search": "5.2 Exact values and inverse trigonometric notation"
+            },
+            {
+              "subtopic": "5.3 Trigonometric identities and solving equations",
+              "search": "5.3 Trigonometric identities and solving equations"
+            }
+          ]
+        },
+        {
+          "topic": "6 Series",
+          "subtopics": [
+            {
+              "subtopic": "6.1 Binomial expansion (a + b)ⁿ",
+              "search": "6.1 Binomial expansion (a + b)ⁿ"
+            },
+            {
+              "subtopic": "6.2 Arithmetic progressions (nᵗʰ term, sum)",
+              "search": "6.2 Arithmetic progressions (nᵗʰ term, sum)"
+            },
+            {
+              "subtopic": "6.3 Geometric progressions (nᵗʰ term, sum, sum to infinity)",
+              "search": "6.3 Geometric progressions (nᵗʰ term, sum, sum to infinity)"
+            }
+          ]
+        },
+        {
+          "topic": "7 Differentiation",
+          "subtopics": [
+            {
+              "subtopic": "7.1 Differentiation of xⁿ and chain rule",
+              "search": "7.1 Differentiation of xⁿ and chain rule"
+            },
+            {
+              "subtopic": "7.2 Tangents, normals, and rates of change",
+              "search": "7.2 Tangents, normals, and rates of change"
+            },
+            {
+              "subtopic": "7.3 Stationary points (max/min)",
+              "search": "7.3 Stationary points (max/min)"
+            }
+          ]
+        },
+        {
+          "topic": "8 Integration",
+          "subtopics": [
+            {
+              "subtopic": "8.1 Reverse differentiation and constant of integration",
+              "search": "8.1 Reverse differentiation and constant of integration"
+            },
+            {
+              "subtopic": "8.2 Definite integrals and area between curves",
+              "search": "8.2 Definite integrals and area between curves"
+            },
+            {
+              "subtopic": "8.3 Volumes of revolution",
+              "search": "8.3 Volumes of revolution"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "unit": "Pure 3",
+      "topics": [
+        {
+          "topic": "1 Algebra",
+          "subtopics": [
+            {
+              "subtopic": "1.1 Modulus equations and inequalities",
+              "search": "1.1 Modulus equations and inequalities"
+            },
+            {
+              "subtopic": "1.2 Polynomial division and Factor/Remainder Theorem",
+              "search": "1.2 Polynomial division and Factor/Remainder Theorem"
+            },
+            {
+              "subtopic": "1.3 Partial fractions (linear, repeated, quadratic factors)",
+              "search": "1.3 Partial fractions (linear, repeated, quadratic factors)"
+            },
+            {
+              "subtopic": "1.4 Binomial expansion (rational n)",
+              "search": "1.4 Binomial expansion (rational n)"
+            }
+          ]
+        },
+        {
+          "topic": "2 Logarithmic and Exponential Functions",
+          "subtopics": [
+            {
+              "subtopic": "2.1 Laws of logarithms and solving equations",
+              "search": "2.1 Laws of logarithms and solving equations"
+            },
+            {
+              "subtopic": "2.2 Graphs and transforming to linear form",
+              "search": "2.2 Graphs and transforming to linear form"
+            }
+          ]
+        },
+        {
+          "topic": "3 Trigonometry",
+          "subtopics": [
+            {
+              "subtopic": "3.1 Secant, cosecant, cotangent identities",
+              "search": "3.1 Secant, cosecant, cotangent identities"
+            },
+            {
+              "subtopic": "3.2 Compound angle formulae and double angles",
+              "search": "3.2 Compound angle formulae and double angles"
+            },
+            {
+              "subtopic": "3.3 Harmonic Form (a cos θ + b sin θ)",
+              "search": "3.3 Harmonic Form (a cos θ + b sin θ)"
+            }
+          ]
+        },
+        {
+          "topic": "4 Differentiation",
+          "subtopics": [
+            {
+              "subtopic": "4.1 Differentiating standard functions (including tan⁻¹)",
+              "search": "4.1 Differentiating standard functions (including tan⁻¹)"
+            },
+            {
+              "subtopic": "4.2 Product and quotient rule",
+              "search": "4.2 Product and quotient rule"
+            },
+            {
+              "subtopic": "4.3 Parametric and implicit differentiation",
+              "search": "4.3 Parametric and implicit differentiation"
+            }
+          ]
+        },
+        {
+          "topic": "5 Integration",
+          "subtopics": [
+            {
+              "subtopic": "5.1 Reverse differentiation (1/(x²+a²))",
+              "search": "5.1 Reverse differentiation (1/(x²+a²))"
+            },
+            {
+              "subtopic": "5.2 Partial fractions and f'(x)/f(x) forms",
+              "search": "5.2 Partial fractions and f'(x)/f(x) forms"
+            },
+            {
+              "subtopic": "5.3 Integration by parts and substitution",
+              "search": "5.3 Integration by parts and substitution"
+            }
+          ]
+        },
+        {
+          "topic": "6 Numerical Solution of Equations",
+          "subtopics": [
+            {
+              "subtopic": "6.1 Locating roots (sign change/graphical)",
+              "search": "6.1 Locating roots (sign change/graphical)"
+            },
+            {
+              "subtopic": "6.2 Iterative Methods (recurrence relations xₙ₊₁ = f(xₙ))",
+              "search": "6.2 Iterative Methods (recurrence relations xₙ₊₁ = f(xₙ))"
+            }
+          ]
+        },
+        {
+          "topic": "7 Vectors",
+          "subtopics": [
+            {
+              "subtopic": "7.1 Vector operations (addition, scalar, magnitude)",
+              "search": "7.1 Vector operations (addition, scalar, magnitude)"
+            },
+            {
+              "subtopic": "7.2 Equation of a line (r = a + tb)",
+              "search": "7.2 Equation of a line (r = a + tb)"
+            },
+            {
+              "subtopic": "7.3 Scalar product and problems (angles, intersection, perpendicular)",
+              "search": "7.3 Scalar product and problems (angles, intersection, perpendicular)"
+            }
+          ]
+        },
+        {
+          "topic": "8 Differential Equations",
+          "subtopics": [
+            {
+              "subtopic": "8.1 Formulating differential equations from rates of change",
+              "search": "8.1 Formulating differential equations from rates of change"
+            },
+            {
+              "subtopic": "8.2 Separable variables (general and particular solutions)",
+              "search": "8.2 Separable variables (general and particular solutions)"
+            }
+          ]
+        },
+        {
+          "topic": "9 Complex Numbers",
+          "subtopics": [
+            {
+              "subtopic": "9.1 Cartesian form (operations, equality, conjugate pairs)",
+              "search": "9.1 Cartesian form (operations, equality, conjugate pairs)"
+            },
+            {
+              "subtopic": "9.2 Polar form and Argand diagrams",
+              "search": "9.2 Polar form and Argand diagrams"
+            },
+            {
+              "subtopic": "9.3 Loci in Argand diagrams",
+              "search": "9.3 Loci in Argand diagrams"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "unit": "Mechanics",
+      "topics": [
+        {
+          "topic": "1 Forces",
+          "subtopics": [
+            {
+              "subtopic": "1.1 Force diagrams and resolving",
+              "search": "1.1 Force diagrams and resolving"
+            },
+            {
+              "subtopic": "1.2 Equilibrium",
+              "search": "1.2 Equilibrium"
+            },
+            {
+              "subtopic": "1.3 Friction",
+              "search": "1.3 Friction"
+            }
+          ]
+        },
+        {
+          "topic": "2 Kinematics",
+          "subtopics": [
+            {
+              "subtopic": "2.1 Motion graphs",
+              "search": "2.1 Motion graphs"
+            },
+            {
+              "subtopic": "2.2 Constant acceleration formulae",
+              "search": "2.2 Constant acceleration formulae"
+            },
+            {
+              "subtopic": "2.3 Calculus in kinematics",
+              "search": "2.3 Calculus in kinematics"
+            }
+          ]
+        },
+        {
+          "topic": "3 Momentum",
+          "subtopics": [
+            {
+              "subtopic": "3.1 Conservation of momentum",
+              "search": "3.1 Conservation of momentum"
+            },
+            {
+              "subtopic": "3.2 Direct impact",
+              "search": "3.2 Direct impact"
+            }
+          ]
+        },
+        {
+          "topic": "4 Newton's Laws",
+          "subtopics": [
+            {
+              "subtopic": "4.1 F = ma and weight",
+              "search": "4.1 F = ma and weight"
+            },
+            {
+              "subtopic": "4.2 Inclined planes",
+              "search": "4.2 Inclined planes"
+            },
+            {
+              "subtopic": "4.3 Connected particles",
+              "search": "4.3 Connected particles"
+            }
+          ]
+        },
+        {
+          "topic": "5 Energy and Power",
+          "subtopics": [
+            {
+              "subtopic": "5.1 Work done",
+              "search": "5.1 Work done"
+            },
+            {
+              "subtopic": "5.2 Kinetic and potential energy",
+              "search": "5.2 Kinetic and potential energy"
+            },
+            {
+              "subtopic": "5.3 Conservation of energy and power",
+              "search": "5.3 Conservation of energy and power"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "unit": "Probability & Statistics 1",
+      "topics": [
+        {
+          "topic": "1 Data Representation",
+          "subtopics": [
+            {
+              "subtopic": "1.1 Graphs and diagrams (stem-and-leaf, box, histogram)",
+              "search": "1.1 Graphs and diagrams (stem-and-leaf, box, histogram)"
+            },
+            {
+              "subtopic": "1.2 Cumulative frequency",
+              "search": "1.2 Cumulative frequency"
+            },
+            {
+              "subtopic": "1.3 Mean and standard deviation",
+              "search": "1.3 Mean and standard deviation"
+            }
+          ]
+        },
+        {
+          "topic": "2 Permutations and Combinations",
+          "subtopics": [
+            {
+              "subtopic": "2.1 Selections (combinations)",
+              "search": "2.1 Selections (combinations)"
+            },
+            {
+              "subtopic": "2.2 Arrangements (permutations)",
+              "search": "2.2 Arrangements (permutations)"
+            }
+          ]
+        },
+        {
+          "topic": "3 Probability",
+          "subtopics": [
+            {
+              "subtopic": "3.1 Addition and multiplication rules",
+              "search": "3.1 Addition and multiplication rules"
+            },
+            {
+              "subtopic": "3.2 Independent and mutually exclusive events",
+              "search": "3.2 Independent and mutually exclusive events"
+            },
+            {
+              "subtopic": "3.3 Conditional probability",
+              "search": "3.3 Conditional probability"
+            }
+          ]
+        },
+        {
+          "topic": "4 Discrete Random Variables",
+          "subtopics": [
+            {
+              "subtopic": "4.1 Probability distributions (E(X), Var(X))",
+              "search": "4.1 Probability distributions (E(X), Var(X))"
+            },
+            {
+              "subtopic": "4.2 Binomial distribution",
+              "search": "4.2 Binomial distribution"
+            },
+            {
+              "subtopic": "4.3 Geometric distribution",
+              "search": "4.3 Geometric distribution"
+            }
+          ]
+        },
+        {
+          "topic": "5 Normal Distribution",
+          "subtopics": [
+            {
+              "subtopic": "5.1 Problems with N(μ, σ²)",
+              "search": "5.1 Problems with N(μ, σ²)"
+            },
+            {
+              "subtopic": "5.2 Normal approximation to binomial",
+              "search": "5.2 Normal approximation to binomial"
+            }
+          ]
+        }
+      ]
+    }  
+  ]
+}
 
   // additional config objects can be added here
 ];
