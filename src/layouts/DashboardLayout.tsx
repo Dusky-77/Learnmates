@@ -379,14 +379,52 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </AnimatePresence>
 
       <div className="flex-1 min-w-0 flex flex-col min-h-screen lg:pl-20">
-        <LockInHeader />
+        <LockInHeader setSidebarOpen={setSidebarOpen} />
+        {!isInSession && (
+          <header className="sticky top-0 z-30 h-20 border-b border-gray-200/80 dark:border-gray-700/80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
+            <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(true)}
+                  className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800 lg:hidden"
+                  aria-label="Open menu"
+                >
+                  <Menu className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={toggleDarkMode}
+                  className="rounded-lg p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  aria-label="Toggle dark mode"
+                >
+                  {isDarkMode ? (
+                    <Sun className="h-6 w-6 text-yellow-500" />
+                  ) : (
+                    <Moon className="h-6 w-6 text-gray-600" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  aria-label="Notifications"
+                >
+                  <Bell className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+                </button>
+              </div>
+            </div>
+          </header>
+        )}
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">{children}</main>
       </div>
     </div>
   );
 }
 
-function LockInHeader() {
+function LockInHeader({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => void }) {
   const { sessionState, currentDevice, updateSessionState, endSessionContext } = useLockInSession();
   const { user: authUser } = useAuth();
   const navigate = useNavigate();
@@ -470,6 +508,14 @@ function LockInHeader() {
     <header className="sticky top-0 z-30 border-b border-gray-200/80 dark:border-gray-700/80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
       <div className="flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800 lg:hidden"
+            aria-label="Open menu"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
           <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
             <div className="flex items-center gap-2">
               {isLocked ? (
