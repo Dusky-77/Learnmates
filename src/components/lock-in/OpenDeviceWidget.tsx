@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Coffee, Maximize2, Minimize2 } from 'lucide-react';
 import { Button, Badge } from '../ui';
@@ -26,11 +26,21 @@ export const OpenDeviceWidget: React.FC<OpenDeviceWidgetProps> = ({
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isMinimized, setIsMinimized] = useState(false);
+  const onEndSessionRef = useRef(onEndSession);
+  const onTakeBreakRef = useRef(onTakeBreak);
+
+  useEffect(() => {
+    onEndSessionRef.current = onEndSession;
+  }, [onEndSession]);
+
+  useEffect(() => {
+    onTakeBreakRef.current = onTakeBreak;
+  }, [onTakeBreak]);
 
   useEffect(() => {
     if (!lockUntil) return;
 
-    const interval = setInterval(() => {
+    const calculateRemaining = () => {
       if (isBreak) return;
       const target = new Date(lockUntil).getTime();
       const now = new Date().getTime();
@@ -38,12 +48,15 @@ export const OpenDeviceWidget: React.FC<OpenDeviceWidgetProps> = ({
       setTimeLeft(Math.max(0, remaining));
       
       if (remaining <= 0) {
-        onEndSession();
+        onEndSessionRef.current();
       }
-    }, 1000);
+    };
+
+    calculateRemaining();
+    const interval = setInterval(calculateRemaining, 1000);
 
     return () => clearInterval(interval);
-  }, [lockUntil, pausedDurationMs, isBreak, onEndSession]);
+  }, [lockUntil, pausedDurationMs, isBreak]);
 
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -94,7 +107,7 @@ export const OpenDeviceWidget: React.FC<OpenDeviceWidgetProps> = ({
                 size="sm" 
                 className="flex-1"
                 disabled={!canTakeBreak}
-                onClick={onTakeBreak}
+                onClick={onTakeBreakRef.current}
               >
                 <Coffee className="w-4 h-4 mr-1" />
                 Break

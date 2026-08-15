@@ -10,6 +10,7 @@ import {
   isEdexcelALevelPureMathSubject,
   getDefaultPaperOptions,
   makeKey,
+  formatRangeSummary,
 } from '../utils/topicalHelpers';
 import { useTopicalMatches } from '../hooks/useTopicalMatches';
 import LevelBoardSubjectPicker from '../components/topical/LevelBoardSubjectPicker';
@@ -160,13 +161,19 @@ const TopicalPages: React.FC = () => {
     return new URLSearchParams(location.search).get('limit') || '';
   }, [location.search]);
 
+  const getStrictFilterFromQuery = useCallback((): boolean => {
+    const strict = new URLSearchParams(location.search).get('strict');
+    return strict === '1' || strict === 'true';
+  }, [location.search]);
+
   const updateQueryParams = (
     newChecked: Set<string>,
     newMcqFilter: 'all' | 'mcq' | 'theory',
     newPaperFilter?: Set<number>,
     newYearFilter?: Set<number>,
     newOrderFilter?: 'newest' | 'oldest' | 'random',
-    newLimitFilter?: string
+    newLimitFilter?: string,
+    newStrictFilter?: boolean
   ) => {
     const params = new URLSearchParams();
     if (newChecked.size > 0) {
@@ -191,6 +198,9 @@ const TopicalPages: React.FC = () => {
     if (newLimitFilter) {
       params.set('limit', newLimitFilter);
     }
+    if (newStrictFilter) {
+      params.set('strict', '1');
+    }
     const queryString = params.toString();
     const newUrl = `${topicalsPath(selectedLevel, selectedBoard, selectedSubject)}${queryString ? '?' + queryString : ''}`;
     navigate(newUrl, { replace: true });
@@ -209,6 +219,7 @@ const TopicalPages: React.FC = () => {
   const [yearFilter, setYearFilterState] = useState<Set<number>>(() => getYearFilterFromQuery());
   const [orderFilter, setOrderFilterState] = useState<'newest' | 'oldest' | 'random'>(() => getOrderFilterFromQuery());
   const [limitFilter, setLimitFilterState] = useState<string>(() => getLimitFilterFromQuery());
+  const [strictFilter, setStrictFilterState] = useState<boolean>(() => getStrictFilterFromQuery());
   // Collapses the topic tree into a compact summary strip once results have
   // been requested, so the matches viewer can grow into the freed space.
   const [pickerCollapsed, setPickerCollapsed] = useState(false);
@@ -247,6 +258,7 @@ const TopicalPages: React.FC = () => {
     setYearFilterState(new Set());
     setOrderFilterState('newest');
     setLimitFilterState('');
+    setStrictFilterState(false);
 
     if (selectedLevel && selectedBoard && selectedSubject) {
       navigate(topicalsPath(selectedLevel, selectedBoard, selectedSubject), { replace: true });
@@ -290,6 +302,11 @@ const TopicalPages: React.FC = () => {
     setLimitFilterState(prev => (prev !== limitFromQuery ? limitFromQuery : prev));
   }, [getLimitFilterFromQuery]);
 
+  useEffect(() => {
+    const strictFromQuery = getStrictFilterFromQuery();
+    setStrictFilterState(prev => (prev !== strictFromQuery ? strictFromQuery : prev));
+  }, [getStrictFilterFromQuery]);
+
   const isPaperMode = isPaperFilterSubject(selectedLevel, selectedBoard, selectedSubject);
   const showMcqTheoryFilter = !isEdexcelALevelPureMathSubject(selectedLevel, selectedBoard, selectedSubject);
   const showExtraPageOption = isEdexcelALevelPureMathSubject(selectedLevel, selectedBoard, selectedSubject);
@@ -306,12 +323,12 @@ const TopicalPages: React.FC = () => {
     ? 'All years'
     : yearFilter.size === 0
       ? 'No year selected'
-      : availableYearNumbers.filter(year => yearFilter.has(year)).join(', ');
+      : formatRangeSummary(availableYearNumbers.filter(year => yearFilter.has(year)));
 
   const setMcqFilter = (filter: 'all' | 'mcq' | 'theory') => {
     setLoadFeedback(null);
     setMcqFilterState(filter);
-    updateQueryParams(checked, filter, paperFilter, yearFilter, orderFilter, limitFilter);
+    updateQueryParams(checked, filter, paperFilter, yearFilter, orderFilter, limitFilter, strictFilter);
   };
 
   const togglePaperFilter = (paperNum: number | 'all') => {
@@ -319,14 +336,14 @@ const TopicalPages: React.FC = () => {
     if (paperNum === 'all') {
       const nextSet = isAllPapersSelected ? new Set<number>() : new Set<number>(availablePaperNumbers);
       setPaperFilterState(nextSet);
-      updateQueryParams(checked, mcqFilter, nextSet, yearFilter, orderFilter, limitFilter);
+      updateQueryParams(checked, mcqFilter, nextSet, yearFilter, orderFilter, limitFilter, strictFilter);
       return;
     }
     const nextSet = new Set<number>(paperFilter);
     if (nextSet.has(paperNum)) nextSet.delete(paperNum);
     else nextSet.add(paperNum);
     setPaperFilterState(nextSet);
-    updateQueryParams(checked, mcqFilter, nextSet, yearFilter, orderFilter, limitFilter);
+    updateQueryParams(checked, mcqFilter, nextSet, yearFilter, orderFilter, limitFilter, strictFilter);
   };
 
   const toggleYearFilter = (yearNum: number | 'all') => {
@@ -334,24 +351,30 @@ const TopicalPages: React.FC = () => {
     if (yearNum === 'all') {
       const nextSet = isAllYearsSelected ? new Set<number>() : new Set<number>(availableYearNumbers);
       setYearFilterState(nextSet);
-      updateQueryParams(checked, mcqFilter, paperFilter, nextSet, orderFilter, limitFilter);
+      updateQueryParams(checked, mcqFilter, paperFilter, nextSet, orderFilter, limitFilter, strictFilter);
       return;
     }
     const nextSet = new Set<number>(yearFilter);
     if (nextSet.has(yearNum)) nextSet.delete(yearNum);
     else nextSet.add(yearNum);
     setYearFilterState(nextSet);
-    updateQueryParams(checked, mcqFilter, paperFilter, nextSet, orderFilter, limitFilter);
+    updateQueryParams(checked, mcqFilter, paperFilter, nextSet, orderFilter, limitFilter, strictFilter);
   };
 
   const setOrderFilter = (order: 'newest' | 'oldest' | 'random') => {
     setOrderFilterState(order);
-    updateQueryParams(checked, mcqFilter, paperFilter, yearFilter, order, limitFilter);
+    updateQueryParams(checked, mcqFilter, paperFilter, yearFilter, order, limitFilter, strictFilter);
   };
 
   const setLimitFilter = (limit: string) => {
     setLimitFilterState(limit);
-    updateQueryParams(checked, mcqFilter, paperFilter, yearFilter, orderFilter, limit);
+    updateQueryParams(checked, mcqFilter, paperFilter, yearFilter, orderFilter, limit, strictFilter);
+  };
+
+  const setStrictFilter = (strict: boolean) => {
+    setLoadFeedback(null);
+    setStrictFilterState(strict);
+    updateQueryParams(checked, mcqFilter, paperFilter, yearFilter, orderFilter, limitFilter, strict);
   };
 
   // ---------------------------------------------------------------------
@@ -366,6 +389,15 @@ const TopicalPages: React.FC = () => {
       return topicObj.subtopics.every(sub => checked.has(makeKey(cfg.level, cfg.board, cfg.subject, unitName, sub.subtopic)));
     }
     return checked.has(topicKey);
+  };
+
+  const isTopicPartiallyChecked = (cfg: SubjectConfig, unitName: string, topicName: string) => {
+    const unitObj = cfg.units.find(u => u.unit === unitName);
+    const topicObj = unitObj?.topics.find(t => t.topic === topicName);
+    if (!topicObj?.subtopics || topicObj.subtopics.length === 0) return false;
+    const subKeys = topicObj.subtopics.map(sub => makeKey(cfg.level, cfg.board, cfg.subject, unitName, sub.subtopic));
+    const checkedCount = subKeys.filter(k => checked.has(k)).length;
+    return checkedCount > 0 && checkedCount < subKeys.length;
   };
 
   const toggleTopic = (cfg: SubjectConfig, unitName: string, topicName: string) => {
@@ -389,7 +421,7 @@ const TopicalPages: React.FC = () => {
       else newSet.add(topicKey);
     }
     setChecked(newSet);
-    updateQueryParams(newSet, mcqFilter, paperFilter, yearFilter, orderFilter, limitFilter);
+    updateQueryParams(newSet, mcqFilter, paperFilter, yearFilter, orderFilter, limitFilter, strictFilter);
   };
 
   const toggleSubtopic = (cfg: SubjectConfig, unitName: string, topicName: string, subtopicName: string) => {
@@ -407,7 +439,7 @@ const TopicalPages: React.FC = () => {
     else newSet.delete(topicKey);
 
     setChecked(newSet);
-    updateQueryParams(newSet, mcqFilter, paperFilter, yearFilter, orderFilter, limitFilter);
+    updateQueryParams(newSet, mcqFilter, paperFilter, yearFilter, orderFilter, limitFilter, strictFilter);
   };
 
   const toggleExpanded = (cfg: SubjectConfig, unitName: string, topicName: string) => {
@@ -482,14 +514,14 @@ const TopicalPages: React.FC = () => {
 
   useEffect(() => {
     if (checked.size > 0) {
-      computeAvailableFilters({ configs, checked, matches });
+      computeAvailableFilters({ configs, checked, matches, strict: strictFilter });
     } else {
       setAvailableFilters({ hasMCQ: true, hasTheory: true });
       setAvailablePapers(new Set(getDefaultPaperOptions(selectedLevel, selectedBoard, selectedSubject)));
       setAvailableYears(new Set());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checked, matches, configs, selectedBoard, selectedLevel, selectedSubject]);
+  }, [checked, matches, configs, selectedBoard, selectedLevel, selectedSubject, strictFilter]);
 
   useEffect(() => {
     if (mcqFilter === 'mcq' && !availableFilters.hasMCQ) setMcqFilter('all');
@@ -503,10 +535,10 @@ const TopicalPages: React.FC = () => {
     if (stillValid.length !== paperFilter.size) {
       const newSet = new Set(stillValid);
       setPaperFilterState(newSet);
-      updateQueryParams(checked, mcqFilter, newSet, yearFilter, orderFilter, limitFilter);
+      updateQueryParams(checked, mcqFilter, newSet, yearFilter, orderFilter, limitFilter, strictFilter);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availablePapers, checked, isPaperMode, mcqFilter, paperFilter, yearFilter]);
+  }, [availablePapers, checked, isPaperMode, mcqFilter, paperFilter, yearFilter, strictFilter]);
 
   useEffect(() => {
     if (yearFilter.size === 0) return;
@@ -514,10 +546,10 @@ const TopicalPages: React.FC = () => {
     if (stillValid.length !== yearFilter.size) {
       const newSet = new Set(stillValid);
       setYearFilterState(newSet);
-      updateQueryParams(checked, mcqFilter, paperFilter, newSet, orderFilter, limitFilter);
+      updateQueryParams(checked, mcqFilter, paperFilter, newSet, orderFilter, limitFilter, strictFilter);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availableYears, checked, mcqFilter, paperFilter, yearFilter]);
+  }, [availableYears, checked, mcqFilter, paperFilter, yearFilter, strictFilter]);
 
   useEffect(() => {
     if (!needLoad) return;
@@ -525,7 +557,7 @@ const TopicalPages: React.FC = () => {
     const runLoad = async () => {
       const parsedLimit = parseInt(limitFilter, 10);
       const limitVal = !isNaN(parsedLimit) ? parsedLimit : null;
-      const results = await computeMatches({ configs, checked, matches, mcqFilter, paperFilter, yearFilter, isPaperMode, orderFilter, limitFilter: limitVal });
+      const results = await computeMatches({ configs, checked, matches, mcqFilter, paperFilter, yearFilter, isPaperMode, strict: strictFilter, orderFilter, limitFilter: limitVal });
       setNeedLoad(false);
 
       if (results.length === 0) {
@@ -539,7 +571,7 @@ const TopicalPages: React.FC = () => {
 
     void runLoad();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [needLoad, checked, matches, mcqFilter, paperFilter, yearFilter, configs, isPaperMode, orderFilter, limitFilter]);
+  }, [needLoad, checked, matches, mcqFilter, paperFilter, yearFilter, configs, isPaperMode, orderFilter, limitFilter, strictFilter]);
 
   // ---------------------------------------------------------------------
   // Render
@@ -625,6 +657,8 @@ const TopicalPages: React.FC = () => {
                     onOrderFilterChange={setOrderFilter}
                     limitFilter={limitFilter}
                     onLimitFilterChange={setLimitFilter}
+                    strict={strictFilter}
+                    onStrictChange={setStrictFilter}
                   />
                 </div>
 
@@ -643,6 +677,7 @@ const TopicalPages: React.FC = () => {
                       expanded={expanded}
                       expandedUnits={expandedUnits}
                       isTopicChecked={isTopicChecked}
+                      isTopicPartiallyChecked={isTopicPartiallyChecked}
                       toggleTopic={toggleTopic}
                       toggleSubtopic={toggleSubtopic}
                       toggleExpanded={toggleExpanded}

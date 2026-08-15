@@ -16,12 +16,15 @@ import {
   User,
   X,
   Layers,
-  LibraryBig
+  LibraryBig,
+  Coffee,
+  RotateCcw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDarkMode } from '../context/DarkModeContext';
 import { useUser } from '../context/UserContext';
 import { fetchProfile } from '../utils/profileSync';
+import { useLockInSession } from '../components/lock-in/LockInContext';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -120,6 +123,44 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [displayName, setDisplayName] = useState('Student');
   const [username, setUsername] = useState<string | null>(null);
+
+  const { sessionState, currentDevice, updateSessionState, endSessionContext } = useLockInSession();
+
+  const isLocked = currentDevice?.status === 'locked' && !!sessionState;
+  const isOpen = currentDevice?.status === 'open' && !!sessionState;
+  const isInSession = isLocked || isOpen;
+
+  const handleEndSession = async () => {
+    if (!authUser) return;
+    const { supabase } = await import('../lib/supabaseClient');
+    await supabase
+      .from('user_devices')
+      .update({ status: 'lobby', lock_until: null })
+      .eq('user_id', authUser.id);
+    await endSessionContext();
+    navigate('/lock_in');
+  };
+
+  const handleTakeBreak = async () => {
+    if (!sessionState) return;
+    if (sessionState.breaks_taken >= sessionState.breaks_allowed) return;
+    await updateSessionState({ current_break_started_at: new Date().toISOString() });
+  };
+
+  const handleEndBreak = async () => {
+    if (!sessionState?.current_break_started_at) return;
+    const started = new Date(sessionState.current_break_started_at).getTime();
+    const now = new Date().getTime();
+    const durationMs = now - started;
+    const isShortBreak = durationMs < 2 * 60 * 1000;
+    await updateSessionState({
+      current_break_started_at: null,
+      breaks_taken: isShortBreak ? sessionState.breaks_taken : sessionState.breaks_taken + 1,
+      paused_duration_ms: sessionState.paused_duration_ms + durationMs
+    });
+  };
+
+  const isBreak = !!sessionState?.current_break_started_at;
 
   useEffect(() => {
     if (!authUser) return;
@@ -338,46 +379,175 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </AnimatePresence>
 
       <div className="flex-1 min-w-0 flex flex-col min-h-screen lg:pl-20">
-        <header className="sticky top-0 z-30 h-20 border-b border-gray-200/80 dark:border-gray-700/80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
-          <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setSidebarOpen(true)}
-                className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-800 lg:hidden"
-                aria-label="Open menu"
-              >
-                <Menu className="h-6 w-6" />
-              </button>
-
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={toggleDarkMode}
-                className="rounded-lg p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                aria-label="Toggle dark mode"
-              >
-                {isDarkMode ? (
-                  <Sun className="h-6 w-6 text-yellow-500" />
-                ) : (
-                  <Moon className="h-6 w-6 text-gray-600" />
-                )}
-              </button>
-              <button
-                type="button"
-                className="rounded-lg p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                aria-label="Notifications"
-              >
-                <Bell className="h-6 w-6 text-gray-600 dark:text-gray-300" />
-              </button>
-            </div>
-          </div>
-        </header>
-
+        <LockInHeader />
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">{children}</main>
       </div>
     </div>
+  );
+}
+
+function LockInHeader() {
+  const { sessionState, currentDevice, updateSessionState, endSessionContext } = useLockInSession();
+  const { user: authUser } = useAuth();
+  const navigate = useNavigate();
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const [timeLeft, setTimeLeft] = useState<string>('00:00:00');
+
+  const isLocked = currentDevice?.status === 'locked' && !!sessionState;
+  const isOpen = currentDevice?.status === 'open' && !!sessionState;
+  const isInSession = isLocked || isOpen;
+  const isBreak = !!sessionState?.current_break_started_at;
+
+  const handleEndSession = async () => {
+    if (!authUser) return;
+    const { supabase } = await import('../lib/supabaseClient');
+    await supabase
+      .from('user_devices')
+      .update({ status: 'lobby', lock_until: null })
+      .eq('user_id', authUser.id);
+    await endSessionContext();
+    navigate('/lock_in');
+  };
+
+  const handleTakeBreak = async () => {
+    if (!sessionState) return;
+    if (sessionState.breaks_taken >= sessionState.breaks_allowed) return;
+    await updateSessionState({ current_break_started_at: new Date().toISOString() });
+  };
+
+  const handleEndBreak = async () => {
+    if (!sessionState?.current_break_started_at) return;
+    const started = new Date(sessionState.current_break_started_at).getTime();
+    const now = new Date().getTime();
+    const durationMs = now - started;
+    const isShortBreak = durationMs < 2 * 60 * 1000;
+    await updateSessionState({
+      current_break_started_at: null,
+      breaks_taken: isShortBreak ? sessionState.breaks_taken : sessionState.breaks_taken + 1,
+      paused_duration_ms: sessionState.paused_duration_ms + durationMs
+    });
+  };
+
+  useEffect(() => {
+    if (!currentDevice?.lock_until) return;
+
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const end = new Date(currentDevice.lock_until).getTime() + (sessionState?.paused_duration_ms || 0);
+      const distance = end - now;
+
+      if (distance < 0 && !isBreak) {
+        setTimeLeft('00:00:00');
+        handleEndSession();
+        return;
+      } else if (distance < 0) {
+        setTimeLeft('00:00:00');
+        return;
+      }
+
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      setTimeLeft(
+        `${hours.toString().padStart(2, '0')}:${minutes
+          .toString()
+          .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+      );
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [currentDevice?.lock_until, sessionState?.paused_duration_ms, isBreak, handleEndSession]);
+
+  const breaksRemaining = (sessionState?.breaks_allowed || 0) - (sessionState?.breaks_taken || 0);
+  const canTakeBreak = breaksRemaining > 0 && !isBreak;
+
+  if (!isInSession) return null;
+
+  return (
+    <header className="sticky top-0 z-30 border-b border-gray-200/80 dark:border-gray-700/80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
+      <div className="flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center gap-2">
+              {isLocked ? (
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+              ) : (
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+              )}
+              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                {isLocked ? 'Locked In' : 'Device Open'}
+              </span>
+            </div>
+            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2" />
+            <span className="font-mono text-xl font-bold text-blue-600 dark:text-blue-400">
+              {timeLeft}
+            </span>
+            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2" />
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {breaksRemaining} break{breaksRemaining !== 1 ? 's' : ''} left
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {!isBreak && canTakeBreak && (
+            <button
+              type="button"
+              onClick={handleTakeBreak}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors text-sm font-medium"
+            >
+              <Coffee className="w-4 h-4" />
+              Take Break
+            </button>
+          )}
+          {isBreak && (
+            <button
+              type="button"
+              onClick={handleEndBreak}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors text-sm font-medium"
+            >
+              <RotateCcw className="w-4 h-4" />
+              End Break
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleEndSession}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors text-sm font-medium"
+          >
+            <Lock className="w-4 h-4" />
+            End Session
+          </button>
+          <button
+            type="button"
+            onClick={toggleDarkMode}
+            className="rounded-lg p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Toggle dark mode"
+          >
+            {isDarkMode ? (
+              <Sun className="h-6 w-6 text-yellow-500" />
+            ) : (
+              <Moon className="h-6 w-6 text-gray-600" />
+            )}
+          </button>
+          <button
+            type="button"
+            className="rounded-lg p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Notifications"
+          >
+            <Bell className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+          </button>
+        </div>
+      </div>
+    </header>
   );
 }

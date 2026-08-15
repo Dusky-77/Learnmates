@@ -175,3 +175,36 @@ export const shuffleArray = <T>(array: T[]): T[] => {
 
 export const makeKey = (level: string, board: string, subject: string, unit: string, name: string) =>
   `${level}||${board}||${subject}||${unit}||${name}`;
+
+// Collapses a sorted list of numbers into compact ranges, e.g.
+// [2020, 2022, 2023, 2024, 2025] => "2020, 2022-2025". If the joined result is
+// longer than maxLength it is cut at the last whole range and given a trailing
+// ellipsis.
+export const formatRangeSummary = (values: number[], maxLength = 25): string => {
+  if (values.length === 0) return '';
+
+  const parts: string[] = [];
+  let start = values[0];
+  let prev = values[0];
+  for (let i = 1; i <= values.length; i++) {
+    const curr = values[i];
+    if (curr === prev + 1) {
+      prev = curr;
+      continue;
+    }
+    parts.push(start === prev ? String(start) : `${start}-${prev}`);
+    start = curr;
+    prev = curr;
+  }
+
+  const joined = parts.join(', ');
+  if (joined.length <= maxLength) return joined;
+
+  let truncated = '';
+  for (const part of parts) {
+    const candidate = truncated ? `${truncated}, ${part}` : part;
+    if (candidate.length > maxLength - 1) break;
+    truncated = candidate;
+  }
+  return truncated ? `${truncated}…` : `${joined.slice(0, maxLength - 1)}…`;
+};

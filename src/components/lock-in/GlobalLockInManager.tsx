@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLockInSession } from './LockInContext';
@@ -12,7 +12,7 @@ export const GlobalLockInManager: React.FC<{ children: React.ReactNode }> = ({ c
   const { sessionState, updateSessionState, endSessionContext, currentDevice, deviceId } = useLockInSession();
   const navigate = useNavigate();
 
-  const handleEndSession = async () => {
+  const handleEndSession = useCallback(async () => {
     if (!user) return;
     await supabase
       .from('user_devices')
@@ -21,15 +21,15 @@ export const GlobalLockInManager: React.FC<{ children: React.ReactNode }> = ({ c
       
     await endSessionContext();
     navigate('/lock_in');
-  };
+  }, [user, endSessionContext, navigate]);
 
-  const handleTakeBreak = async () => {
+  const handleTakeBreak = useCallback(async () => {
     if (!sessionState) return;
     if (sessionState.breaks_taken >= sessionState.breaks_allowed) return;
     await updateSessionState({ current_break_started_at: new Date().toISOString() });
-  };
+  }, [sessionState, updateSessionState]);
 
-  const handleEndBreak = async () => {
+  const handleEndBreak = useCallback(async () => {
     if (!sessionState?.current_break_started_at) return;
     const started = new Date(sessionState.current_break_started_at).getTime();
     const now = new Date().getTime();
@@ -42,7 +42,7 @@ export const GlobalLockInManager: React.FC<{ children: React.ReactNode }> = ({ c
       breaks_taken: isShortBreak ? sessionState.breaks_taken : sessionState.breaks_taken + 1,
       paused_duration_ms: sessionState.paused_duration_ms + durationMs
     });
-  };
+  }, [sessionState, updateSessionState]);
 
   useEffect(() => {
     if (!sessionState) return;

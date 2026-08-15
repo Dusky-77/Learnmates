@@ -27,20 +27,24 @@ interface ComputeParams {
   paperFilter: Set<number>;
   yearFilter: Set<number>;
   isPaperMode: boolean;
+  strict?: boolean;
   orderFilter?: 'newest' | 'oldest' | 'random';
   limitFilter?: number | null;
 }
 
 const normalizeTopicMatchTerm = (value: string) => value.trim().toLowerCase();
 
-const doesEntryMatchSelectedTopics = (topicMatches: unknown, selectedTopicsForUnit: Set<string>) => {
-  if (!Array.isArray(topicMatches)) return false;
+// Loose mode: a question matches when ANY of its topics is selected.
+// Strict mode: a question matches only when ALL of its topics are selected
+// (i.e. it covers exclusively the selected topics and nothing else).
+const doesEntryMatchSelectedTopics = (topicMatches: unknown, selectedTopicsForUnit: Set<string>, strict = false) => {
+  if (!Array.isArray(topicMatches) || topicMatches.length === 0) return false;
 
   const normalizedSelectedTopics = new Set(
     Array.from(selectedTopicsForUnit).map(term => normalizeTopicMatchTerm(term))
   );
 
-  return topicMatches.some((match: unknown) => {
+  return topicMatches[strict ? 'every' : 'some']((match: unknown) => {
     if (typeof match !== 'string') return false;
     return normalizedSelectedTopics.has(normalizeTopicMatchTerm(match));
   });
@@ -139,7 +143,7 @@ export function useTopicalMatches() {
     return info;
   };
 
-  const computeAvailableFilters = async ({ configs, checked, matches }: Pick<ComputeParams, 'configs' | 'checked' | 'matches'>) => {
+  const computeAvailableFilters = async ({ configs, checked, matches, strict = false }: Pick<ComputeParams, 'configs' | 'checked' | 'matches' | 'strict'>) => {
     const selectedTopicsByUnit = buildSelectedTopicsByUnit(checked, configs);
     let hasMCQ = false;
     let hasTheory = false;
@@ -159,7 +163,7 @@ export function useTopicalMatches() {
         if (info && Array.isArray(info)) {
           info.forEach((entry: any) => {
             const matchesList = Array.isArray(entry.topic_matches) ? entry.topic_matches : [];
-            const doesMatch = doesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit);
+            const doesMatch = doesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit, strict);
             if (doesMatch) {
               const isMCQ = entry.MCQ === 'yes' || entry.MCQ === true;
               if (isMCQ) hasMCQ = true;
@@ -181,7 +185,7 @@ export function useTopicalMatches() {
     setAvailableYears(yearsFound);
   };
 
-  const computeMatches = async ({ configs, checked, matches, mcqFilter, paperFilter, yearFilter, isPaperMode, orderFilter = 'newest', limitFilter = null }: ComputeParams) => {
+  const computeMatches = async ({ configs, checked, matches, mcqFilter, paperFilter, yearFilter, isPaperMode, strict = false, orderFilter = 'newest', limitFilter = null }: ComputeParams) => {
     const selectedTopicsByUnit = buildSelectedTopicsByUnit(checked, configs);
     const baseUrlPrefix = ((import.meta as any).env?.BASE_URL as string) || '/';
 
@@ -198,7 +202,7 @@ export function useTopicalMatches() {
         if (info && Array.isArray(info)) {
           info.forEach((entry: any) => {
             const matchesList = Array.isArray(entry.topic_matches) ? entry.topic_matches : [];
-            const doesMatch = doesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit);
+            const doesMatch = doesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit, strict);
             if (doesMatch) totalQuestions++;
           });
         }
@@ -279,7 +283,7 @@ export function useTopicalMatches() {
         if (info && Array.isArray(info)) {
           for (const entry of info) {
             const matchesList = Array.isArray(entry.topic_matches) ? entry.topic_matches : [];
-            const doesMatch = doesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit);
+            const doesMatch = doesEntryMatchSelectedTopics(matchesList, selectedTopicsForUnit, strict);
             if (!doesMatch) continue;
 
             let passFilter: boolean;

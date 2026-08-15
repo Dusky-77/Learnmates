@@ -11,6 +11,7 @@ interface TopicPickerPanelProps {
   expanded: Set<string>;
   expandedUnits: Set<string>;
   isTopicChecked: (cfg: SubjectConfig, unitName: string, topicName: string) => boolean;
+  isTopicPartiallyChecked: (cfg: SubjectConfig, unitName: string, topicName: string) => boolean;
   toggleTopic: (cfg: SubjectConfig, unitName: string, topicName: string) => void;
   toggleSubtopic: (cfg: SubjectConfig, unitName: string, topicName: string, subtopicName: string) => void;
   toggleExpanded: (cfg: SubjectConfig, unitName: string, topicName: string) => void;
@@ -27,6 +28,7 @@ const TopicPickerPanel: React.FC<TopicPickerPanelProps> = ({
   expanded,
   expandedUnits,
   isTopicChecked,
+  isTopicPartiallyChecked,
   toggleTopic,
   toggleSubtopic,
   toggleExpanded,
@@ -86,6 +88,8 @@ const TopicPickerPanel: React.FC<TopicPickerPanelProps> = ({
                         const topicKey = makeKey(cfg.level, cfg.board, cfg.subject, unit.unit, topic.topic);
                         const hasSub = !!(topic.subtopics && topic.subtopics.length > 0);
                         const expandedHere = expanded.has(topicKey);
+                        const checkedHere = isTopicChecked(cfg, unit.unit, topic.topic);
+                        const partiallyCheckedHere = isTopicPartiallyChecked(cfg, unit.unit, topic.topic);
                         return (
                           <li key={tidx} className="rounded-lg bg-slate-900/70 dark:bg-slate-800/80 border border-slate-700 p-3">
                             <div className="flex items-center justify-between gap-2">
@@ -93,22 +97,27 @@ const TopicPickerPanel: React.FC<TopicPickerPanelProps> = ({
                                 <input
                                   type="checkbox"
                                   className="sr-only peer"
-                                  checked={isTopicChecked(cfg, unit.unit, topic.topic)}
+                                  checked={checkedHere}
                                   onChange={() => toggleTopic(cfg, unit.unit, topic.topic)}
                                 />
-                                <span className="relative h-5 w-5 flex-shrink-0 rounded-full border-2 border-gray-400 dark:border-gray-500 flex items-center justify-center aspect-square transition-colors group-hover:border-purple-400">
-                                  <span
-                                    className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${
-                                      isTopicChecked(cfg, unit.unit, topic.topic)
-                                        ? 'bg-purple-500 dark:bg-purple-400 scale-110'
-                                        : 'bg-transparent scale-0'
-                                    }`}
+                                <span className="relative h-5 w-5 flex-shrink-0 rounded-full border-2 border-gray-400 dark:border-gray-500 aspect-square transition-colors group-hover:border-blue-400">
+                                  <motion.span
+                                    className="absolute inset-0 m-auto h-3 w-3 rounded-full bg-blue-600 dark:bg-blue-500 border border-blue-400 dark:border-blue-300"
+                                    initial={false}
+                                    animate={{
+                                      clipPath: checkedHere
+                                        ? 'inset(0 0% 0 0)'
+                                        : partiallyCheckedHere
+                                          ? 'inset(0 50% 0 0)'
+                                          : 'inset(0 100% 0 0)',
+                                    }}
+                                    transition={{ type: 'spring', stiffness: 300, damping: 24 }}
                                   />
                                 </span>
                                 <span
                                   className={`ml-2 text-base font-semibold transition-colors break-words whitespace-normal ${
-                                    isTopicChecked(cfg, unit.unit, topic.topic)
-                                      ? 'text-cyan-200 dark:text-cyan-300'
+                                    checkedHere
+                                      ? 'text-gray-100 dark:text-gray-200'
                                       : 'text-gray-100 dark:text-gray-200 group-hover:text-white'
                                   }`}
                                 >
@@ -151,16 +160,17 @@ const TopicPickerPanel: React.FC<TopicPickerPanelProps> = ({
                                               checked={subChecked}
                                               onChange={() => toggleSubtopic(cfg, unit.unit, topic.topic, sub.subtopic)}
                                             />
-                                            <span className="relative h-4 w-4 flex-shrink-0 rounded-full border border-gray-400 dark:border-gray-500 flex items-center justify-center transition-colors group-hover:border-purple-400">
-                                              <span
-                                                className={`h-2 w-2 rounded-full transition-all duration-200 ${
-                                                  subChecked ? 'bg-purple-500 dark:bg-purple-400 scale-110' : 'bg-transparent scale-0'
-                                                }`}
+                                            <span className="relative h-4 w-4 flex-shrink-0 rounded-full border border-gray-400 dark:border-gray-500 aspect-square transition-colors group-hover:border-blue-400">
+                                              <motion.span
+                                                className="absolute inset-0 m-auto h-2.5 w-2.5 rounded-full bg-blue-600 dark:bg-blue-500 border border-blue-400 dark:border-blue-300"
+                                                initial={false}
+                                                animate={{ clipPath: subChecked ? 'inset(0 0% 0 0)' : 'inset(0 100% 0 0)' }}
+                                                transition={{ type: 'spring', stiffness: 300, damping: 24 }}
                                               />
                                             </span>
                                             <span
                                               className={`text-sm transition-colors ${
-                                                subChecked ? 'text-cyan-200 dark:text-cyan-300' : 'text-gray-300 dark:text-gray-400 group-hover:text-gray-200'
+                                                subChecked ? 'text-gray-300 dark:text-gray-400' : 'text-gray-300 dark:text-gray-400 group-hover:text-gray-200'
                                               }`}
                                             >
                                               {sub.subtopic}

@@ -37,9 +37,15 @@ export const pillActive =
 export const pillInactive =
   'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-gray-700/30 text-gray-300 border border-gray-600/40';
 
-// Dropdown menu shell used by both the export menu and the paper filter
+// Bordered button used as a standalone dropdown / select trigger
+export const btnSelect =
+  `${btnBase} border bg-white text-gray-700 hover:bg-gray-50 ` +
+  'dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700';
+
+// Dropdown menu shell shared by the export menu, the filter dropdowns and the
+// level/board/subject picker
 export const dropdownPanel =
-  'absolute z-20 mt-2 rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-100 dark:bg-gray-800';
+  'absolute z-20 mt-2 rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-800';
 
 export const dropdownItem =
   'w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2';

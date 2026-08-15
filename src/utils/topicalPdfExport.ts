@@ -1,7 +1,8 @@
 // topicalPdfExport.ts - Full version with R2 support
-import { PDFDocument, rgb, StandardFonts, PDFFont } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, PDFFont, PDFPage, PDFEmbeddedPage } from 'pdf-lib';
 import { Question } from '../components/TopicalQuiz';
 import { fetchR2AsBlobUrl, resolveFromR2, getAssetAuthHeaders } from '../utils/r2Utils';
+import { topicalConfigs } from '../pages/topicalpagesdata';
 
 export type ExportType = 'questions' | 'markschemes';
 
@@ -159,34 +160,69 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
 // Cover page
 // ---------------------------------------------------------------------------
 
-const buildTopicsStructure = (selectedTopics: Set<string>) => {
+// Resolves the flat checkbox keys (`level||board||subject||unit||displayName`)
+// against the topic configuration data, so every key is classified as either a
+// major topic or a subtopic instead of being listed as both. Keys that do not
+// belong to the subject currently being exported (or that cannot be resolved
+// in the config) are dropped — they are stale leftovers from a previous
+// selection and must never appear on the cover page.
+const buildTopicsStructure = (
+  selectedTopics: Set<string>,
+  levelBoardSubject: { level: string; board: string; subject: string }
+) => {
   interface TopicStructure {
     [unit: string]: { [mainTopic: string]: string[] };
   }
   const topicsStructure: TopicStructure = {};
   let totalTopicCount = 0;
 
+  const cfg = topicalConfigs.find(
+    c =>
+      c.level === levelBoardSubject.level &&
+      c.board === levelBoardSubject.board &&
+      c.subject === levelBoardSubject.subject
+  );
+
   selectedTopics.forEach(key => {
     const parts = key.split('||');
-    if (parts.length >= 5) {
-      const unit = parts[3];
-      let mainTopic = '';
-      let subtopic = '';
+    if (parts.length < 5) return;
 
-      if (parts.length === 5) {
-        mainTopic = parts[4];
-        subtopic = mainTopic;
-      } else if (parts.length > 5) {
-        mainTopic = parts[4];
-        subtopic = parts.slice(5).join('||');
-      }
+    const [level, board, subject, unit, name] = parts;
+    if (
+      level !== levelBoardSubject.level ||
+      board !== levelBoardSubject.board ||
+      subject !== levelBoardSubject.subject
+    ) {
+      return;
+    }
 
-      if (!topicsStructure[unit]) topicsStructure[unit] = {};
-      if (!topicsStructure[unit][mainTopic]) topicsStructure[unit][mainTopic] = [];
-      if (!topicsStructure[unit][mainTopic].includes(subtopic)) {
-        topicsStructure[unit][mainTopic].push(subtopic);
-        totalTopicCount++;
+    const unitObj = cfg?.units.find(u => u.unit === unit);
+    if (!unitObj) return;
+
+    if (!topicsStructure[unit]) topicsStructure[unit] = {};
+
+    // The key names a major topic directly.
+    const topicObj = unitObj.topics.find(t => t.topic === name);
+    if (topicObj) {
+      // Topics with subtopics only appear here when the whole topic was
+      // selected — their checked subtopic keys are added individually below.
+      if (!topicObj.subtopics || topicObj.subtopics.length === 0) {
+        if (!topicsStructure[unit][name]) {
+          topicsStructure[unit][name] = [];
+          totalTopicCount++;
+        }
       }
+      return;
+    }
+
+    // Otherwise the key must be a subtopic — find its parent topic.
+    const parent = unitObj.topics.find(t => t.subtopics?.some(st => st.subtopic === name));
+    if (!parent) return;
+
+    if (!topicsStructure[unit][parent.topic]) topicsStructure[unit][parent.topic] = [];
+    if (!topicsStructure[unit][parent.topic].includes(name)) {
+      topicsStructure[unit][parent.topic].push(name);
+      totalTopicCount++;
     }
   });
 
@@ -213,6 +249,102 @@ const formatTopicHeaderText = (topicMatches: string[] = []): string => {
     .filter((value, index, array) => array.indexOf(value) === index);
 
   return topicCodes.join(', ');
+};
+
+// ---------------------------------------------------------------------------
+// CropBox-aware page embedding
+//
+// Some source files are "soft cropped" with PyMuPDF (fitz): only /CropBox is
+// set, the content outside it is never removed. pdf-lib's default embedding
+// (and getSize()) only looks at /MediaBox, so merging such a page shows the
+// hidden content and shifts the layout. This helper embeds only the visible
+// /CropBox region, baking in any page rotation so the result matches what a
+// viewer actually shows.
+// ---------------------------------------------------------------------------
+
+interface VisiblePage {
+  embedded: PDFEmbeddedPage;
+  width: number;
+  height: number;
+}
+
+const embedVisiblePage = async (
+  targetDoc: PDFDocument,
+  page: PDFPage
+): Promise<VisiblePage> => {
+  const cropBox = page.getCropBox();
+  const left = cropBox.x;
+  const bottom = cropBox.y;
+  const cropWidth = cropBox.width;
+  const cropHeight = cropBox.height;
+
+  // Map the crop region onto (0,0)-(cropWidth,cropHeight) of the target page,
+  // applying the page's own rotation (viewers rotate /Rotate pages clockwise,
+  // and that rotation must be baked into the form XObject matrix).
+  let width = cropWidth;
+  let height = cropHeight;
+  let matrix: [number, number, number, number, number, number];
+
+  switch (((page.getRotation().angle % 360) + 360) % 360) {
+    case 90:
+      matrix = [0, -1, 1, 0, -bottom, left + cropWidth];
+      width = cropHeight;
+      height = cropWidth;
+      break;
+    case 180:
+      matrix = [-1, 0, 0, -1, left + cropWidth, bottom + cropHeight];
+      break;
+    case 270:
+      matrix = [0, 1, -1, 0, bottom + cropHeight, -left];
+      width = cropHeight;
+      height = cropWidth;
+      break;
+    default:
+      matrix = [1, 0, 0, 1, -left, -bottom];
+  }
+
+  // The bounding box is expressed in the content's own (page) coordinate
+  // space and is also used as the clip region when the form XObject is
+  // rendered, so it must be the crop box as stored in the file (with its
+  // real x/y origin), not a zero-based box — otherwise the content inside
+  // the crop region is clipped away.
+  const embedded = await targetDoc.embedPage(
+    page,
+    { left, bottom, right: left + cropWidth, top: bottom + cropHeight },
+    matrix
+  );
+
+  return { embedded, width, height };
+};
+
+// Add a source page to the merged document showing only what is actually
+// visible (its /CropBox). Pages without a crop box are added as-is.
+const addVisiblePage = async (
+  targetDoc: PDFDocument,
+  page: PDFPage
+): Promise<void> => {
+  const mediaBox = page.getMediaBox();
+  const cropBox = page.getCropBox();
+
+  const isCropped =
+    cropBox.x !== mediaBox.x ||
+    cropBox.y !== mediaBox.y ||
+    cropBox.width !== mediaBox.width ||
+    cropBox.height !== mediaBox.height;
+
+  if (!isCropped) {
+    targetDoc.addPage(page);
+    return;
+  }
+
+  try {
+    const { embedded, width, height } = await embedVisiblePage(targetDoc, page);
+    const cropPage = targetDoc.addPage([width, height]);
+    cropPage.drawPage(embedded, { x: 0, y: 0, xScale: 1, yScale: 1 });
+  } catch (error) {
+    console.warn('Failed to hard-crop page, adding it as-is:', error);
+    targetDoc.addPage(page);
+  }
 };
 
 export const createCoverPage = async (
@@ -326,7 +458,7 @@ export const createCoverPage = async (
     color: rgb(0, 0, 0),
   });
 
-  const { topicsStructure, totalTopicCount } = buildTopicsStructure(selectedTopics);
+  const { topicsStructure, totalTopicCount } = buildTopicsStructure(selectedTopics, levelBoardSubject);
   const sortedUnits = Object.keys(topicsStructure).sort();
 
   const unitSize = 11;
@@ -351,7 +483,7 @@ export const createCoverPage = async (
       const subtopics = topicsStructure[unit][mainTopic].sort();
       subtopics.forEach(subtopic => {
         if (currentY < 100) return;
-        const displayText = subtopic === mainTopic ? `  ${subtopic}` : `  • ${subtopic}`;
+        const displayText = `  • ${subtopic}`;
         page.drawText(displayText, {
           x: 70,
           y: currentY,
@@ -577,16 +709,62 @@ export const mergeTopicalPDFs = async (
     try {
       if (task.fileType === 'pdf') {
         const sourcePdf = await PDFDocument.load(arrayBuffer);
-        const pages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
+        const sourcePageIndices = sourcePdf.getPageIndices();
+        const sourcePages = await mergedPdf.copyPages(sourcePdf, sourcePageIndices);
 
-        if (pages.length > 0) {
-          const firstPage = pages[0];
-          const { width, height } = firstPage.getSize();
+        if (sourcePages.length > 0) {
+          const firstSourcePage = sourcePages[0];
+          const firstCropBox = firstSourcePage.getCropBox();
+          const contentWidth = firstCropBox.width;
+          const contentHeight = firstCropBox.height;
 
-          await createHeaderPage(mergedPdf, task.question, questionNumber, type, width, boldFont, regularFont);
-          pages.forEach(page => mergedPdf.addPage(page));
+          const titleText = task.question.title || `Question ${questionNumber}`;
+          const topicsText = task.question.topicMatches && task.question.topicMatches.length > 0
+            ? formatTopicHeaderText(task.question.topicMatches)
+            : '';
+
+          const titleSize = 14;
+          const topicSize = 10;
+          const headerHeight = 50;
+
+          const newFirstPage = mergedPdf.addPage([contentWidth, contentHeight + headerHeight]);
+
+          newFirstPage.drawRectangle({ x: 0, y: contentHeight, width: contentWidth, height: headerHeight, color: rgb(0.95, 0.95, 0.95) });
+          newFirstPage.drawLine({ start: { x: 0, y: contentHeight }, end: { x: contentWidth, y: contentHeight }, thickness: 1, color: rgb(0.7, 0.7, 0.7) });
+
+          newFirstPage.drawText(titleText, { x: 15, y: contentHeight + headerHeight - 22, size: titleSize, font: boldFont, color: rgb(0, 0, 0) });
+
+          if (topicsText) {
+            const maxWidth = contentWidth - 30 - 150;
+            let rendered = topicsText;
+            while (regularFont.widthOfTextAtSize(rendered, topicSize) > maxWidth && rendered.length > 0) {
+              rendered = rendered.slice(0, -1);
+            }
+            if (rendered !== topicsText) rendered = `${rendered.trimEnd()}…`;
+
+            const renderedWidth = regularFont.widthOfTextAtSize(rendered, topicSize);
+            newFirstPage.drawText(rendered, {
+              x: contentWidth - renderedWidth - 15,
+              y: contentHeight + headerHeight - 22,
+              size: topicSize,
+              font: regularFont,
+              color: rgb(0.25, 0.25, 0.25),
+            });
+          }
+
+          const typeText = type === 'questions' ? 'Question' : 'Mark Scheme';
+          newFirstPage.drawText(typeText, { x: 15, y: contentHeight + headerHeight - 42, size: 9, font: regularFont, color: rgb(0.45, 0.45, 0.45) });
+
+          // Embed only the visible (cropped) region of the first page so hidden
+          // content from fitz "soft crops" never shows up and nothing shifts.
+          const embeddedFirstPage = await embedVisiblePage(mergedPdf, firstSourcePage);
+          newFirstPage.drawPage(embeddedFirstPage.embedded, { x: 0, y: 0, xScale: 1, yScale: 1 });
+
+          for (let i = 1; i < sourcePages.length; i++) {
+            await addVisiblePage(mergedPdf, sourcePages[i]);
+          }
           if (options.extraPage && type === 'questions') {
-            await addBlankPageToPdf(mergedPdf, width, height);
+            await addBlankPageToPdf(mergedPdf, contentWidth, contentHeight);
           }
         }
       } else if (task.fileType === 'image') {

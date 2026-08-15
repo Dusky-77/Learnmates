@@ -18,15 +18,11 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
   'P3-Math-T1': {
     videos: [],
     resources: [],
-    quizzes: [{ id: 'q1', title: 'Algebra Topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P3/1-Algebra/P3 Topic 1 Algebra QS.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P3/1-Algebra/P3 Topic 1 Algebra MS.pdf' }]
+    quizzes: [{ id: 'q1', title: 'Algebra Topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P3/1-Algebra/P3 Topic 1 Algebra QS.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P3/1-Algebra/P3 Topic 1 Algebra MS.pdf' },{ id: 'q1', title: 'Functions Topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P3/2-Functions/P3 Topic 2 Functions QS.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P3/2-Functions/P3 Topic 2 Functions MS.pdf' }]
+
 
   },
-  'P3-Math-T2': {
-    videos: [],
-    resources: [],
-    quizzes: [{ id: 'q1', title: 'Functions Topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P3/2-Functions/P3 Topic 2 Functions QS.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P3/2-Functions/P3 Topic 2 Functions MS.pdf' }]
-
-  },
+  
   'P3-Math-T3': {
     videos: [],
     resources: [],
@@ -65,23 +61,19 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
     resources: [],
     quizzes: [{ id: 'q1', title: 'Algebra Topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P1/1-Algebra and inqualities/P1 - Topic 1 Algebra 2019 - 2024 QP.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P1/1-Algebra and inqualities/P1 - Topic 1 Algebra 2019 - 2024 MS.pdf' },
     { id: 'q2', title: 'Quadratics topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P1/1-Algebra and inqualities/P1 - Topic 2 Quadratics 2019 - 2024 QP.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P1/1-Algebra and inqualities/P1 - Topic 2 Quadratics 2019 - 2024 MS.pdf' },
-    { id: 'q3', title: 'Inequalities topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P1/1-Algebra and inqualities/P1 - Topic 3 Inequalities 2019 - 2024 QP.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P1/1-Algebra and inqualities/P1 - Topic 3 Inequalities 2019 - 2024 MS.pdf' }
+    { id: 'q3', title: 'Inequalities topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P1/1-Algebra and inqualities/P1 - Topic 3 Inequalities 2019 - 2024 QP.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P1/1-Algebra and inqualities/P1 - Topic 3 Inequalities 2019 - 2024 MS.pdf' },
+    { id: 'q1', title: 'Functions Topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P1/2-Functions/P1 - Topic 4 Graphs 2019 - 2024 QP.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P1/2-Functions/P1 - Topic 4 Graphs 2019 - 2024 MS.pdf' }
     ]
 
   },
+  
   'P1-Math-T2': {
-    videos: [],
-    resources: [],
-    quizzes: [{ id: 'q1', title: 'Functions Topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P1/2-Functions/P1 - Topic 4 Graphs 2019 - 2024 QP.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P1/2-Functions/P1 - Topic 4 Graphs 2019 - 2024 MS.pdf' }]
-
-  },
-  'P1-Math-T3': {
     videos: [],
     resources: [],
     quizzes: [{ id: 'q1', title: 'Coordinate Geometry Topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P1/3-Coordinate Geometry/P1 - Topic 5 Straight Line Graphs 2019 - 2024 QP.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P1/3-Coordinate Geometry/P1 - Topic 5 Straight Line Graphs 2019 - 2024 MS.pdf' }]
 
   },
-  'P1-Math-T4': {
+  'P1-Math-T3': {
     videos: [],
     resources: [],
     quizzes: [{ id: 'q1', title: 'Trigonometry Topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P1/4-Trigonometry/P1 - Topic 6 Trigonometric Ratios 2019 - 2024 QP.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P1/4-Trigonometry/P1 - Topic 6 Trigonometric Ratios 2019 - 2024 MS.pdf' },
@@ -89,13 +81,13 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
     ]
 
   },
-  'P1-Math-T5': {
+  'P1-Math-T4': {
     videos: [],
     resources: [],
     quizzes: [{ id: 'q1', title: 'Differentiation Topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P1/5-Differentiation/P1 - Topic 8 Differentiation 2019 - 2024 QP.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P1/5-Differentiation/P1 - Topic 8 Differentiation 2019 - 2024 MS.pdf' }]
 
   },
-  'P1-Math-T6': {
+  'P1-Math-T5': {
     videos: [],
     resources: [],
     quizzes: [{ id: 'q1', title: 'Integration Topical', questionFile: '/Questions/alevel/edexcel/math/Pure/P1/6-Integration/P1 - Topic 9 Integration 2019 - 2024 QP.pdf', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P1/6-Integration/P1 - Topic 9 Integration 2019 - 2024 MS.pdf' }]
@@ -121,37 +113,32 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
     quizzes: [{ id: 'q1', title: 'Coordinate Geometry (Circles) Topical', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P2/3-Coordinate Geometry/Coordinate Geometry.pdf', questionFile: '/Questions/alevel/edexcel/math/Pure/P2/3-Coordinate Geometry/p2-chapter-2-coordinate-geometry Copy.pdf' }]
 
   },
+  
   'P2-Math-T4': {
     videos: [],
     resources: [],
-    quizzes: [{ id: 'q1', title: 'Binomial Expansion Topical', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P2/4-Binomial expansion/Binomial Expansion.pdf', questionFile: '/Questions/alevel/edexcel/math/Pure/P2/4-Binomial expansion/p2-chapter-4-binomial-expansion Copy.pdf' }]
+    quizzes: [{ id: 'q1', title: 'Sequences and Series Topical', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P2/5-Sequences and Series/Sequences and Series.pdf', questionFile: '/Questions/alevel/edexcel/math/Pure/P2/5-Sequences and Series/p2-chapter-5-sequences-and-series Copy.pdf' }, { id: 'q1', title: 'Binomial Expansion Topical', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P2/4-Binomial expansion/Binomial Expansion.pdf', questionFile: '/Questions/alevel/edexcel/math/Pure/P2/4-Binomial expansion/p2-chapter-4-binomial-expansion Copy.pdf' }]
 
   },
   'P2-Math-T5': {
     videos: [],
     resources: [],
-    quizzes: [{ id: 'q1', title: 'Sequences and Series Topical', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P2/5-Sequences and Series/Sequences and Series.pdf', questionFile: '/Questions/alevel/edexcel/math/Pure/P2/5-Sequences and Series/p2-chapter-5-sequences-and-series Copy.pdf' }]
+    quizzes: [{ id: 'q1', title: 'Exponentials and Logarithms Topical', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P2/6-Exponentials and Logarithms/Exponentials and Logarithms.pdf', questionFile: '/Questions/alevel/edexcel/math/Pure/P2/6-Exponentials and Logarithms/p2-chapter-3-exponentials-and-logarithms Copy.pdf' }]
 
   },
   'P2-Math-T6': {
     videos: [],
     resources: [],
-    quizzes: [{ id: 'q1', title: 'Exponentials and Logarithms Topical', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P2/6-Exponentials and Logarithms/Exponentials and Logarithms.pdf', questionFile: '/Questions/alevel/edexcel/math/Pure/P2/6-Exponentials and Logarithms/p2-chapter-3-exponentials-and-logarithms Copy.pdf' }]
+    quizzes: [{ id: 'q1', title: 'Trigonometry Topical', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P2/7-Trigonometry/Trigonometric Identities and Equations.pdf', questionFile: '/Questions/alevel/edexcel/math/Pure/P2/7-Trigonometry/p2-chapter-6-trigonmetric-identities-and-equations Copy.pdf' }]
 
   },
   'P2-Math-T7': {
     videos: [],
     resources: [],
-    quizzes: [{ id: 'q1', title: 'Trigonometry Topical', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P2/7-Trigonometry/Trigonometric Identities and Equations.pdf', questionFile: '/Questions/alevel/edexcel/math/Pure/P2/7-Trigonometry/p2-chapter-6-trigonmetric-identities-and-equations Copy.pdf' }]
-
-  },
-  'P2-Math-T8': {
-    videos: [],
-    resources: [],
     quizzes: [{ id: 'q1', title: 'Differentiation Topical', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P2/8-Differentiation/Differentiation.pdf', questionFile: '/Questions/alevel/edexcel/math/Pure/P2/8-Differentiation/p2-chapter-7-differentiation Copy.pdf' }]
 
   },
-  'P2-Math-T9': {
+  'P2-Math-T8': {
     videos: [],
     resources: [],
     quizzes: [{ id: 'q1', title: 'Integration Topical', markSchemeFile: '/Questions/alevel/edexcel/math/Pure/P2/9-Integration/Integration.pdf', questionFile: '/Questions/alevel/edexcel/math/Pure/P2/9-Integration/p2-chapter-8-integration-and-trapezium-rule Copy.pdf' }]
