@@ -1,6 +1,5 @@
 import React from 'react';
-import { Check } from 'lucide-react';
-import { btnPrimary, btnBase, btnToggleBase, btnToggleActive, btnToggleInactive } from './ui';
+import { btnPrimary, btnToggleBase, btnToggleActive, btnToggleInactive, checkboxBase, checkboxWithLabel } from './ui';
 import Dropdown from './Dropdown';
 
 interface FilterBarProps {
@@ -72,20 +71,16 @@ const StrictToggle: React.FC<{
   onChange: (strict: boolean) => void;
 }> = ({ strict, onChange }) => {
   return (
-    <button
-      type="button"
-      onClick={() => onChange(!strict)}
-      aria-pressed={strict}
-      className={`${btnBase} border ${
-        strict
-          ? 'bg-blue-500 border-blue-600 text-white shadow-sm hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800'
-          : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700'
-      }`}
-      title="Strict mode: only show questions that cover exclusively the selected topics"
-    >
-      {strict && <Check className="w-4 h-4" />}
-      Strict
-    </button>
+    <label className={checkboxWithLabel} title="Strict mode: only show questions that cover exclusively the selected topics">
+      <input
+        type="checkbox"
+        checked={strict}
+        onChange={() => onChange(!strict)}
+        className={checkboxBase}
+        aria-label="Strict mode"
+      />
+      <span className="text-sm font-medium">Strict</span>
+    </label>
   );
 };
 
@@ -154,13 +149,6 @@ const FilterBar: React.FC<FilterBarProps> = ({
         }
       />
 
-      {onStrictChange && (
-        <StrictToggle
-          strict={strict || false}
-          onChange={onStrictChange}
-        />
-      )}
-
       {onOrderFilterChange && (
         <Dropdown
           buttonLabel={
@@ -196,6 +184,13 @@ const FilterBar: React.FC<FilterBarProps> = ({
             }
           }}
           title="Leave empty to show all matches"
+        />
+      )}
+
+      {onStrictChange && (
+        <StrictToggle
+          strict={strict || false}
+          onChange={onStrictChange}
         />
       )}
     </div>

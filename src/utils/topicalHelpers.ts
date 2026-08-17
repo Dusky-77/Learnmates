@@ -42,7 +42,7 @@ export const getDefaultPaperOptions = (level: string, board: string, subject: st
   }
   
 
-  return [1, 2, 3, 4, 5,6];
+  return [1, 2, 3, 4];
 };
 
 // Extracts the paper number (1-4, or whatever the first digit of the

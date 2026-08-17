@@ -70,7 +70,7 @@ const AUTO_SAVE_DEBOUNCE_MS = 5000;
 const AUTO_SAVE_RETRY_MS = 750;
 
 const clampZoom = (value: number) =>
-  Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(value)));
+  Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
 
 const isShapeTool = (tool: DrawTool) =>
   tool === 'line' || tool === 'rectangle' || tool === 'ellipse';
@@ -88,7 +88,6 @@ const MemoizedPdfDrawablePage = React.memo(
     return (
       prevProps.pageNumber === nextProps.pageNumber &&
       prevProps.pageWidth === nextProps.pageWidth &&
-      prevProps.zoom === nextProps.zoom &&
       prevProps.drawingEnabled === nextProps.drawingEnabled &&
       prevProps.drawTool === nextProps.drawTool &&
       prevProps.penColor === nextProps.penColor &&
@@ -126,7 +125,6 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [drawingPages, setDrawingPages] = useState<Set<number>>(() => new Set());
-  const [renderZoom, setRenderZoom] = useState<number>(100);
   const [, startTransition] = useTransition();
 
   const engagementContextAPI = useEngagement();
@@ -152,23 +150,14 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const pdfBytesForThumbnailsRef = useRef<Uint8Array | null>(null);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const isProgrammaticScroll = useRef(false);
   const engagementRecordedRef = useRef({ opened: false, read: false, downloaded: false });
   const alivePagesRef = useRef<Set<number>>(new Set());
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
   const [thumbnailWidth, setThumbnailWidth] = useState(100);
   const [sidebarEl, setSidebarEl] = useState<HTMLDivElement | null>(null);
-  const isProgrammaticScroll = useRef(false);
-  const zoomRef = useRef(zoom);
-  const pendingScrollAdjustRef = useRef<{
-    clientX: number;
-    clientY: number;
-    localX: number;
-    localY: number;
-    pageNumber: number;
-    oldZoom: number;
-    newZoom: number;
-  } | null>(null);
   const lastPointerInContainerRef = useRef<{ x: number; y: number } | null>(null);
+  const zoomRef = useRef(zoom);
   zoomRef.current = zoom;
   const storedPagesRef = useRef(storedPages);
   const pageRestoreGettersRef = useRef<Map<number, () => StoredAnnotationPage | null>>(
@@ -283,10 +272,7 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
     clearPdfThumbnailCache(pdfUrl);
   }, [pdfUrl]);
 
-  // Debounce renderZoom by ~80ms
-  useEffect(() => {
-      setRenderZoom(zoom);
-  }, [zoom]);
+
 
   useEffect(() => {
     if (!pdfFile || numPages === 0) {
@@ -493,23 +479,38 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
 
       const pageNumber = findPageUnderPoint(clientX, clientY) ?? currentPage;
       const pageEl = pageRefs.current.get(pageNumber);
+      const container = scrollContainerRef.current;
 
-      if (pageEl) {
+      if (pageEl && container) {
+        const containerRect = container.getBoundingClientRect();
         const pageRect = pageEl.getBoundingClientRect();
-        pendingScrollAdjustRef.current = {
-          clientX,
-          clientY,
-          localX: clientX - pageRect.left,
-          localY: clientY - pageRect.top,
-          pageNumber,
-          oldZoom,
-          newZoom: clamped,
-        };
-      } else {
-        pendingScrollAdjustRef.current = null;
+
+        const localX = clientX - pageRect.left;
+        const localY = clientY - pageRect.top;
+        const ratio = clamped / oldZoom;
+
+        container.style.setProperty('--pdf-zoom', String(clamped / 100));
+
+        // Force synchronous layout to get the newly scaled rect
+        const newPageRect = pageEl.getBoundingClientRect();
+
+        const pointerX = clientX - containerRect.left;
+        const pointerY = clientY - containerRect.top;
+
+        const pageLeftInScroll = newPageRect.left - containerRect.left + container.scrollLeft;
+        const pageTopInScroll = newPageRect.top - containerRect.top + container.scrollTop;
+
+        const pointX = pageLeftInScroll + localX * ratio;
+        const pointY = pageTopInScroll + localY * ratio;
+
+        container.scrollLeft = Math.max(0, pointX - pointerX);
+        container.scrollTop = Math.max(0, pointY - pointerY);
+      } else if (container) {
+        container.style.setProperty('--pdf-zoom', String(clamped / 100));
       }
 
       setZoom(clamped);
+      zoomRef.current = clamped;
     },
     [currentPage, findPageUnderPoint]
   );
@@ -531,30 +532,7 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
     [applyZoomAtPoint]
   );
 
-  useLayoutEffect(() => {
-    const container = scrollContainerRef.current;
-    const pending = pendingScrollAdjustRef.current;
-    if (!container || !pending) return;
 
-    pendingScrollAdjustRef.current = null;
-
-    const pageEl = pageRefs.current.get(pending.pageNumber);
-    if (!pageEl) return;
-
-    const containerRect = container.getBoundingClientRect();
-    const pageRect = pageEl.getBoundingClientRect();
-    const ratio = pending.newZoom / pending.oldZoom;
-    const pointerX = pending.clientX - containerRect.left;
-    const pointerY = pending.clientY - containerRect.top;
-
-    const pageLeftInScroll = pageRect.left - containerRect.left + container.scrollLeft;
-    const pageTopInScroll = pageRect.top - containerRect.top + container.scrollTop;
-    const pointX = pageLeftInScroll + pending.localX * ratio;
-    const pointY = pageTopInScroll + pending.localY * ratio;
-
-    container.scrollLeft = Math.max(0, pointX - pointerX);
-    container.scrollTop = Math.max(0, pointY - pointerY);
-  }, [zoom]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -571,8 +549,13 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
     const handleWheel = (e: WheelEvent) => {
       if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
-      const step = e.deltaY > 0 ? -10 : 10;
-      applyZoomAtPoint(zoomRef.current + step, e.clientX, e.clientY);
+
+      // Trackpads typically emit many small delta events, while mice emit larger discrete ones.
+      const isTrackpad = Math.abs(e.deltaY) < 50;
+      const multiplier = isTrackpad ? 0.5 : 0.05;
+
+      const zoomDelta = -e.deltaY * multiplier;
+      applyZoomAtPoint(zoomRef.current + zoomDelta, e.clientX, e.clientY);
     };
 
     container.addEventListener('pointermove', trackPointer);
@@ -614,7 +597,8 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
 
       e.preventDefault();
       const nextDistance = touchDistance(e.touches);
-      const scale = nextDistance / pinchStateRef.distance;
+      const rawScale = nextDistance / pinchStateRef.distance;
+      const scale = 1 + (rawScale - 1) * 2.5;
       const midpoint = touchMidpoint(e.touches);
       applyZoomAtPoint(pinchStateRef.zoom * scale, midpoint.x, midpoint.y);
     };
@@ -644,7 +628,7 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
       if (setEngagementFlag) {
         setEngagementFlag(engagementContext.topicId, engagementContext.resourceId, pdfUrl, 'downloaded');
       }
-      
+
       // Award XP for downloading
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -656,7 +640,7 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
               'Authorization': `Bearer ${session.access_token}`
             },
             keepalive: true,
-            body: JSON.stringify({ 
+            body: JSON.stringify({
               resourceId: engagementContext.resourceId,
               resourceName: fileName,
               resourceType: 'file'
@@ -778,7 +762,7 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
   );
 
   const estimatedPageHeight = pageWidth * A4_ASPECT * (zoom / 100) + PAGE_GAP_PX;
-  
+
   const dynamicBuffer = useMemo(() => {
     const container = scrollContainerRef.current;
     if (!container) return 2;
@@ -791,14 +775,14 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
 
   const renderStart = Math.max(1, currentPage - effectiveBuffer);
   const renderEnd = Math.min(numPages || 1, currentPage + effectiveBuffer);
-  
+
   // Update alive pages: add new pages and lazily prune old ones
-  useEffect(() => {
+  useMemo(() => {
     // Add newly visible pages to alive set
     for (let i = renderStart; i <= renderEnd; i++) {
       alivePagesRef.current.add(i);
     }
-    
+
     // Lazy prune: remove pages too far from current page
     const pruneDistance = effectiveBuffer + 2;
     const toRemove: number[] = [];
@@ -919,9 +903,9 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
           <span
             className="text-xs sm:text-sm text-gray-300 px-1.5 sm:px-2 min-w-[2.75rem] sm:min-w-[3.25rem] text-center tabular-nums"
             aria-live="polite"
-            aria-label={`Zoom ${zoom}%`}
+            aria-label={`Zoom ${Math.round(zoom)}%`}
           >
-            {zoom}%
+            {Math.round(zoom)}%
           </span>
 
           <button
@@ -941,9 +925,8 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
                 return !prev;
               });
             }}
-            className={`${iconBtn} ${
-              drawingEnabled ? 'bg-purple-600 text-white hover:bg-purple-500' : iconBtnIdle
-            }`}
+            className={`${iconBtn} ${drawingEnabled ? 'bg-purple-600 text-white hover:bg-purple-500' : iconBtnIdle
+              }`}
             title={drawingEnabled ? 'Exit annotation mode' : 'Annotate'}
             aria-pressed={drawingEnabled}
           >
@@ -1018,9 +1001,8 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
 
             <button
               onClick={() => setTouchScrollInDrawMode(prev => !prev)}
-              className={`${iconBtn} ${
-                touchScrollInDrawMode ? iconBtnActive : iconBtnIdle
-              }`}
+              className={`${iconBtn} ${touchScrollInDrawMode ? iconBtnActive : iconBtnIdle
+                }`}
               title="Finger scroll & pinch zoom"
               aria-pressed={touchScrollInDrawMode}
             >
@@ -1096,31 +1078,28 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
               <div className="flex items-center rounded-md overflow-hidden border border-gray-600">
                 <button
                   onClick={() => setDrawTool('line')}
-                  className={`p-2 sm:p-2.5 transition ${
-                    drawTool === 'line' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700'
-                  }`}
+                  className={`p-2 sm:p-2.5 transition ${drawTool === 'line' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700'
+                    }`}
                   title="Line"
                 >
                   <Minus className={toolbarIconSize} />
                 </button>
                 <button
                   onClick={() => setDrawTool('rectangle')}
-                  className={`p-2 sm:p-2.5 transition border-x border-gray-600 ${
-                    drawTool === 'rectangle'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:bg-gray-700'
-                  }`}
+                  className={`p-2 sm:p-2.5 transition border-x border-gray-600 ${drawTool === 'rectangle'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:bg-gray-700'
+                    }`}
                   title="Rectangle"
                 >
                   <Square className={toolbarIconSize} />
                 </button>
                 <button
                   onClick={() => setDrawTool('ellipse')}
-                  className={`p-2 sm:p-2.5 transition ${
-                    drawTool === 'ellipse'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:bg-gray-700'
-                  }`}
+                  className={`p-2 sm:p-2.5 transition ${drawTool === 'ellipse'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:bg-gray-700'
+                    }`}
                   title="Ellipse"
                 >
                   <Circle className={toolbarIconSize} />
@@ -1170,9 +1149,8 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
       <div className="flex flex-1 overflow-hidden relative">
         <div
           ref={setSidebarEl}
-          className={`absolute left-0 top-0 bottom-0 bg-gray-800 border-r border-gray-700 overflow-y-auto p-2 sm:p-3 md:p-4 transition-all duration-300 ease-out z-40 w-36 sm:w-44 md:w-52 lg:w-56 ${
-            sidebarOpen ? 'translate-x-0 visible' : '-translate-x-full invisible'
-          }`}
+          className={`absolute left-0 top-0 bottom-0 bg-gray-800 border-r border-gray-700 overflow-y-auto p-2 sm:p-3 md:p-4 transition-all duration-300 ease-out z-40 w-36 sm:w-44 md:w-52 lg:w-56 ${sidebarOpen ? 'translate-x-0 visible' : '-translate-x-full invisible'
+            }`}
         >
           {numPages > 0 ? (
             <>
@@ -1198,11 +1176,10 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
                       key={page}
                       type="button"
                       onClick={() => goToPage(page)}
-                      className={`w-full aspect-[210/297] rounded border-2 flex items-center justify-center text-sm font-medium transition ${
-                        currentPage === page
-                          ? 'border-blue-500 bg-blue-600/20 text-blue-200'
-                          : 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      }`}
+                      className={`w-full aspect-[210/297] rounded border-2 flex items-center justify-center text-sm font-medium transition ${currentPage === page
+                        ? 'border-blue-500 bg-blue-600/20 text-blue-200'
+                        : 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
                     >
                       {page}
                     </button>
@@ -1220,7 +1197,7 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
         <div
           ref={scrollContainerRef}
           className="flex-1 bg-gray-950 overflow-y-auto overflow-x-auto p-4"
-          style={{ touchAction: 'pan-x pan-y pinch-zoom' }}
+          style={{ touchAction: 'pan-x pan-y pinch-zoom', '--pdf-zoom': zoom / 100 } as React.CSSProperties}
         >
           {!pdfFile ? (
             <PdfDocumentSkeleton pageCount={2} />
@@ -1237,52 +1214,50 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
               >
                 {numPages > 0 &&
                   Array.from({ length: numPages }, (_, i) => i + 1).map(pageNum => {
-                  const shouldRenderPage =
-                    drawingPages.has(pageNum) ||
-                    alivePagesRef.current.has(pageNum);
+                    const shouldRenderPage =
+                      drawingPages.has(pageNum) ||
+                      alivePagesRef.current.has(pageNum);
 
-                  const pageDisplayWidth = pageWidth * (renderZoom / 100);
-
-                  return (
-                    <div
-                      key={pageNum}
-                      style={{ width: pageDisplayWidth }}
-                    >
+                    return (
                       <div
-                        ref={setPageRef(pageNum)}
-                        data-page={pageNum}
+                        key={pageNum}
+                        style={{ width: `calc(${pageWidth}px * var(--pdf-zoom, 1))` }}
                       >
-                        {shouldRenderPage ? (
-                          <MemoizedPdfDrawablePage
-                            pageNumber={pageNum}
-                            pageWidth={pageWidth}
-                            zoom={renderZoom}
-                            drawingEnabled={drawingEnabled}
-                            drawTool={drawTool}
-                            penColor={penColor}
-                            penSize={penSize}
-                            eraserSize={eraserSize}
-                            onCanvasMount={handleCanvasMount}
-                            onActionComplete={handleActionComplete}
-                            onDrawingActiveChange={handleDrawingActiveChange}
-                            allowTouchNavigation={touchScrollInDrawMode}
-                            restoredAnnotation={storedPages[pageNum] ?? null}
-                            getRestoredAnnotation={getPageRestoreGetter(pageNum)}
-                          />
-                        ) : (
-                          <div
-                            className="mx-auto scroll-mt-4 rounded bg-gray-200/40 dark:bg-gray-800/40"
-                            style={{
-                              width: pageDisplayWidth,
-                              height: estimatedPageHeight - PAGE_GAP_PX,
-                            }}
-                            aria-hidden="true"
-                          />
-                        )}
+                        <div
+                          ref={setPageRef(pageNum)}
+                          data-page={pageNum}
+                        >
+                          {shouldRenderPage ? (
+                            <MemoizedPdfDrawablePage
+                              pageNumber={pageNum}
+                              pageWidth={pageWidth}
+                              zoom={zoom}
+                              drawingEnabled={drawingEnabled}
+                              drawTool={drawTool}
+                              penColor={penColor}
+                              penSize={penSize}
+                              eraserSize={eraserSize}
+                              onCanvasMount={handleCanvasMount}
+                              onActionComplete={handleActionComplete}
+                              onDrawingActiveChange={handleDrawingActiveChange}
+                              allowTouchNavigation={touchScrollInDrawMode}
+                              restoredAnnotation={storedPages[pageNum] ?? null}
+                              getRestoredAnnotation={getPageRestoreGetter(pageNum)}
+                            />
+                          ) : (
+                            <div
+                              className="mx-auto scroll-mt-4 rounded bg-gray-200/40 dark:bg-gray-800/40"
+                              style={{
+                                width: `calc(${pageWidth}px * var(--pdf-zoom, 1))`,
+                                height: `calc(${pageWidth * A4_ASPECT}px * var(--pdf-zoom, 1))`,
+                              }}
+                              aria-hidden="true"
+                            />
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </Document>
             </div>
           )}
@@ -1302,7 +1277,7 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
             <span className="text-orange-400">●</span>
           )}
         </div>
-        <span>Zoom: {zoom}% (5% increments) · Ctrl+scroll to zoom</span>
+        <span>Zoom: {Math.round(zoom)}% · Ctrl+scroll to zoom</span>
       </div>
     </div>
   );

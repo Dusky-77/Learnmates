@@ -227,6 +227,8 @@ const TopicalPages: React.FC = () => {
   const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null);
   const [loadFeedback, setLoadFeedback] = useState<string | null>(null);
   const [extraPageEnabled, setExtraPageEnabled] = useState(false);
+  const [headerPageEnabled, setHeaderPageEnabled] = useState(false);
+  const [mergeHeaderEnabled, setMergeHeaderEnabled] = useState(true);
   const [loadId, setLoadId] = useState<number>(0);
 
   const {
@@ -252,6 +254,8 @@ const TopicalPages: React.FC = () => {
     setPickerCollapsed(false);
     setLoadFeedback(null);
     setExtraPageEnabled(false);
+    setHeaderPageEnabled(false);
+    setMergeHeaderEnabled(true);
     resetResults();
     setMcqFilterState('all');
     setPaperFilterState(new Set(getDefaultPaperOptions(selectedLevel, selectedBoard, selectedSubject)));
@@ -493,11 +497,32 @@ const TopicalPages: React.FC = () => {
     setNeedLoad(true);
   };
 
-  const handleExport = (type: 'questions' | 'markschemes', options?: { extraPage?: boolean }) => {
+  const handleExport = (type: 'questions' | 'markschemes', options?: { extraPage?: boolean; headerPage?: boolean; mergeHeader?: boolean }) => {
+    // Get topics from localStorage if checked is empty
+    const key = `topical_checked_${selectedLevel}_${selectedBoard}_${selectedSubject}`;
+    const storedTopicsStr = localStorage.getItem(key);
+    let storedTopics: Set<string> | null = null;
+    if (storedTopicsStr) {
+      try {
+        const parsed = JSON.parse(storedTopicsStr);
+        if (Array.isArray(parsed)) {
+          storedTopics = new Set(parsed);
+        }
+      } catch (e) {
+        console.error('Failed to parse stored topics', e);
+      }
+    }
+    const exportTopics = checked.size > 0 ? checked : (storedTopics || checked);
+    
+    console.log('[Export] checked.size:', checked.size);
+    console.log('[Export] storedTopics:', storedTopics);
+    console.log('[Export] exportTopics.size:', exportTopics.size);
+    console.log('[Export] exportTopics:', [...exportTopics]);
+
     downloadMergedTopicalPDFs(
       type,
       topicalQuiz,
-      checked,
+      exportTopics,
       { level: selectedLevel, board: selectedBoard, subject: selectedSubject },
       {
         onStart: () => setIsExporting(true),
@@ -508,7 +533,17 @@ const TopicalPages: React.FC = () => {
         },
         onError: message => alert(message),
       },
-      { extraPage: options?.extraPage ?? extraPageEnabled }
+      { 
+        extraPage: options?.extraPage ?? extraPageEnabled,
+        headerPage: options?.headerPage ?? headerPageEnabled,
+        mergeHeader: options?.mergeHeader ?? mergeHeaderEnabled
+      },
+      {
+        papers: Array.from(paperFilter),
+        years: Array.from(yearFilter),
+        order: orderFilter,
+        strict: strictFilter
+      }
     );
   };
 
@@ -566,6 +601,10 @@ const TopicalPages: React.FC = () => {
       } else {
         setLoadFeedback(null);
         setPickerCollapsed(true);
+        // Persist selected topics for export cover page
+        const key = `topical_checked_${selectedLevel}_${selectedBoard}_${selectedSubject}`;
+        localStorage.setItem(key, JSON.stringify([...checked]));
+        console.log('[Load] Saved to localStorage:', key, [...checked]);
       }
     };
 
@@ -702,6 +741,11 @@ const TopicalPages: React.FC = () => {
                       showExtraPageOption={showExtraPageOption}
                       extraPageEnabled={extraPageEnabled}
                       onExtraPageToggle={setExtraPageEnabled}
+                      showHeaderOptions={true}
+                      headerPageEnabled={headerPageEnabled}
+                      mergeHeaderEnabled={mergeHeaderEnabled}
+                      onHeaderPageToggle={setHeaderPageEnabled}
+                      onMergeHeaderToggle={setMergeHeaderEnabled}
                       loadId={loadId}
                     />
                   </div>

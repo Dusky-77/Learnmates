@@ -14,7 +14,7 @@ export type DrawTool = 'pen' | 'eraser' | 'line' | 'rectangle' | 'ellipse';
 interface PdfDrawablePageProps {
   pageNumber: number;
   pageWidth: number;
-  zoom: number;
+  zoom: number; // Kept for interface compatibility, but we use --pdf-zoom via CSS
   drawingEnabled?: boolean;
   drawTool?: DrawTool;
   penColor?: string;
@@ -231,7 +231,6 @@ const PdfDrawablePageInner: React.FC<PdfDrawablePageProps> = ({
   const getRestoredAnnotationRef = useRef(getRestoredAnnotation);
   const appliedRestoreKeyRef = useRef<string | null>(null);
 
-  const zoomFactor = zoom / 100;
   const [rendered, setRendered] = useState(false);
   const [pageHeight, setPageHeight] = useState(() => pageWidth * A4_ASPECT);
 
@@ -652,8 +651,8 @@ const PdfDrawablePageInner: React.FC<PdfDrawablePageProps> = ({
     <div
       className="relative mx-auto scroll-mt-4"
       style={{
-        width: pageWidth * zoomFactor,
-        height: pageHeight * zoomFactor,
+        width: `calc(${pageWidth}px * var(--pdf-zoom, 1))`,
+        height: `calc(${pageHeight}px * var(--pdf-zoom, 1))`,
       }}
     >
       <div
@@ -662,7 +661,7 @@ const PdfDrawablePageInner: React.FC<PdfDrawablePageProps> = ({
           rendered ? 'bg-white' : 'bg-gray-200 dark:bg-gray-800'
         }`}
         style={{
-          transform: `scale(${zoomFactor})`,
+          transform: `scale(var(--pdf-zoom, 1))`,
           width: pageWidth,
         }}
       >
@@ -710,7 +709,6 @@ function pdfDrawablePagePropsAreEqual(
 ) {
   if (prev.pageNumber !== next.pageNumber) return false;
   if (prev.pageWidth !== next.pageWidth) return false;
-  if (prev.zoom !== next.zoom) return false;
   if (prev.drawingEnabled !== next.drawingEnabled) return false;
   if (prev.allowTouchNavigation !== next.allowTouchNavigation) return false;
   if (prev.drawTool !== next.drawTool) return false;

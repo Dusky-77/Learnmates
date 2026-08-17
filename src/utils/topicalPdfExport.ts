@@ -13,12 +13,12 @@ export interface ExportProgress {
 
 // Helper function to check if URL is an R2 asset
 const isR2Asset = (url: string): boolean => {
-    return url.includes('assets.learnmates.org') || 
-         url.includes('/Questions/') || 
-         url.includes('/questions/') || 
-         url.includes('/topicals/') ||
-         url.includes('topicals/') ||
-         url.includes('Questions/');
+  return url.includes('assets.learnmates.org') ||
+    url.includes('/Questions/') ||
+    url.includes('/questions/') ||
+    url.includes('/topicals/') ||
+    url.includes('topicals/') ||
+    url.includes('Questions/');
 };
 
 // Helper function to fetch file as ArrayBuffer with R2 support
@@ -26,12 +26,12 @@ const isR2Asset = (url: string): boolean => {
 const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> => {
   try {
     console.log(`[PDF Export] Fetching: ${url}`);
-    
+
     // Check if this is an R2 asset
     if (isR2Asset(url)) {
       // Use the same approach as MediaViewer - fetch via blob URL
       let r2Url = url;
-      
+
       // If it's a relative path, resolve it via r2Utils (never construct the
       // URL by hand here — the bucket is private, r2Utils is the single
       // source of truth for how asset URLs are built).
@@ -43,7 +43,7 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
         }
         r2Url = resolved;
       }
-      
+
       // If the URL is still on www.learnmates.org, convert it to assets.learnmates.org
       if (r2Url.includes('www.learnmates.org') || r2Url.includes('learnmates.org')) {
         // Extract the path from the URL
@@ -51,9 +51,9 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
         r2Url = `https://assets.learnmates.org${urlObj.pathname}`;
         console.log(`[PDF Export] Converted to assets URL: ${r2Url}`);
       }
-      
+
       console.log(`[PDF Export] Using R2 URL: ${r2Url}`);
-      
+
       // Try blob URL approach (same as MediaViewer)
       const blobUrl = await fetchR2AsBlobUrl(r2Url);
       if (blobUrl) {
@@ -61,7 +61,7 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
           const response = await fetch(blobUrl);
           if (response.ok) {
             const contentType = response.headers.get('content-type') || '';
-            
+
             // Check if we got HTML instead of a file
             if (contentType.includes('text/html') || contentType.includes('text/plain')) {
               console.warn(`[PDF Export] Received HTML instead of file from blob URL`);
@@ -85,13 +85,13 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
               }
               return null;
             }
-            
+
             const arrayBuffer = await response.arrayBuffer();
             if (arrayBuffer.byteLength === 0) {
               console.warn(`[PDF Export] Empty response from blob URL`);
               return null;
             }
-            
+
             console.log(`[PDF Export] Successfully fetched ${arrayBuffer.byteLength} bytes via blob URL`);
             return arrayBuffer;
           }
@@ -101,7 +101,7 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
           if (blobUrl) URL.revokeObjectURL(blobUrl);
         }
       }
-      
+
       // Fallback: direct fetch with proper headers
       try {
         const directResponse = await fetch(r2Url, {
@@ -111,16 +111,16 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
             ...getAssetAuthHeaders(),
           },
         });
-        
+
         if (directResponse.ok) {
           const directContentType = directResponse.headers.get('content-type') || '';
-          
+
           // Check if we got HTML instead of a file
           if (directContentType.includes('text/html') || directContentType.includes('text/plain')) {
             console.warn(`[PDF Export] Received HTML instead of file from direct fetch: ${r2Url}`);
             return null;
           }
-          
+
           const arrayBuffer = await directResponse.arrayBuffer();
           if (arrayBuffer.byteLength > 0) {
             console.log(`[PDF Export] Successfully fetched ${arrayBuffer.byteLength} bytes via direct fetch`);
@@ -132,23 +132,23 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
       } catch (err) {
         console.warn('[PDF Export] Direct fetch failed:', err);
       }
-      
+
       return null;
     }
-    
+
     // Non-R2 asset - direct fetch
     const response = await fetch(url);
     if (!response.ok) {
       console.warn(`[PDF Export] Fetch failed: ${response.status}`);
       return null;
     }
-    
+
     const contentType = response.headers.get('content-type') || '';
     if (contentType.includes('text/html') || contentType.includes('text/plain')) {
       console.warn(`[PDF Export] Received HTML instead of file from: ${url}`);
       return null;
     }
-    
+
     return await response.arrayBuffer();
   } catch (error) {
     console.error(`[PDF Export] Error fetching file:`, error);
@@ -165,7 +165,24 @@ const fetchFileAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> 
 // major topic or a subtopic instead of being listed as both. Keys that do not
 // belong to the subject currently being exported (or that cannot be resolved
 // in the config) are dropped — they are stale leftovers from a previous
-// selection and must never appear on the cover page.
+// Helper to strip/replace non-WinAnsi characters so pdf-lib doesn't throw
+const sanitizeForPdf = (text: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/θ/g, 'theta')
+    .replace(/ₙ/g, 'n')
+    .replace(/Δ/g, 'Delta ')
+    .replace(/σ/g, 'sigma')
+    .replace(/π/g, 'pi')
+    .replace(/ˣ/g, '^x')
+    .replace(/ⁿ/g, '^n')
+    .replace(/ᵗ/g, '^t')
+    .replace(/⁻/g, '^-')
+    .replace(/μ/g, 'mu')
+    // Remove remaining characters outside standard ascii/winansi range, except bullet
+    .replace(/[^\x00-\x7F\x80-\xFF\u2022]/g, '');
+};
+
 const buildTopicsStructure = (
   selectedTopics: Set<string>,
   levelBoardSubject: { level: string; board: string; subject: string }
@@ -178,51 +195,49 @@ const buildTopicsStructure = (
 
   const cfg = topicalConfigs.find(
     c =>
-      c.level === levelBoardSubject.level &&
-      c.board === levelBoardSubject.board &&
-      c.subject === levelBoardSubject.subject
+      c.level.toLowerCase() === levelBoardSubject.level.toLowerCase() &&
+      c.board.toLowerCase() === levelBoardSubject.board.toLowerCase() &&
+      c.subject.toLowerCase() === levelBoardSubject.subject.toLowerCase()
   );
 
-  selectedTopics.forEach(key => {
+  Array.from(selectedTopics).forEach(key => {
+    if (typeof key !== 'string') return;
     const parts = key.split('||');
     if (parts.length < 5) return;
 
-    const [level, board, subject, unit, name] = parts;
-    if (
-      level !== levelBoardSubject.level ||
-      board !== levelBoardSubject.board ||
-      subject !== levelBoardSubject.subject
-    ) {
-      return;
-    }
-
-    const unitObj = cfg?.units.find(u => u.unit === unit);
-    if (!unitObj) return;
-
+    const [level, board, subject, unit, ...nameParts] = parts;
+    const name = nameParts.join('||');
+    
+    // Be fully permissive: don't skip if subject cases mismatch.
     if (!topicsStructure[unit]) topicsStructure[unit] = {};
 
-    // The key names a major topic directly.
-    const topicObj = unitObj.topics.find(t => t.topic === name);
-    if (topicObj) {
-      // Topics with subtopics only appear here when the whole topic was
-      // selected — their checked subtopic keys are added individually below.
-      if (!topicObj.subtopics || topicObj.subtopics.length === 0) {
-        if (!topicsStructure[unit][name]) {
-          topicsStructure[unit][name] = [];
-          totalTopicCount++;
+    let isMainTopic = false;
+    let parentTopic = name;
+
+    const unitObj = cfg?.units.find(u => u.unit.toLowerCase() === unit.toLowerCase());
+    if (unitObj) {
+      const mainMatch = unitObj.topics.find(t => t.topic.toLowerCase() === name.toLowerCase());
+      if (mainMatch) {
+        isMainTopic = true;
+        parentTopic = mainMatch.topic;
+      } else {
+        const parentMatch = unitObj.topics.find(t => t.subtopics?.some(st => st.subtopic.toLowerCase() === name.toLowerCase()));
+        if (parentMatch) {
+          parentTopic = parentMatch.topic;
         }
       }
-      return;
     }
 
-    // Otherwise the key must be a subtopic — find its parent topic.
-    const parent = unitObj.topics.find(t => t.subtopics?.some(st => st.subtopic === name));
-    if (!parent) return;
-
-    if (!topicsStructure[unit][parent.topic]) topicsStructure[unit][parent.topic] = [];
-    if (!topicsStructure[unit][parent.topic].includes(name)) {
-      topicsStructure[unit][parent.topic].push(name);
+    if (!topicsStructure[unit][parentTopic]) {
+      topicsStructure[unit][parentTopic] = [];
       totalTopicCount++;
+    }
+
+    if (!isMainTopic && parentTopic !== name) {
+      if (!topicsStructure[unit][parentTopic].includes(name)) {
+        topicsStructure[unit][parentTopic].push(name);
+        totalTopicCount++;
+      }
     }
   });
 
@@ -353,11 +368,13 @@ export const createCoverPage = async (
   selectedTopics: Set<string>,
   levelBoardSubject: { level: string; board: string; subject: string },
   boldFont: PDFFont,
-  regularFont: PDFFont
+  regularFont: PDFFont,
+  filters?: { papers?: number[]; years?: number[]; order?: string; strict?: boolean }
 ) => {
   const width = 612; // Standard letter width
   const height = 792; // Standard letter height
-  const page = pdf.addPage([width, height]);
+  let page = pdf.addPage([width, height]);
+  const coverPages: PDFPage[] = [page];
 
   page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(0.98, 0.98, 0.98) });
 
@@ -443,91 +460,191 @@ export const createCoverPage = async (
     color: rgb(0.5, 0.5, 0.5),
   });
 
-  page.drawLine({
-    start: { x: 50, y: height - 340 },
-    end: { x: width - 50, y: height - 340 },
-    thickness: 1,
-    color: rgb(0.7, 0.7, 0.7),
-  });
+  const { topicsStructure, totalTopicCount } = buildTopicsStructure(selectedTopics, levelBoardSubject);
+  const sortedUnits = Object.keys(topicsStructure).sort();
 
+  console.log('[CoverPage] selectedTopics:', selectedTopics);
+  console.log('[CoverPage] topicsStructure:', topicsStructure);
+  console.log('[CoverPage] totalTopicCount:', totalTopicCount);
+  console.log('[CoverPage] sortedUnits:', sortedUnits);
+
+  const leftMargin = 50;
+  const rightMargin = 50;
+  const contentWidth = width - leftMargin - rightMargin;
+  const leftColumnWidth = contentWidth * 0.6;
+  const rightColumnWidth = contentWidth * 0.35;
+  const rightColumnX = leftMargin + leftColumnWidth + 20;
+
+  let leftY = height - 360;
+  let rightY = height - 360;
+
+  // Draw right column box background for filters
+  if (filters) {
+    const filterLines = [];
+    if (filters.papers && filters.papers.length > 0) filterLines.push(`Papers: ${filters.papers.map(p => `P${p}`).join(', ')}`);
+    if (filters.years && filters.years.length > 0) {
+      const sortedYears = [...filters.years].sort((a, b) => a - b);
+      const yearRanges = [];
+      let start = sortedYears[0];
+      let end = sortedYears[0];
+      
+      for (let i = 1; i < sortedYears.length; i++) {
+        if (sortedYears[i] === end + 1) {
+          end = sortedYears[i];
+        } else {
+          yearRanges.push(start === end ? `${start}` : `${start}-${end}`);
+          start = sortedYears[i];
+          end = sortedYears[i];
+        }
+      }
+      yearRanges.push(start === end ? `${start}` : `${start}-${end}`);
+      filterLines.push(`Years: ${yearRanges.join(', ')}`);
+    }
+    if (filters.order) filterLines.push(`Order: ${filters.order === 'newest' ? 'New -> Old' : filters.order === 'oldest' ? 'Old -> New' : 'Random'}`);
+    if (filters.strict) filterLines.push('Strict: Yes (exclusive topic match)');
+
+    const boxPadding = 10;
+    const lineHeight = 14;
+    const boxHeight = filterLines.length * lineHeight + boxPadding * 2 + 20; // +20 for title
+    const boxY = rightY - boxHeight;
+
+    // Box background
+    page.drawRectangle({
+      x: rightColumnX,
+      y: boxY,
+      width: rightColumnWidth,
+      height: boxHeight,
+      color: rgb(0.95, 0.95, 0.95),
+      borderColor: rgb(0.7, 0.7, 0.7),
+      borderWidth: 1,
+    });
+
+    // Filters title
+    page.drawText('Filters Applied', {
+      x: rightColumnX + boxPadding,
+      y: rightY - 14,
+      size: 10,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+    rightY -= 24;
+
+    // Filter lines
+    for (const line of filterLines) {
+      page.drawText(sanitizeForPdf(line), {
+        x: rightColumnX + boxPadding,
+        y: rightY,
+        size: 9,
+        font: regularFont,
+        color: rgb(0.3, 0.3, 0.3),
+        maxWidth: rightColumnWidth - boxPadding * 2,
+      });
+      rightY -= lineHeight;
+    }
+  }
+
+  // Left column - Topics Selected
   page.drawText('Topics Selected:', {
-    x: 50,
-    y: height - 380,
+    x: leftMargin,
+    y: leftY,
     size: 12,
     font: boldFont,
     color: rgb(0, 0, 0),
   });
+  leftY -= 18;
 
-  const { topicsStructure, totalTopicCount } = buildTopicsStructure(selectedTopics, levelBoardSubject);
-  const sortedUnits = Object.keys(topicsStructure).sort();
+  const unitSize = 10;
+  const mainTopicSize = 9;
+  const topicSize = 8;
+  const topicLineHeight = 11;
 
-  const unitSize = 11;
-  const mainTopicSize = 10;
-  const topicSize = 9;
-  const lineHeight = 11;
-  let currentY = height - 410;
+  const checkNewPage = (threshold: number) => {
+    if (leftY < threshold) {
+      page = pdf.addPage([width, height]);
+      coverPages.push(page);
+      page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(0.98, 0.98, 0.98) });
+      leftY = height - 80;
+      page.drawText('Topics Selected (continued):', {
+        x: leftMargin,
+        y: leftY,
+        size: 12,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      leftY -= 25;
+    }
+  };
 
   sortedUnits.forEach(unit => {
-    if (currentY < 120) return;
+    checkNewPage(120);
 
-    page.drawText(`${unit}`, { x: 50, y: currentY, size: unitSize, font: boldFont, color: rgb(0, 0.3, 0.6) });
-    currentY -= lineHeight;
+    page.drawText(sanitizeForPdf(`${unit}`), { x: leftMargin, y: leftY, size: unitSize, font: boldFont, color: rgb(0, 0.3, 0.6) });
+    leftY -= topicLineHeight;
 
     const mainTopicsForUnit = Object.keys(topicsStructure[unit]).sort();
     mainTopicsForUnit.forEach(mainTopic => {
-      if (currentY < 100) return;
+      checkNewPage(100);
 
-      page.drawText(`${mainTopic}`, { x: 70, y: currentY, size: mainTopicSize, font: boldFont, color: rgb(0, 0, 0) });
-      currentY -= lineHeight;
+      page.drawText(sanitizeForPdf(`${mainTopic}`), { x: leftMargin + 20, y: leftY, size: mainTopicSize, font: boldFont, color: rgb(0, 0, 0) });
+      leftY -= topicLineHeight;
 
       const subtopics = topicsStructure[unit][mainTopic].sort();
       subtopics.forEach(subtopic => {
-        if (currentY < 100) return;
-        const displayText = `  • ${subtopic}`;
-        page.drawText(displayText, {
-          x: 70,
-          y: currentY,
+        checkNewPage(100);
+        const displayText = `  \u2022 ${subtopic}`;
+        page.drawText(sanitizeForPdf(displayText), {
+          x: leftMargin + 20,
+          y: leftY,
           size: topicSize,
           font: regularFont,
           color: rgb(0.2, 0.2, 0.2),
-          maxWidth: width - 100,
+          maxWidth: leftColumnWidth - 40,
         });
-        currentY -= lineHeight;
+        
+        const textWidth = regularFont.widthOfTextAtSize(sanitizeForPdf(displayText), topicSize);
+        const lines = Math.ceil(textWidth / (leftColumnWidth - 40));
+        leftY -= topicLineHeight * (lines > 0 ? lines : 1);
       });
 
-      currentY -= 2;
+      leftY -= 2;
     });
 
-    currentY -= 5;
+    leftY -= 5;
   });
 
-  const topicCountText = `Total Topics: ${totalTopicCount}`;
-  const topicCountSize = 9;
-  const topicCountWidth = regularFont.widthOfTextAtSize(topicCountText, topicCountSize);
-  page.drawText(topicCountText, {
-    x: (width - topicCountWidth) / 2,
-    y: 60,
-    size: topicCountSize,
-    font: regularFont,
-    color: rgb(0.5, 0.5, 0.5),
-  });
+  coverPages.forEach((p, index) => {
+    const isLastPage = index === coverPages.length - 1;
+    
+    if (isLastPage) {
+      const topicCountText = `Total Topics: ${totalTopicCount}`;
+      const topicCountSize = 9;
+      const topicCountWidth = regularFont.widthOfTextAtSize(topicCountText, topicCountSize);
+      p.drawText(topicCountText, {
+        x: (width - topicCountWidth) / 2,
+        y: 60,
+        size: topicCountSize,
+        font: regularFont,
+        color: rgb(0.5, 0.5, 0.5),
+      });
+    }
 
-  const footerText = 'Created using Learnmates.org';
-  const footerSize = 9;
-  const footerWidth = regularFont.widthOfTextAtSize(footerText, footerSize);
-  page.drawText(footerText, {
-    x: (width - footerWidth) / 2,
-    y: 30,
-    size: footerSize,
-    font: regularFont,
-    color: rgb(0.4, 0.4, 0.4),
-  });
+    const footerText = 'Created using Learnmates.org';
+    const footerSize = 9;
+    const footerWidth = regularFont.widthOfTextAtSize(footerText, footerSize);
+    p.drawText(footerText, {
+      x: (width - footerWidth) / 2,
+      y: 30,
+      size: footerSize,
+      font: regularFont,
+      color: rgb(0.4, 0.4, 0.4),
+    });
 
-  page.drawLine({
-    start: { x: width / 2 - 100, y: 40 },
-    end: { x: width / 2 + 100, y: 40 },
-    thickness: 0.5,
-    color: rgb(0.7, 0.7, 0.7),
+    p.drawLine({
+      start: { x: width / 2 - 100, y: 40 },
+      end: { x: width / 2 + 100, y: 40 },
+      thickness: 0.5,
+      color: rgb(0.7, 0.7, 0.7),
+    });
   });
 };
 
@@ -544,10 +661,10 @@ export const createHeaderPage = async (
   boldFont: PDFFont,
   regularFont: PDFFont
 ) => {
-  const headerHeight = 46;
+  const headerHeight = 25;
   const page = pdf.addPage([width, headerHeight]);
 
-  page.drawRectangle({ x: 0, y: 0, width, height: headerHeight, color: rgb(0.8, 0.8, 0.8) });
+  page.drawRectangle({ x: 0, y: 0, width, height: headerHeight, color: rgb(0.85, 0.85, 0.85) });
   page.drawLine({ start: { x: 0, y: headerHeight - 1 }, end: { x: width, y: headerHeight - 1 }, thickness: 1, color: rgb(0.65, 0.65, 0.65) });
   page.drawLine({ start: { x: 0, y: 0 }, end: { x: width, y: 0 }, thickness: 1, color: rgb(0.65, 0.65, 0.65) });
 
@@ -556,14 +673,15 @@ export const createHeaderPage = async (
     ? formatTopicHeaderText(question.topicMatches)
     : '';
 
-  const titleSize = 12;
-  const topicSize = 10;
+  const titleSize = 10;
+  const topicSize = 8;
+  const safeTitle = sanitizeForPdf(titleText);
 
-  page.drawText(titleText, { x: 10, y: headerHeight / 2 - titleSize / 2 - 1, size: titleSize, font: boldFont, color: rgb(0, 0, 0) });
+  page.drawText(safeTitle, { x: 10, y: headerHeight / 2 - titleSize / 2 - 1, size: titleSize, font: boldFont, color: rgb(0, 0, 0) });
 
   if (topicsText) {
     const maxWidth = width - 20 - 170;
-    let rendered = topicsText;
+    let rendered = sanitizeForPdf(topicsText);
     while (regularFont.widthOfTextAtSize(rendered, topicSize) > maxWidth && rendered.length > 0) {
       rendered = rendered.slice(0, -1);
     }
@@ -578,9 +696,6 @@ export const createHeaderPage = async (
       color: rgb(0.25, 0.25, 0.25),
     });
   }
-
-  const typeText = type === 'questions' ? 'Question' : 'Mark Scheme';
-  page.drawText(typeText, { x: 10, y: 4, size: 9, font: regularFont, color: rgb(0.45, 0.45, 0.45) });
 };
 
 // ---------------------------------------------------------------------------
@@ -598,7 +713,8 @@ export const mergeTopicalPDFs = async (
   selectedTopics: Set<string>,
   levelBoardSubject: { level: string; board: string; subject: string },
   onProgress?: (progress: ExportProgress) => void,
-  options: { extraPage?: boolean } = {}
+  options: { extraPage?: boolean; headerPage?: boolean; mergeHeader?: boolean } = {},
+  filters?: { papers?: number[]; years?: number[]; order?: string; strict?: boolean }
 ): Promise<Blob> => {
   const mergedPdf = await PDFDocument.create();
 
@@ -606,7 +722,7 @@ export const mergeTopicalPDFs = async (
   const regularFont = await mergedPdf.embedFont(StandardFonts.Helvetica);
 
   try {
-    await createCoverPage(mergedPdf, type, selectedTopics, levelBoardSubject, boldFont, regularFont);
+    await createCoverPage(mergedPdf, type, selectedTopics, levelBoardSubject, boldFont, regularFont, filters);
   } catch (error) {
     console.warn('Failed to create cover page:', error);
   }
@@ -668,11 +784,11 @@ export const mergeTopicalPDFs = async (
       try {
         // Use the R2-aware fetch function
         const arrayBuffer = await fetchFileAsArrayBuffer(task.url);
-        
+
         if (!arrayBuffer) {
           return { task, arrayBuffer: null, contentType: '', error: 'Failed to fetch file' };
         }
-        
+
         // Try to detect content type from the URL or file extension
         let contentType = '';
         if (task.fileType === 'pdf') {
@@ -686,7 +802,7 @@ export const mergeTopicalPDFs = async (
           else if (ext === 'webp') contentType = 'image/webp';
           else contentType = 'image/png'; // Default
         }
-        
+
         return { task, arrayBuffer, contentType, error: null };
       } catch (err) {
         return { task, arrayBuffer: null, contentType: '', error: String(err) };
@@ -723,46 +839,65 @@ export const mergeTopicalPDFs = async (
             ? formatTopicHeaderText(task.question.topicMatches)
             : '';
 
-          const titleSize = 14;
-          const topicSize = 10;
-          const headerHeight = 50;
-
-          const newFirstPage = mergedPdf.addPage([contentWidth, contentHeight + headerHeight]);
-
-          newFirstPage.drawRectangle({ x: 0, y: contentHeight, width: contentWidth, height: headerHeight, color: rgb(0.95, 0.95, 0.95) });
-          newFirstPage.drawLine({ start: { x: 0, y: contentHeight }, end: { x: contentWidth, y: contentHeight }, thickness: 1, color: rgb(0.7, 0.7, 0.7) });
-
-          newFirstPage.drawText(titleText, { x: 15, y: contentHeight + headerHeight - 22, size: titleSize, font: boldFont, color: rgb(0, 0, 0) });
-
-          if (topicsText) {
-            const maxWidth = contentWidth - 30 - 150;
-            let rendered = topicsText;
-            while (regularFont.widthOfTextAtSize(rendered, topicSize) > maxWidth && rendered.length > 0) {
-              rendered = rendered.slice(0, -1);
+          // Handle header page option
+          if (options.headerPage) {
+            if (!options.mergeHeader) {
+              // Add separate header page before the question
+              await createHeaderPage(mergedPdf, task.question, questionNumber, type, contentWidth, boldFont, regularFont);
             }
-            if (rendered !== topicsText) rendered = `${rendered.trimEnd()}…`;
 
-            const renderedWidth = regularFont.widthOfTextAtSize(rendered, topicSize);
-            newFirstPage.drawText(rendered, {
-              x: contentWidth - renderedWidth - 15,
-              y: contentHeight + headerHeight - 22,
-              size: topicSize,
-              font: regularFont,
-              color: rgb(0.25, 0.25, 0.25),
-            });
+            // Add merged header with first page (when mergeHeader is true, or default when headerPage enabled)
+            if (options.mergeHeader !== false) {
+              const titleSize = 11;
+              const topicSize = 8;
+              const headerHeight = 20;
+
+              const newFirstPage = mergedPdf.addPage([contentWidth, contentHeight + headerHeight]);
+
+              newFirstPage.drawRectangle({ x: 0, y: contentHeight, width: contentWidth, height: headerHeight, color: rgb(0.95, 0.95, 0.95) });
+              newFirstPage.drawLine({ start: { x: 0, y: contentHeight }, end: { x: contentWidth, y: contentHeight }, thickness: 1, color: rgb(0.7, 0.7, 0.7) });
+
+              newFirstPage.drawText(titleText, { x: 15, y: contentHeight + headerHeight - 16, size: titleSize, font: boldFont, color: rgb(0, 0, 0) });
+
+              if (topicsText) {
+                const maxWidth = contentWidth - 30 - 150;
+                let rendered = topicsText;
+                while (regularFont.widthOfTextAtSize(rendered, topicSize) > maxWidth && rendered.length > 0) {
+                  rendered = rendered.slice(0, -1);
+                }
+                if (rendered !== topicsText) rendered = `${rendered.trimEnd()}…`;
+
+                const renderedWidth = regularFont.widthOfTextAtSize(rendered, topicSize);
+                newFirstPage.drawText(rendered, {
+                  x: contentWidth - renderedWidth - 15,
+                  y: contentHeight + headerHeight - 16,
+                  size: topicSize,
+                  font: regularFont,
+                  color: rgb(0.25, 0.25, 0.25),
+                });
+              }
+
+              // Embed only the visible (cropped) region of the first page so hidden
+              // content from fitz "soft crops" never shows up and nothing shifts.
+              const embeddedFirstPage = await embedVisiblePage(mergedPdf, firstSourcePage);
+              newFirstPage.drawPage(embeddedFirstPage.embedded, { x: 0, y: 0, xScale: 1, yScale: 1 });
+
+              for (let i = 1; i < sourcePages.length; i++) {
+                await addVisiblePage(mergedPdf, sourcePages[i]);
+              }
+            } else {
+              // Header page enabled but merge disabled - just add question pages without header
+              for (let i = 0; i < sourcePages.length; i++) {
+                await addVisiblePage(mergedPdf, sourcePages[i]);
+              }
+            }
+          } else {
+            // headerPage disabled - add pages without any header (original behavior before header feature)
+            for (let i = 0; i < sourcePages.length; i++) {
+              await addVisiblePage(mergedPdf, sourcePages[i]);
+            }
           }
 
-          const typeText = type === 'questions' ? 'Question' : 'Mark Scheme';
-          newFirstPage.drawText(typeText, { x: 15, y: contentHeight + headerHeight - 42, size: 9, font: regularFont, color: rgb(0.45, 0.45, 0.45) });
-
-          // Embed only the visible (cropped) region of the first page so hidden
-          // content from fitz "soft crops" never shows up and nothing shifts.
-          const embeddedFirstPage = await embedVisiblePage(mergedPdf, firstSourcePage);
-          newFirstPage.drawPage(embeddedFirstPage.embedded, { x: 0, y: 0, xScale: 1, yScale: 1 });
-
-          for (let i = 1; i < sourcePages.length; i++) {
-            await addVisiblePage(mergedPdf, sourcePages[i]);
-          }
           if (options.extraPage && type === 'questions') {
             await addBlankPageToPdf(mergedPdf, contentWidth, contentHeight);
           }
@@ -781,89 +916,135 @@ export const mergeTopicalPDFs = async (
           }
         }
 
-        const page = mergedPdf.addPage([612, 792]);
-        const { width, height } = page.getSize();
-        const headerHeight = 80;
-
-        page.drawRectangle({ x: 0, y: height - headerHeight, width, height: headerHeight, color: rgb(0.95, 0.95, 0.95) });
-        page.drawRectangle({
-          x: 10,
-          y: height - headerHeight + 5,
-          width: width - 20,
-          height: headerHeight - 10,
-          borderColor: rgb(0.7, 0.7, 0.7),
-          borderWidth: 1,
-        });
-
-        const titleText = task.question.title || `Question ${questionNumber}`;
-        const titleSize = 14;
-        const titleWidth = boldFont.widthOfTextAtSize(titleText, titleSize);
-        const titleX = Math.min((width - titleWidth) / 2, width - titleWidth - 50);
-        page.drawText(titleText, { x: titleX, y: height - 25, size: titleSize, color: rgb(0, 0, 0), font: boldFont });
-
-        const typeText = type === 'questions' ? 'Questions' : 'Mark Schemes';
-        const typeSize = 10;
-        const typeWidth = boldFont.widthOfTextAtSize(typeText, typeSize);
-        const typeX = Math.min((width - typeWidth) / 2, width - typeWidth - 50);
-        page.drawText(typeText, { x: typeX, y: height - 40, size: typeSize, color: rgb(0.4, 0.4, 0.4), font: boldFont });
-
-        if (task.question.topicMatches && task.question.topicMatches.length > 0) {
-          page.drawText('Topics:', { x: 20, y: height - 55, size: 9, color: rgb(0, 0, 0), font: boldFont });
-
-          const topicsString = formatTopicHeaderText(task.question.topicMatches);
-          const maxWidth = width - 100;
-          const topicSize = 8;
-          const lineHeight = 10;
-
-          const words = topicsString.split(', ');
-          let currentLine = '';
-          const lines: string[] = [];
-
-          for (const word of words) {
-            const testLine = currentLine ? `${currentLine}, ${word}` : word;
-            const testWidth = regularFont.widthOfTextAtSize(testLine, topicSize);
-
-            if (testWidth > maxWidth && currentLine) {
-              lines.push(currentLine);
-              currentLine = word;
-            } else {
-              currentLine = testLine;
-            }
-          }
-          if (currentLine) lines.push(currentLine);
-
-          let currentY = height - 65;
-          for (let i = 0; i < Math.min(lines.length, 2); i++) {
-            if (currentY > height - headerHeight + 15) {
-              const lineX = Math.min(20, width - regularFont.widthOfTextAtSize(lines[i], topicSize) - 20);
-              page.drawText(lines[i], { x: lineX, y: currentY, size: topicSize, color: rgb(0.3, 0.3, 0.3), font: regularFont });
-              currentY -= lineHeight;
-            }
-          }
-        }
-
-        const numberText = `${questionNumber}`;
-        page.drawText(numberText, { x: width - 30, y: height - 25, size: 10, color: rgb(0.5, 0.5, 0.5), font: boldFont });
-
         const imageDims = image.scale(1);
-        const maxImageHeight = height - headerHeight - 20;
-        const maxImageWidth = width - 80;
-        const scale = Math.min(maxImageWidth / imageDims.width, maxImageHeight / imageDims.height, 1);
+        const pageWidth = 612;
+        const pageHeight = 792;
+        const headerHeight = 25;
 
-        const scaledWidth = imageDims.width * scale;
-        const scaledHeight = imageDims.height * scale;
-        const imageX = (width - scaledWidth) / 2;
-        const imageY = height - headerHeight - 20 - scaledHeight;
+        // Handle header page option for images
+        if (options.headerPage) {
+          if (!options.mergeHeader) {
+            // Add separate header page before the question
+            await createHeaderPage(mergedPdf, task.question, questionNumber, type, pageWidth, boldFont, regularFont);
+          }
 
-        page.drawImage(image, { x: imageX, y: imageY, width: scaledWidth, height: scaledHeight });
+          if (options.mergeHeader !== false) {
+            // Merge header with page
+            const page = mergedPdf.addPage([pageWidth, pageHeight]);
+            const { width, height } = page.getSize();
 
-        if (options.extraPage && type === 'questions') {
-          await addBlankPageToPdf(mergedPdf, width, height);
+            page.drawRectangle({ x: 0, y: height - headerHeight, width, height: headerHeight, color: rgb(0.95, 0.95, 0.95) });
+            page.drawRectangle({
+              x: 10,
+              y: height - headerHeight + 5,
+              width: width - 20,
+              height: headerHeight - 10,
+              borderColor: rgb(0.7, 0.7, 0.7),
+              borderWidth: 1,
+            });
+
+            const titleText = task.question.title || `Question ${questionNumber}`;
+            const titleSize = 11;
+            const titleWidth = boldFont.widthOfTextAtSize(titleText, titleSize);
+            const titleX = Math.min((width - titleWidth) / 2, width - titleWidth - 50);
+            page.drawText(titleText, { x: titleX, y: height - 20, size: titleSize, color: rgb(0, 0, 0), font: boldFont });
+
+            if (task.question.topicMatches && task.question.topicMatches.length > 0) {
+              page.drawText('Topics:', { x: 20, y: height - 42, size: 8, color: rgb(0, 0, 0), font: boldFont });
+
+              const topicsString = formatTopicHeaderText(task.question.topicMatches);
+              const maxWidth = width - 100;
+              const topicSize = 8;
+              const lineHeight = 10;
+
+              const words = topicsString.split(', ');
+              let currentLine = '';
+              const lines: string[] = [];
+
+              for (const word of words) {
+                const testLine = currentLine ? `${currentLine}, ${word}` : word;
+                const testWidth = regularFont.widthOfTextAtSize(testLine, topicSize);
+
+                if (testWidth > maxWidth && currentLine) {
+                  lines.push(currentLine);
+                  currentLine = word;
+                } else {
+                  currentLine = testLine;
+                }
+              }
+              if (currentLine) lines.push(currentLine);
+
+              let currentY = height - 65;
+              for (let i = 0; i < Math.min(lines.length, 2); i++) {
+                if (currentY > height - headerHeight + 15) {
+                  const lineX = Math.min(20, width - regularFont.widthOfTextAtSize(lines[i], topicSize) - 20);
+                  page.drawText(lines[i], { x: lineX, y: currentY, size: topicSize, color: rgb(0.3, 0.3, 0.3), font: regularFont });
+                  currentY -= lineHeight;
+                }
+              }
+            }
+
+            const numberText = `${questionNumber}`;
+            page.drawText(numberText, { x: width - 30, y: height - 25, size: 10, color: rgb(0.5, 0.5, 0.5), font: boldFont });
+
+            const maxImageHeight = height - headerHeight - 20;
+            const maxImageWidth = width - 80;
+            const scale = Math.min(maxImageWidth / imageDims.width, maxImageHeight / imageDims.height, 1);
+
+            const scaledWidth = imageDims.width * scale;
+            const scaledHeight = imageDims.height * scale;
+            const imageX = (width - scaledWidth) / 2;
+            const imageY = height - headerHeight - 20 - scaledHeight;
+
+            page.drawImage(image, { x: imageX, y: imageY, width: scaledWidth, height: scaledHeight });
+
+            if (options.extraPage && type === 'questions') {
+              await addBlankPageToPdf(mergedPdf, width, height);
+            }
+          } else {
+            // Header page enabled but merge disabled - just add the image page without header
+            const page = mergedPdf.addPage([pageWidth, pageHeight]);
+            const { width, height } = page.getSize();
+
+            const maxImageHeight = height - 20;
+            const maxImageWidth = width - 80;
+            const scale = Math.min(maxImageWidth / imageDims.width, maxImageHeight / imageDims.height, 1);
+
+            const scaledWidth = imageDims.width * scale;
+            const scaledHeight = imageDims.height * scale;
+            const imageX = (width - scaledWidth) / 2;
+            const imageY = height - 20 - scaledHeight;
+
+            page.drawImage(image, { x: imageX, y: imageY, width: scaledWidth, height: scaledHeight });
+
+            if (options.extraPage && type === 'questions') {
+              await addBlankPageToPdf(mergedPdf, width, height);
+            }
+          }
+        } else {
+          // headerPage disabled - add page without any header (original behavior)
+          const page = mergedPdf.addPage([pageWidth, pageHeight]);
+          const { width, height } = page.getSize();
+
+          const maxImageHeight = height - 20;
+          const maxImageWidth = width - 80;
+          const scale = Math.min(maxImageWidth / imageDims.width, maxImageHeight / imageDims.height, 1);
+
+          const scaledWidth = imageDims.width * scale;
+          const scaledHeight = imageDims.height * scale;
+          const imageX = (width - scaledWidth) / 2;
+          const imageY = height - 20 - scaledHeight;
+
+          page.drawImage(image, { x: imageX, y: imageY, width: scaledWidth, height: scaledHeight });
+
+          if (options.extraPage && type === 'questions') {
+            await addBlankPageToPdf(mergedPdf, width, height);
+          }
         }
       } else if (task.fileType === 'mcqAnswer') {
         // Keep this as small as the per-question header strip (not a full page) —
         // there's no mark scheme file, just a single answer letter to show.
-        const headerHeight = 50;
+        const headerHeight = 25;
         const page = mergedPdf.addPage([612, headerHeight]);
         const { width, height } = page.getSize();
 
@@ -872,12 +1053,11 @@ export const mergeTopicalPDFs = async (
         page.drawLine({ start: { x: 0, y: 0 }, end: { x: width, y: 0 }, thickness: 1, color: rgb(0.7, 0.7, 0.7) });
 
         const titleText = task.question.title || `Question ${questionNumber}`;
-        const titleSize = 12;
+        const titleSize = 11;
         page.drawText(titleText, { x: 10, y: height / 2 + 4, size: titleSize, color: rgb(0, 0, 0), font: boldFont });
-        page.drawText('Mark Scheme (MCQ)', { x: 10, y: height / 2 - 14, size: 8, color: rgb(0.45, 0.45, 0.45), font: regularFont });
 
         const answerText = `Answer: ${task.question.mcqAnswer || '?'}`;
-        const answerSize = 22;
+        const answerSize = 15;
         const answerWidth = boldFont.widthOfTextAtSize(answerText, answerSize);
         page.drawText(answerText, {
           x: width - answerWidth - 20,
@@ -911,7 +1091,8 @@ export const downloadMergedTopicalPDFs = async (
     onDone?: () => void;
     onError?: (message: string) => void;
   } = {},
-  options: { extraPage?: boolean } = {}
+  options: { extraPage?: boolean; headerPage?: boolean; mergeHeader?: boolean } = {},
+  filters?: { papers?: number[]; years?: number[]; order?: string; strict?: boolean }
 ) => {
   if (questions.length === 0) {
     callbacks.onError?.('No questions to download');
@@ -936,7 +1117,7 @@ export const downloadMergedTopicalPDFs = async (
     callbacks.onStart?.();
     callbacks.onProgress?.({ current: 0, total: validQuestions.length });
 
-    const mergedBlob = await mergeTopicalPDFs(validQuestions, type, selectedTopics, levelBoardSubject, callbacks.onProgress, options);
+    const mergedBlob = await mergeTopicalPDFs(validQuestions, type, selectedTopics, levelBoardSubject, callbacks.onProgress, options, filters);
 
     const downloadUrl = window.URL.createObjectURL(mergedBlob);
     const link = document.createElement('a');
@@ -948,7 +1129,7 @@ export const downloadMergedTopicalPDFs = async (
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(downloadUrl);
-    
+
     callbacks.onDone?.();
   } catch (error) {
     console.error('Error merging PDFs:', error);

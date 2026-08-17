@@ -45,7 +45,23 @@ export const btnSelect =
 // Dropdown menu shell shared by the export menu, the filter dropdowns and the
 // level/board/subject picker
 export const dropdownPanel =
-  'absolute z-20 mt-2 rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-800';
+  'absolute z-50 mt-2 rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-800';
 
 export const dropdownItem =
   'w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2';
+
+// Checkbox style matching the TopicPickerPanel - border-only box with inner dot
+export const checkboxBase =
+  'w-5 h-5 appearance-none border-2 border-gray-400 dark:border-gray-500 rounded focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-2 ' +
+  'dark:focus:ring-offset-gray-900 transition-colors cursor-pointer hover:border-blue-500 bg-transparent ' +
+  'relative ' +
+  'checked:border-blue-500 ' +
+  'checked:after:content-[""] checked:after:absolute checked:after:inset-0 checked:after:m-auto checked:after:w-2.5 checked:after:h-2.5 checked:after:bg-blue-600 checked:after:rounded-[2px] ' +
+  'disabled:opacity-50 disabled:cursor-not-allowed';
+
+// Checkbox with label wrapper - same height as other controls (h-9)
+export const checkboxWithLabel =
+  'inline-flex items-center gap-2 h-9 px-3 rounded-lg cursor-pointer ' +
+  'bg-white text-gray-700 border border-gray-300 ' +
+  'dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 ' +
+  'hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors';
