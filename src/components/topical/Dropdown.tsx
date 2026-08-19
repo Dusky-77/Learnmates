@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
-import { btnSelect, dropdownPanel, dropdownItem, checkboxBase } from './ui';
+import { btnSelect, dropdownPanel, dropdownItem } from './ui';
+import TopicalCheckbox from './Checkbox';
 
 type DropdownValue = string | number;
 
@@ -114,12 +115,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         >
           {showAllOption && (
             <label className="flex cursor-pointer items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
-              <input
-                type="checkbox"
-                checked={allSelected}
-                onChange={() => onToggleAll?.()}
-                className={checkboxBase}
-              />
+              <TopicalCheckbox checked={allSelected} onChange={() => onToggleAll?.()} />
               <span>All</span>
             </label>
           )}
@@ -134,12 +130,7 @@ const Dropdown: React.FC<DropdownProps> = ({
                   key={option.value}
                   className="flex cursor-pointer items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => pick(option.value)}
-                    className={checkboxBase}
-                  />
+                  <TopicalCheckbox checked={isSelected} onChange={() => pick(option.value)} />
                   <span>{option.label}</span>
                 </label>
               );

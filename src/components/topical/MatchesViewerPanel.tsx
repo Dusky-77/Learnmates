@@ -20,6 +20,8 @@ interface MatchesViewerPanelProps {
   mergeHeaderEnabled?: boolean;
   onHeaderPageToggle?: (enabled: boolean) => void;
   onMergeHeaderToggle?: (enabled: boolean) => void;
+  headerSize?: number;
+  onHeaderSizeChange?: (size: number) => void;
   loadId?: number;
 }
 
@@ -46,6 +48,8 @@ const MatchesViewerPanel: React.FC<MatchesViewerPanelProps> = ({
   mergeHeaderEnabled = true,
   onHeaderPageToggle,
   onMergeHeaderToggle,
+  headerSize,
+  onHeaderSizeChange,
   loadId,
 }) => {
   return (
@@ -75,6 +79,8 @@ const MatchesViewerPanel: React.FC<MatchesViewerPanelProps> = ({
               mergeHeaderEnabled={mergeHeaderEnabled}
               onHeaderPageToggle={onHeaderPageToggle}
               onMergeHeaderToggle={onMergeHeaderToggle}
+              headerSize={headerSize}
+              onHeaderSizeChange={onHeaderSizeChange}
             />
           )}
           {hasLoadedOnce && (

@@ -208,7 +208,15 @@ const buildTopicsStructure = (
     const [level, board, subject, unit, ...nameParts] = parts;
     const name = nameParts.join('||');
     
-    // Be fully permissive: don't skip if subject cases mismatch.
+    // Ensure the key belongs to the current subject being exported (case-insensitive)
+    if (
+      level.toLowerCase() !== levelBoardSubject.level.toLowerCase() ||
+      board.toLowerCase() !== levelBoardSubject.board.toLowerCase() ||
+      subject.toLowerCase() !== levelBoardSubject.subject.toLowerCase()
+    ) {
+      return;
+    }
+
     if (!topicsStructure[unit]) topicsStructure[unit] = {};
 
     let isMainTopic = false;
@@ -659,9 +667,9 @@ export const createHeaderPage = async (
   type: ExportType,
   width: number,
   boldFont: PDFFont,
-  regularFont: PDFFont
+  regularFont: PDFFont,
+  headerHeight: number = 25
 ) => {
-  const headerHeight = 25;
   const page = pdf.addPage([width, headerHeight]);
 
   page.drawRectangle({ x: 0, y: 0, width, height: headerHeight, color: rgb(0.85, 0.85, 0.85) });
@@ -673,11 +681,11 @@ export const createHeaderPage = async (
     ? formatTopicHeaderText(question.topicMatches)
     : '';
 
-  const titleSize = 10;
-  const topicSize = 8;
+  const titleSize = 8 + (headerHeight * 0.15);
+  const topicSize = 7 + (headerHeight * 0.1);
   const safeTitle = sanitizeForPdf(titleText);
 
-  page.drawText(safeTitle, { x: 10, y: headerHeight / 2 - titleSize / 2 - 1, size: titleSize, font: boldFont, color: rgb(0, 0, 0) });
+  page.drawText(safeTitle, { x: 10, y: (headerHeight / 2) - (titleSize / 3), size: titleSize, font: boldFont, color: rgb(0, 0, 0) });
 
   if (topicsText) {
     const maxWidth = width - 20 - 170;
@@ -690,7 +698,7 @@ export const createHeaderPage = async (
     const renderedWidth = regularFont.widthOfTextAtSize(rendered, topicSize);
     page.drawText(rendered, {
       x: width - renderedWidth - 10,
-      y: headerHeight / 2 - topicSize / 2 - 1,
+      y: (headerHeight / 2) - (topicSize / 3),
       size: topicSize,
       font: regularFont,
       color: rgb(0.25, 0.25, 0.25),
@@ -713,7 +721,7 @@ export const mergeTopicalPDFs = async (
   selectedTopics: Set<string>,
   levelBoardSubject: { level: string; board: string; subject: string },
   onProgress?: (progress: ExportProgress) => void,
-  options: { extraPage?: boolean; headerPage?: boolean; mergeHeader?: boolean } = {},
+  options: { extraPage?: boolean; headerPage?: boolean; mergeHeader?: boolean; headerSize?: number } = {},
   filters?: { papers?: number[]; years?: number[]; order?: string; strict?: boolean }
 ): Promise<Blob> => {
   const mergedPdf = await PDFDocument.create();
@@ -843,21 +851,21 @@ export const mergeTopicalPDFs = async (
           if (options.headerPage) {
             if (!options.mergeHeader) {
               // Add separate header page before the question
-              await createHeaderPage(mergedPdf, task.question, questionNumber, type, contentWidth, boldFont, regularFont);
+              await createHeaderPage(mergedPdf, task.question, questionNumber, type, contentWidth, boldFont, regularFont, options.headerSize);
             }
 
             // Add merged header with first page (when mergeHeader is true, or default when headerPage enabled)
             if (options.mergeHeader !== false) {
-              const titleSize = 11;
-              const topicSize = 8;
-              const headerHeight = 20;
+              const headerHeight = options.headerSize || 25;
+              const titleSize = 8 + (headerHeight * 0.15);
+              const topicSize = 7 + (headerHeight * 0.1);
 
               const newFirstPage = mergedPdf.addPage([contentWidth, contentHeight + headerHeight]);
 
               newFirstPage.drawRectangle({ x: 0, y: contentHeight, width: contentWidth, height: headerHeight, color: rgb(0.95, 0.95, 0.95) });
               newFirstPage.drawLine({ start: { x: 0, y: contentHeight }, end: { x: contentWidth, y: contentHeight }, thickness: 1, color: rgb(0.7, 0.7, 0.7) });
 
-              newFirstPage.drawText(titleText, { x: 15, y: contentHeight + headerHeight - 16, size: titleSize, font: boldFont, color: rgb(0, 0, 0) });
+              newFirstPage.drawText(titleText, { x: 15, y: contentHeight + (headerHeight / 2) - (titleSize / 3), size: titleSize, font: boldFont, color: rgb(0, 0, 0) });
 
               if (topicsText) {
                 const maxWidth = contentWidth - 30 - 150;
@@ -870,7 +878,7 @@ export const mergeTopicalPDFs = async (
                 const renderedWidth = regularFont.widthOfTextAtSize(rendered, topicSize);
                 newFirstPage.drawText(rendered, {
                   x: contentWidth - renderedWidth - 15,
-                  y: contentHeight + headerHeight - 16,
+                  y: contentHeight + (headerHeight / 2) - (topicSize / 3),
                   size: topicSize,
                   font: regularFont,
                   color: rgb(0.25, 0.25, 0.25),
@@ -919,13 +927,13 @@ export const mergeTopicalPDFs = async (
         const imageDims = image.scale(1);
         const pageWidth = 612;
         const pageHeight = 792;
-        const headerHeight = 25;
+        const headerHeight = options.headerSize || 25;
 
         // Handle header page option for images
         if (options.headerPage) {
           if (!options.mergeHeader) {
             // Add separate header page before the question
-            await createHeaderPage(mergedPdf, task.question, questionNumber, type, pageWidth, boldFont, regularFont);
+            await createHeaderPage(mergedPdf, task.question, questionNumber, type, pageWidth, boldFont, regularFont, options.headerSize);
           }
 
           if (options.mergeHeader !== false) {
@@ -944,48 +952,28 @@ export const mergeTopicalPDFs = async (
             });
 
             const titleText = task.question.title || `Question ${questionNumber}`;
-            const titleSize = 11;
-            const titleWidth = boldFont.widthOfTextAtSize(titleText, titleSize);
-            const titleX = Math.min((width - titleWidth) / 2, width - titleWidth - 50);
-            page.drawText(titleText, { x: titleX, y: height - 20, size: titleSize, color: rgb(0, 0, 0), font: boldFont });
+            const titleSize = 8 + (headerHeight * 0.15);
+            page.drawText(titleText, { x: 15, y: height - (headerHeight / 2) - (titleSize / 3), size: titleSize, color: rgb(0, 0, 0), font: boldFont });
 
             if (task.question.topicMatches && task.question.topicMatches.length > 0) {
-              page.drawText('Topics:', { x: 20, y: height - 42, size: 8, color: rgb(0, 0, 0), font: boldFont });
-
               const topicsString = formatTopicHeaderText(task.question.topicMatches);
-              const maxWidth = width - 100;
-              const topicSize = 8;
-              const lineHeight = 10;
-
-              const words = topicsString.split(', ');
-              let currentLine = '';
-              const lines: string[] = [];
-
-              for (const word of words) {
-                const testLine = currentLine ? `${currentLine}, ${word}` : word;
-                const testWidth = regularFont.widthOfTextAtSize(testLine, topicSize);
-
-                if (testWidth > maxWidth && currentLine) {
-                  lines.push(currentLine);
-                  currentLine = word;
-                } else {
-                  currentLine = testLine;
-                }
+              const topicSize = 7 + (headerHeight * 0.1);
+              const maxWidth = width - 30 - 150;
+              let rendered = topicsString;
+              while (regularFont.widthOfTextAtSize(rendered, topicSize) > maxWidth && rendered.length > 0) {
+                rendered = rendered.slice(0, -1);
               }
-              if (currentLine) lines.push(currentLine);
+              if (rendered !== topicsString) rendered = `${rendered.trimEnd()}…`;
 
-              let currentY = height - 65;
-              for (let i = 0; i < Math.min(lines.length, 2); i++) {
-                if (currentY > height - headerHeight + 15) {
-                  const lineX = Math.min(20, width - regularFont.widthOfTextAtSize(lines[i], topicSize) - 20);
-                  page.drawText(lines[i], { x: lineX, y: currentY, size: topicSize, color: rgb(0.3, 0.3, 0.3), font: regularFont });
-                  currentY -= lineHeight;
-                }
-              }
+              const renderedWidth = regularFont.widthOfTextAtSize(rendered, topicSize);
+              page.drawText(rendered, {
+                x: width - renderedWidth - 15,
+                y: height - (headerHeight / 2) - (topicSize / 3),
+                size: topicSize,
+                font: regularFont,
+                color: rgb(0.25, 0.25, 0.25),
+              });
             }
-
-            const numberText = `${questionNumber}`;
-            page.drawText(numberText, { x: width - 30, y: height - 25, size: 10, color: rgb(0.5, 0.5, 0.5), font: boldFont });
 
             const maxImageHeight = height - headerHeight - 20;
             const maxImageWidth = width - 80;
@@ -1054,14 +1042,14 @@ export const mergeTopicalPDFs = async (
 
         const titleText = task.question.title || `Question ${questionNumber}`;
         const titleSize = 11;
-        page.drawText(titleText, { x: 10, y: height / 2 + 4, size: titleSize, color: rgb(0, 0, 0), font: boldFont });
+        page.drawText(titleText, { x: 10, y: (headerHeight / 2) - (titleSize / 3), size: titleSize, color: rgb(0, 0, 0), font: boldFont });
 
         const answerText = `Answer: ${task.question.mcqAnswer || '?'}`;
         const answerSize = 15;
         const answerWidth = boldFont.widthOfTextAtSize(answerText, answerSize);
         page.drawText(answerText, {
           x: width - answerWidth - 20,
-          y: height / 2 - answerSize / 2 + 2,
+          y: (headerHeight / 2) - (answerSize / 3),
           size: answerSize,
           font: boldFont,
           color: rgb(0, 0.4, 0.2),
@@ -1091,7 +1079,7 @@ export const downloadMergedTopicalPDFs = async (
     onDone?: () => void;
     onError?: (message: string) => void;
   } = {},
-  options: { extraPage?: boolean; headerPage?: boolean; mergeHeader?: boolean } = {},
+  options: { extraPage?: boolean; headerPage?: boolean; mergeHeader?: boolean; headerSize?: number } = {},
   filters?: { papers?: number[]; years?: number[]; order?: string; strict?: boolean }
 ) => {
   if (questions.length === 0) {

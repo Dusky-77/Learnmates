@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { btnSecondary, dropdownPanel, dropdownItem, checkboxBase } from './ui';
+import { btnSecondary, dropdownPanel, dropdownItem } from './ui';
+import TopicalCheckbox from './Checkbox';
 
 interface ExportMenuProps {
   onExport: (type: 'questions' | 'markschemes', options?: { extraPage?: boolean; headerPage?: boolean; mergeHeader?: boolean }) => void;
@@ -11,6 +12,8 @@ interface ExportMenuProps {
   mergeHeaderEnabled?: boolean;
   onHeaderPageToggle?: (enabled: boolean) => void;
   onMergeHeaderToggle?: (enabled: boolean) => void;
+  headerSize?: number;
+  onHeaderSizeChange?: (size: number) => void;
 }
 
 const EXTRA_PAGE_EXPLANATION =
@@ -37,7 +40,9 @@ const ExportMenu: React.FC<ExportMenuProps> = ({
   headerPageEnabled = false,
   mergeHeaderEnabled = true,
   onHeaderPageToggle,
-  onMergeHeaderToggle
+  onMergeHeaderToggle,
+  headerSize,
+  onHeaderSizeChange
 }) => {
   const [open, setOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -78,7 +83,7 @@ const ExportMenu: React.FC<ExportMenuProps> = ({
         <div className={`${dropdownPanel} right-0 w-64`}>
           <button
             onClick={() => {
-              onExport('questions', { extraPage: extraPageEnabled, headerPage: headerPageEnabled, mergeHeader: mergeHeaderEnabled });
+              onExport('questions', { extraPage: extraPageEnabled, headerPage: headerPageEnabled, mergeHeader: mergeHeaderEnabled, headerSize: headerSize });
               setOpen(false);
             }}
             className={dropdownItem}
@@ -88,7 +93,7 @@ const ExportMenu: React.FC<ExportMenuProps> = ({
           </button>
           <button
             onClick={() => {
-              onExport('markschemes', { extraPage: false, headerPage: headerPageEnabled, mergeHeader: mergeHeaderEnabled });
+              onExport('markschemes', { extraPage: false, headerPage: headerPageEnabled, mergeHeader: mergeHeaderEnabled, headerSize: headerSize });
               setOpen(false);
             }}
             className={dropdownItem}
@@ -108,11 +113,9 @@ const ExportMenu: React.FC<ExportMenuProps> = ({
               {showExtraPageOption && (
                 <div className="flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm text-gray-700 dark:text-gray-200">
                   <label className="flex cursor-pointer items-center gap-2">
-                    <input
-                      type="checkbox"
+                    <TopicalCheckbox
                       checked={extraPageEnabled}
-                      onChange={event => onExtraPageToggle?.(event.target.checked)}
-                      className={checkboxBase}
+                      onChange={() => onExtraPageToggle?.(!extraPageEnabled)}
                     />
                     <span>Extra page</span>
                   </label>
@@ -149,11 +152,9 @@ const ExportMenu: React.FC<ExportMenuProps> = ({
                 <>
                   <div className="flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm text-gray-700 dark:text-gray-200">
                     <label className="flex cursor-pointer items-center gap-2">
-                      <input
-                        type="checkbox"
+                      <TopicalCheckbox
                         checked={headerPageEnabled}
-                        onChange={event => onHeaderPageToggle?.(event.target.checked)}
-                        className={checkboxBase}
+                        onChange={() => onHeaderPageToggle?.(!headerPageEnabled)}
                       />
                       <span>Header page per question</span>
                     </label>
@@ -188,12 +189,10 @@ const ExportMenu: React.FC<ExportMenuProps> = ({
                   <div className="flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm text-gray-700 dark:text-gray-200 ml-6 pt-1">
                     <label className={`flex cursor-pointer items-center gap-2 ${!headerPageEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
                       <span className="text-gray-400 dark:text-gray-500">•</span>
-                      <input
-                        type="checkbox"
+                      <TopicalCheckbox
                         checked={mergeHeaderEnabled}
-                        onChange={event => onMergeHeaderToggle?.(event.target.checked)}
+                        onChange={() => onMergeHeaderToggle?.(!mergeHeaderEnabled)}
                         disabled={!headerPageEnabled}
-                        className={`${checkboxBase} disabled:opacity-50 disabled:cursor-not-allowed`}
                       />
                       <span className="text-xs text-gray-500 dark:text-gray-400">Merge header with question page</span>
                     </label>
@@ -224,6 +223,23 @@ const ExportMenu: React.FC<ExportMenuProps> = ({
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1 rounded-md px-3 py-2 text-sm text-gray-700 dark:text-gray-200 ml-6 pt-1">
+                    <label className={`flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 ${!headerPageEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <span>Header size</span>
+                      <span>{headerSize}px</span>
+                    </label>
+                    <input
+                      type="range"
+                      min="15"
+                      max="40"
+                      step="1"
+                      value={headerSize || 25}
+                      onChange={(e) => onHeaderSizeChange?.(Number(e.target.value))}
+                      disabled={!headerPageEnabled}
+                      className={`w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 ${!headerPageEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    />
                   </div>
                 </>
               )}

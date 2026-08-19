@@ -106,22 +106,39 @@ const TopicalPages: React.FC = () => {
       }
     }
 
+    const currentCfg = configs.find(c => c.level === selectedLevel && c.board === selectedBoard && c.subject === selectedSubject);
+
     keysArray.forEach(key => {
       if (!key) return;
       const parts = key.split('||');
+      
+      let unit = '';
+      let topic = '';
+
       if (parts.length === 5) {
-        const [keyLevel, keyBoard, keySubject, unit, topic] = parts;
+        const [keyLevel, keyBoard, keySubject, u, t] = parts;
         if (keyLevel === selectedLevel && keyBoard === selectedBoard && keySubject === selectedSubject) {
-          topicKeys.add(`${selectedLevel}||${selectedBoard}||${selectedSubject}||${unit}||${topic}`);
+          unit = u;
+          topic = t;
         }
       } else if (parts.length >= 2) {
-        const unit = parts[0];
-        const topic = parts.slice(1).join('||');
-        topicKeys.add(`${selectedLevel}||${selectedBoard}||${selectedSubject}||${unit}||${topic}`);
+        unit = parts[0];
+        topic = parts.slice(1).join('||');
+      }
+
+      if (unit && topic && currentCfg) {
+        // Validate against current config to prevent interference from other subjects' query parameters
+        const unitObj = currentCfg.units.find(u => u.unit === unit);
+        if (unitObj) {
+          const topicObj = unitObj.topics.find(t => t.topic === topic || t.subtopics?.some(st => st.subtopic === topic));
+          if (topicObj) {
+            topicKeys.add(`${selectedLevel}||${selectedBoard}||${selectedSubject}||${unit}||${topic}`);
+          }
+        }
       }
     });
     return topicKeys;
-  }, [location.search, selectedLevel, selectedBoard, selectedSubject]);
+  }, [location.search, selectedLevel, selectedBoard, selectedSubject, configs]);
 
   const getMcqFilterFromQuery = useCallback((): 'all' | 'mcq' | 'theory' => {
     const mcq = new URLSearchParams(location.search).get('mcq');
@@ -227,8 +244,9 @@ const TopicalPages: React.FC = () => {
   const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null);
   const [loadFeedback, setLoadFeedback] = useState<string | null>(null);
   const [extraPageEnabled, setExtraPageEnabled] = useState(false);
-  const [headerPageEnabled, setHeaderPageEnabled] = useState(false);
+  const [headerPageEnabled, setHeaderPageEnabled] = useState(true);
   const [mergeHeaderEnabled, setMergeHeaderEnabled] = useState(true);
+  const [headerSize, setHeaderSize] = useState<number>(25);
   const [loadId, setLoadId] = useState<number>(0);
 
   const {
@@ -254,8 +272,9 @@ const TopicalPages: React.FC = () => {
     setPickerCollapsed(false);
     setLoadFeedback(null);
     setExtraPageEnabled(false);
-    setHeaderPageEnabled(false);
+    setHeaderPageEnabled(true);
     setMergeHeaderEnabled(true);
+    setHeaderSize(25);
     resetResults();
     setMcqFilterState('all');
     setPaperFilterState(new Set(getDefaultPaperOptions(selectedLevel, selectedBoard, selectedSubject)));
@@ -497,7 +516,7 @@ const TopicalPages: React.FC = () => {
     setNeedLoad(true);
   };
 
-  const handleExport = (type: 'questions' | 'markschemes', options?: { extraPage?: boolean; headerPage?: boolean; mergeHeader?: boolean }) => {
+  const handleExport = (type: 'questions' | 'markschemes', options?: { extraPage?: boolean; headerPage?: boolean; mergeHeader?: boolean; headerSize?: number }) => {
     // Get topics from localStorage if checked is empty
     const key = `topical_checked_${selectedLevel}_${selectedBoard}_${selectedSubject}`;
     const storedTopicsStr = localStorage.getItem(key);
@@ -536,7 +555,8 @@ const TopicalPages: React.FC = () => {
       { 
         extraPage: options?.extraPage ?? extraPageEnabled,
         headerPage: options?.headerPage ?? headerPageEnabled,
-        mergeHeader: options?.mergeHeader ?? mergeHeaderEnabled
+        mergeHeader: options?.mergeHeader ?? mergeHeaderEnabled,
+        headerSize: options?.headerSize ?? headerSize
       },
       {
         papers: Array.from(paperFilter),
@@ -746,6 +766,8 @@ const TopicalPages: React.FC = () => {
                       mergeHeaderEnabled={mergeHeaderEnabled}
                       onHeaderPageToggle={setHeaderPageEnabled}
                       onMergeHeaderToggle={setMergeHeaderEnabled}
+                      headerSize={headerSize}
+                      onHeaderSizeChange={setHeaderSize}
                       loadId={loadId}
                     />
                   </div>

@@ -823,7 +823,7 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
   'chemistry-CH7': {
     videos: [],
     resources: [
-      { id: 'r1', title: 'The Periodic Table Notes (Eshal)', url: '/documents/alevel/cambridge/Chemistry/AS/7-The Periodic Table/Unit 7.pdf' }
+      { id: 'r1', title: 'The Periodic Table Notes (Eshal)', url: '/documents/alevel/cambridge/Chemistry/AS/7-Equilibria/Unit 7.pdf' }
     ],
     quizzes: []
   },
@@ -837,8 +837,8 @@ const topicDataRaw: Record<string, TopicDataRawEntry> = {
   },
   'chemistry-CH9': {
     videos: [],
-    resources: [{ id: 'r1', title: 'The Periodic Table chemical periodicity Notes (@Mockingbird)', url: '/documents/alevel/cambridge/Chemistry/AS/9-The Periodic Table chemical periodicity/The Periodic Table chemical periodicity.pdf' },
-    { id: 'r2', title: 'The Periodic Table chemical periodicity Notes (Eshal)', url: '/documents/alevel/cambridge/Chemistry/AS/9-The Periodic Table chemical periodicity/Unit 9.pdf' }],
+    resources: [{ id: 'r1', title: 'The Periodic Table chemical periodicity Notes (@Mockingbird)', url: '/documents/alevel/cambridge/Chemistry/AS/9-The Periodic Table: chemical periodicity/The Periodic Table chemical periodicity.pdf' },
+    { id: 'r2', title: 'The Periodic Table chemical periodicity Notes (Eshal)', url: '/documents/alevel/cambridge/Chemistry/AS/9-The Periodic Table: chemical periodicity/Unit 9.pdf' }],
     quizzes: []
   },
   'chemistry-CH10': {

@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import { SubjectConfig } from '../../utils/topicalConfig';
 import { makeKey } from '../../utils/topicalHelpers';
 import { pillActive, pillInactive, btnSecondary } from './ui';
+import TopicalCheckbox from './Checkbox';
 
 interface TopicPickerPanelProps {
   cfg: SubjectConfig;
@@ -94,26 +95,12 @@ const TopicPickerPanel: React.FC<TopicPickerPanelProps> = ({
                           <li key={tidx} className="rounded-lg bg-slate-900/70 dark:bg-slate-800/80 border border-slate-700 p-3">
                             <div className="flex items-center justify-between gap-2">
                               <label className="inline-flex items-center space-x-3 cursor-pointer group w-full">
-                                <input
-                                  type="checkbox"
-                                  className="sr-only peer"
+                                <TopicalCheckbox
+                                  shape="circle"
                                   checked={checkedHere}
+                                  indeterminate={partiallyCheckedHere && !checkedHere}
                                   onChange={() => toggleTopic(cfg, unit.unit, topic.topic)}
                                 />
-                                <span className="relative h-5 w-5 flex-shrink-0 rounded-full border-2 border-gray-400 dark:border-gray-500 aspect-square transition-colors group-hover:border-blue-400">
-                                  <motion.span
-                                    className="absolute inset-0 m-auto h-3 w-3 rounded-full bg-blue-600 dark:bg-blue-500 border border-blue-400 dark:border-blue-300"
-                                    initial={false}
-                                    animate={{
-                                      clipPath: checkedHere
-                                        ? 'inset(0 0% 0 0)'
-                                        : partiallyCheckedHere
-                                          ? 'inset(0 50% 0 0)'
-                                          : 'inset(0 100% 0 0)',
-                                    }}
-                                    transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-                                  />
-                                </span>
                                 <span
                                   className={`ml-2 text-base font-semibold transition-colors break-words whitespace-normal ${
                                     checkedHere
@@ -154,20 +141,12 @@ const TopicPickerPanel: React.FC<TopicPickerPanelProps> = ({
                                       return (
                                         <li key={sidx}>
                                           <label className="inline-flex items-center space-x-3 cursor-pointer group">
-                                            <input
-                                              type="checkbox"
-                                              className="sr-only peer"
+                                            <TopicalCheckbox
+                                              shape="circle"
+                                              size="sm"
                                               checked={subChecked}
                                               onChange={() => toggleSubtopic(cfg, unit.unit, topic.topic, sub.subtopic)}
                                             />
-                                            <span className="relative h-4 w-4 flex-shrink-0 rounded-full border border-gray-400 dark:border-gray-500 aspect-square transition-colors group-hover:border-blue-400">
-                                              <motion.span
-                                                className="absolute inset-0 m-auto h-2.5 w-2.5 rounded-full bg-blue-600 dark:bg-blue-500 border border-blue-400 dark:border-blue-300"
-                                                initial={false}
-                                                animate={{ clipPath: subChecked ? 'inset(0 0% 0 0)' : 'inset(0 100% 0 0)' }}
-                                                transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-                                              />
-                                            </span>
                                             <span
                                               className={`text-sm transition-colors ${
                                                 subChecked ? 'text-gray-300 dark:text-gray-400' : 'text-gray-300 dark:text-gray-400 group-hover:text-gray-200'
