@@ -63,7 +63,7 @@ interface PDFViewerModalProps {
 }
 
 const MIN_ZOOM = 50;
-const MAX_ZOOM = 200;
+const MAX_ZOOM = 500;
 const PAGE_GAP_PX = 12;
 const A4_ASPECT = 297 / 210;
 const AUTO_SAVE_DEBOUNCE_MS = 5000;
@@ -93,7 +93,8 @@ const MemoizedPdfDrawablePage = React.memo(
       prevProps.penColor === nextProps.penColor &&
       prevProps.penSize === nextProps.penSize &&
       prevProps.eraserSize === nextProps.eraserSize &&
-      prevProps.allowTouchNavigation === nextProps.allowTouchNavigation
+      prevProps.allowTouchNavigation === nextProps.allowTouchNavigation &&
+      prevProps.renderScale === nextProps.renderScale
     );
   }
 );
@@ -107,6 +108,7 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [zoom, setZoom] = useState<number>(100);
+  const [debouncedZoom, setDebouncedZoom] = useState<number>(100);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [pdfFile, setPdfFile] = useState<PdfFileSource | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -164,6 +166,20 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
     new Map()
   );
   storedPagesRef.current = storedPages;
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedZoom(zoomRef.current);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [zoom]);
+
+  // Cleanup global PDF document on unmount
+  useEffect(() => {
+    return () => {
+      window.__PDF_DOC__ = null;
+    };
+  }, []);
 
   useEffect(() => {
     engagementRecordedRef.current = { opened: false, read: false, downloaded: false };
@@ -376,10 +392,13 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [drawingEnabled, undo, redo]);
 
-  const onDocumentLoadSuccess = ({ numPages: total }: { numPages: number }) => {
+  const onDocumentLoadSuccess = (doc: PDFDocumentProxy) => {
+    const total = doc.numPages;
     setNumPages(total);
     setCurrentPage(1);
     setFetchError(null);
+    // Expose PDF document globally for hi-res viewport rendering
+    window.__PDF_DOC__ = doc;
   };
 
   const scrollToPage = useCallback((page: number, smooth = true) => {
@@ -552,9 +571,12 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
 
       // Trackpads typically emit many small delta events, while mice emit larger discrete ones.
       const isTrackpad = Math.abs(e.deltaY) < 50;
-      const multiplier = isTrackpad ? 0.5 : 0.05;
+      const multiplier = isTrackpad ? 0.75 : 0.1;
 
-      const zoomDelta = -e.deltaY * multiplier;
+      // Scale delta by current zoom for consistent relative sensitivity at all zoom levels
+      // Trackpads often emit smaller deltas for zoom-out; boost slightly
+      const directionBoost = e.deltaY > 0 ? 1.3 : 1; // zoom out (positive deltaY) gets 30% boost
+      const zoomDelta = -e.deltaY * multiplier * (zoomRef.current / 100) * directionBoost;
       applyZoomAtPoint(zoomRef.current + zoomDelta, e.clientX, e.clientY);
     };
 
@@ -598,7 +620,7 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
       e.preventDefault();
       const nextDistance = touchDistance(e.touches);
       const rawScale = nextDistance / pinchStateRef.distance;
-      const scale = 1 + (rawScale - 1) * 2.5;
+      const scale = 1 + (rawScale - 1) * 1.5;
       const midpoint = touchMidpoint(e.touches);
       applyZoomAtPoint(pinchStateRef.zoom * scale, midpoint.x, midpoint.y);
     };
@@ -1198,6 +1220,7 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
           ref={scrollContainerRef}
           className="flex-1 bg-gray-950 overflow-y-auto overflow-x-auto p-4"
           style={{ touchAction: 'pan-x pan-y pinch-zoom', '--pdf-zoom': zoom / 100 } as React.CSSProperties}
+          data-pdf-scroll-container="true"
         >
           {!pdfFile ? (
             <PdfDocumentSkeleton pageCount={2} />
@@ -1232,6 +1255,7 @@ const PDFViewerModal: React.FC<PDFViewerModalProps> = ({
                               pageNumber={pageNum}
                               pageWidth={pageWidth}
                               zoom={zoom}
+                              renderScale={Math.abs(pageNum - currentPage) <= 1 ? Math.min(2, Math.max(1, debouncedZoom / 100)) : 1}
                               drawingEnabled={drawingEnabled}
                               drawTool={drawTool}
                               penColor={penColor}

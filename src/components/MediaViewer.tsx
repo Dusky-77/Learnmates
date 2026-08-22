@@ -1673,14 +1673,17 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black bg-opacity-60 p-6">
           <div ref={modalWrapperRef} className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden max-w-[90vw] max-h-[90vh] w-full flex flex-col">
                   <div className="p-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-3">
-                <h3 className="text-lg font-semibold">Large View</h3>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <h3 className="text-base sm:text-lg font-semibold whitespace-nowrap">Large View</h3>
                 {modalLoading && (
-                  <span className="text-sm text-gray-500">Loading...</span>
+                  <span className="text-xs sm:text-sm text-gray-500">Loading...</span>
                 )}
                 {/* Show question index when available */}
                 {typeof questionIndex === 'number' && questionList && (
-                  <span className="text-sm text-gray-500">Question {modalQuestionIndex + 1} of {questionList.length}</span>
+                  <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
+                    <span className="sm:hidden">Q</span>
+                    <span className="hidden sm:inline">Question</span> {modalQuestionIndex + 1} of {questionList.length}
+                  </span>
                 )}
               </div>
               <div className="flex items-center gap-2">
@@ -1702,7 +1705,8 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
                       className="px-2 sm:px-3 py-1 sm:py-1.5 rounded bg-white dark:bg-gray-800 text-xs sm:text-sm md:text-base text-gray-700 dark:text-gray-200"
                       title="Previous question"
                     >
-                      ← Prev
+                      <span className="sm:hidden">←</span>
+                      <span className="hidden sm:inline">← Prev</span>
                     </button>
                     <button
                       onClick={async () => {
@@ -1719,7 +1723,8 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
                       className="px-2 sm:px-3 py-1 sm:py-1.5 rounded bg-white dark:bg-gray-800 text-xs sm:text-sm md:text-base text-gray-700 dark:text-gray-200"
                       title="Next question"
                     >
-                      Next →
+                      <span className="hidden sm:inline">Next →</span>
+                      <span className="sm:hidden">→</span>
                     </button>
                   </>
                 )}
@@ -1757,7 +1762,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
                 {/* Annotate toggle inside modal */}
                 <button
                   onClick={() => setModalAnnotate(prev => !prev)}
-                  className={`flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm md:text-base transition-colors ${
+                  className={`hidden sm:flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm md:text-base transition-colors ${
                     modalAnnotate
                       ? 'bg-purple-500 text-white'
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'

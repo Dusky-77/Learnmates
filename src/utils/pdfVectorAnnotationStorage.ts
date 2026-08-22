@@ -149,7 +149,7 @@ export function applyStoredAnnotation(
     if (stored.rasterFallback) {
       const img = new Image();
       img.onload = () => {
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         resolve();
       };
       img.onerror = () => {

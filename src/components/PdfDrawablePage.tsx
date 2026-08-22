@@ -7,6 +7,12 @@ import {
 } from '../utils/pdfVectorAnnotationStorage';
 import './PdfViewerTextLayer.css';
 
+declare global {
+  interface Window {
+    __PDF_DOC__: any;
+  }
+}
+
 const A4_ASPECT = 297 / 210;
 
 export type DrawTool = 'pen' | 'eraser' | 'line' | 'rectangle' | 'ellipse';
@@ -15,6 +21,7 @@ interface PdfDrawablePageProps {
   pageNumber: number;
   pageWidth: number;
   zoom: number; // Kept for interface compatibility, but we use --pdf-zoom via CSS
+  renderScale?: number;
   drawingEnabled?: boolean;
   drawTool?: DrawTool;
   penColor?: string;
@@ -190,7 +197,7 @@ function readCanvasMetrics(canvas: HTMLCanvasElement): CanvasMetrics {
 const PdfDrawablePageInner: React.FC<PdfDrawablePageProps> = ({
   pageNumber,
   pageWidth,
-  zoom,
+  renderScale,
   drawingEnabled = false,
   drawTool = 'pen',
   penColor = '#000000',
@@ -233,6 +240,11 @@ const PdfDrawablePageInner: React.FC<PdfDrawablePageProps> = ({
 
   const [rendered, setRendered] = useState(false);
   const [pageHeight, setPageHeight] = useState(() => pageWidth * A4_ASPECT);
+
+  // High-res viewport overlay
+  const hiResCanvasRef = useRef<HTMLCanvasElement>(null);
+  const renderTaskRef = useRef<any>(null);
+  const lastViewportKeyRef = useRef<string>('');
 
   useEffect(() => {
     drawToolRef.current = drawTool;
@@ -287,8 +299,14 @@ const PdfDrawablePageInner: React.FC<PdfDrawablePageProps> = ({
     const pageEl = container.querySelector('.react-pdf__Page') as HTMLElement | null;
     if (!pdfCanvas || !pageEl) return;
 
-    const nextWidth = pdfCanvas.width;
-    const nextHeight = pdfCanvas.height;
+    // Use a fixed devicePixelRatio for the drawing canvas to keep it static and avoid clearing it on semantic zoom
+    const fixedDpr = window.devicePixelRatio || 1;
+    const logicalWidth = pageWidth;
+    const logicalHeight = pageWidth * A4_ASPECT;
+
+    const nextWidth = Math.round(logicalWidth * fixedDpr);
+    const nextHeight = Math.round(logicalHeight * fixedDpr);
+
     if (overlay.width !== nextWidth || overlay.height !== nextHeight) {
       overlay.width = nextWidth;
       overlay.height = nextHeight;
@@ -296,10 +314,10 @@ const PdfDrawablePageInner: React.FC<PdfDrawablePageProps> = ({
     }
     overlay.style.top = `${pageEl.offsetTop}px`;
     overlay.style.left = `${pageEl.offsetLeft}px`;
-    overlay.style.width = `${pdfCanvas.clientWidth}px`;
-    overlay.style.height = `${pdfCanvas.clientHeight}px`;
-    setPageHeight(pdfCanvas.clientHeight);
-  }, []);
+    overlay.style.width = `${pdfCanvas.clientWidth || logicalWidth}px`;
+    overlay.style.height = `${pdfCanvas.clientHeight || logicalHeight}px`;
+    setPageHeight(pdfCanvas.clientHeight || logicalHeight);
+  }, [pageWidth]);
 
   const applyRestoredAnnotationToOverlay = useCallback(async () => {
     const stored =
@@ -330,6 +348,138 @@ const PdfDrawablePageInner: React.FC<PdfDrawablePageProps> = ({
       void applyRestoredAnnotationToOverlay();
     });
   };
+
+  // High-res viewport rendering for zoom > 150%
+  const renderHiResViewport = useCallback(async () => {
+    const container = containerRef.current;
+    const scrollContainer = container?.closest('[data-pdf-scroll-container]') as HTMLElement | null;
+    const canvas = hiResCanvasRef.current;
+    if (!container || !scrollContainer || !canvas || !rendered) return;
+
+    const scale = renderScale || 1;
+    if (scale <= 1.5) {
+      // Hide hi-res canvas at low zoom
+      canvas.style.display = 'none';
+      return;
+    }
+
+    // Get PDF document from global (set by PDFViewerModal)
+    const pdfDoc = window.__PDF_DOC__;
+    if (!pdfDoc) return;
+
+    const pageEl = container.querySelector('.react-pdf__Page') as HTMLElement | null;
+    const pdfCanvas = container.querySelector('canvas.react-pdf__Page__canvas') as HTMLCanvasElement | null;
+    if (!pageEl || !pdfCanvas) return;
+
+    // Calculate visible viewport in PDF coordinates
+    const containerRect = pageEl.getBoundingClientRect();
+    const scrollRect = scrollContainer.getBoundingClientRect();
+
+    const visibleLeft = Math.max(0, scrollRect.left - containerRect.left);
+    const visibleTop = Math.max(0, scrollRect.top - containerRect.top);
+    const visibleWidth = Math.min(scrollRect.width, containerRect.width - visibleLeft);
+    const visibleHeight = Math.min(scrollRect.height, containerRect.height - visibleTop);
+
+    if (visibleWidth <= 0 || visibleHeight <= 0) {
+      canvas.style.display = 'none';
+      return;
+    }
+
+    // Convert to PDF page coordinates (page is rendered at pageWidth x pageHeight CSS pixels)
+    const cssScale = containerRect.width / pageWidth;
+    const pdfX = visibleLeft / cssScale;
+    const pdfY = visibleTop / cssScale;
+    const pdfWidth = visibleWidth / cssScale;
+    const pdfHeight = visibleHeight / cssScale;
+
+    // Create viewport key to avoid redundant renders
+    const viewportKey = `${pageNumber}-${Math.round(pdfX)}-${Math.round(pdfY)}-${Math.round(pdfWidth)}-${Math.round(pdfHeight)}-${Math.round(scale * 100)}`;
+    if (viewportKey === lastViewportKeyRef.current) return;
+    lastViewportKeyRef.current = viewportKey;
+
+    try {
+      const page = await pdfDoc.getPage(pageNumber);
+      const baseViewport = page.getViewport({ scale: 1 });
+      
+      // High DPR for sharp text: 3x at 200% zoom, 4x at 400%
+      const hiResDpr = Math.min(4, Math.max(2, scale * 2));
+      const targetScale = hiResDpr;
+      
+      // Calculate source region in hi-res viewport coordinates
+      const srcX = pdfX * targetScale;
+      const srcY = pdfY * targetScale;
+
+      // Set canvas size to visible area in CSS pixels * hiResDpr
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(visibleWidth * dpr);
+      canvas.height = Math.round(visibleHeight * dpr);
+      canvas.style.width = `${visibleWidth}px`;
+      canvas.style.height = `${visibleHeight}px`;
+      canvas.style.display = 'block';
+      canvas.style.position = 'absolute';
+      canvas.style.left = `${visibleLeft}px`;
+      canvas.style.top = `${visibleTop}px`;
+      canvas.style.pointerEvents = 'none';
+      canvas.style.zIndex = '15';
+
+      const ctx = canvas.getContext('2d', { alpha: true });
+      if (!ctx) return;
+
+      // Clear and render viewport region
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      
+      // Create a viewport for just the visible region at high res
+      const renderViewport = baseViewport.clone({ 
+        scale: targetScale,
+        offsetX: -srcX,
+        offsetY: -srcY
+      });
+
+      // Cancel previous render
+      if (renderTaskRef.current) {
+        renderTaskRef.current.cancel();
+      }
+
+      renderTaskRef.current = page.render({
+        canvasContext: ctx,
+        viewport: renderViewport,
+        renderInteractiveForms: false,
+      });
+
+      await renderTaskRef.current.promise;
+      ctx.restore();
+    } catch (err) {
+      console.warn('Hi-res render failed:', err);
+      canvas.style.display = 'none';
+    }
+  }, [pageNumber, pageWidth, renderScale, rendered]);
+
+  // Trigger hi-res render on scroll/zoom
+  useEffect(() => {
+    if (!rendered) return;
+    const scrollContainer = containerRef.current?.closest('[data-pdf-scroll-container]') as HTMLElement | null;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      void renderHiResViewport();
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    // Also render on resize/zoom
+    const ro = new ResizeObserver(() => void renderHiResViewport());
+    ro.observe(scrollContainer);
+
+    // Initial render
+    void renderHiResViewport();
+
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll);
+      ro.disconnect();
+      if (renderTaskRef.current) renderTaskRef.current.cancel();
+    };
+  }, [renderHiResViewport, rendered]);
 
   useEffect(() => {
     if (!rendered) return;
@@ -676,6 +826,8 @@ const PdfDrawablePageInner: React.FC<PdfDrawablePageProps> = ({
         <Page
           pageNumber={pageNumber}
           width={pageWidth}
+          // Base layer: moderate quality for smooth scrolling
+          devicePixelRatio={(window.devicePixelRatio || 1) * 1.5}
           renderMode="canvas"
           renderTextLayer={!drawingEnabled}
           renderAnnotationLayer={false}
@@ -684,6 +836,12 @@ const PdfDrawablePageInner: React.FC<PdfDrawablePageProps> = ({
           }
           onRenderSuccess={handleRenderSuccess}
           onRenderError={handleRenderSuccess}
+        />
+        {/* Hi-res viewport overlay for zoom > 150% */}
+        <canvas
+          ref={hiResCanvasRef}
+          className="absolute pointer-events-none"
+          style={{ display: 'none' }}
         />
         {rendered && (
           <canvas

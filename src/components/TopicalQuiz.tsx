@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Flag, Trophy, FileText, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import MediaViewer from './MediaViewer';
+import { ReportModal } from './ReportModal';
 import { deriveMarkSchemeUrl } from '../utils/quizLoader';
 import { QuestionViewTracker } from './QuestionViewTracker';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
@@ -66,6 +67,7 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
   const [liveMcqCheckEnabled, setLiveMcqCheckEnabled] = useState(true);
   const [pageCount, setPageCount] = useState<number | null>(null);
   const [annotationMode, setAnnotationMode] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // helper: fetch with a short timeout (local files shouldn't take long)
   const fetchWithTimeout = (url: string, timeout = 3000): Promise<Response> => {
@@ -692,6 +694,28 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
     }
   };
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement || 
+          event.target instanceof HTMLTextAreaElement ||
+          event.target instanceof HTMLSelectElement ||
+          (event.target as HTMLElement).isContentEditable) {
+        return;
+      }
+
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        handleNext();
+      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        handlePrevious();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentQuestion, questions.length, handleNext, handlePrevious]);
+
   const handlePageCountChange = useCallback((numPages: number) => {
     setPageCount(numPages);
   }, []);
@@ -979,9 +1003,9 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex justify-between items-start mb-4">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h2>
-            <Link to="/contact" className="p-2 text-gray-400 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Report Quiz">
+            <button onClick={() => setIsReportModalOpen(true)} className="p-2 text-gray-400 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Report Quiz">
               <Flag className="w-4 h-4" />
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -1033,6 +1057,7 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
             </div>
           )}
         </div>
+        <ReportModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} question={currentQ} />
       </motion.div>
     );
   }
@@ -1175,17 +1200,29 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setAnnotationMode(prev => !prev)}
-              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition-colors ${
-                annotationMode
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
-              }`}
-            >
-              Annotate
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setAnnotationMode(prev => !prev)}
+                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition-colors ${
+                  annotationMode
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
+                }`}
+              >
+                Annotate
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setIsReportModalOpen(true)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition-colors bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                title="Report this question"
+              >
+                <Flag className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Report</span>
+              </button>
+            </div>
           </div>
 
           {/* Question Content Display (wraps to content height) */}
@@ -1351,6 +1388,7 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
           )}
         </div>
       </div>
+      <ReportModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} question={currentQ} />
     </motion.div>
   );
 };

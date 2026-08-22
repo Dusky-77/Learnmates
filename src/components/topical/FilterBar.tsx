@@ -1,6 +1,5 @@
 import React from 'react';
-import { btnPrimary, btnToggleBase, btnToggleActive, btnToggleInactive, checkboxWithLabel } from './ui';
-import TopicalCheckbox from './Checkbox';
+import { btnPrimary, btnToggleBase, btnToggleActive, btnToggleInactive } from './ui';
 import Dropdown from './Dropdown';
 
 interface FilterBarProps {
@@ -72,14 +71,14 @@ const StrictToggle: React.FC<{
   onChange: (strict: boolean) => void;
 }> = ({ strict, onChange }) => {
   return (
-    <label className={checkboxWithLabel} title="Strict mode: only show questions that cover exclusively the selected topics">
-      <TopicalCheckbox
-        checked={strict}
-        onChange={() => onChange(!strict)}
-        aria-label="Strict mode"
-      />
-      <span className="text-sm font-medium">Strict</span>
-    </label>
+    <button
+      type="button"
+      onClick={() => onChange(!strict)}
+      className={`${btnToggleBase} ${strict ? btnToggleActive : btnToggleInactive} rounded-lg`}
+      title="Strict mode: only show questions that cover exclusively the selected topics"
+    >
+      Strict
+    </button>
   );
 };
 
