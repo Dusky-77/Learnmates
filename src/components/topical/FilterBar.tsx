@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { btnPrimary, btnToggleBase, btnToggleActive, btnToggleInactive } from './ui';
 import Dropdown from './Dropdown';
+import { Filter } from 'lucide-react';
 
 interface FilterBarProps {
   onLoad: () => void;
@@ -35,6 +36,22 @@ interface FilterBarProps {
   onOrderFilterChange?: (order: 'newest' | 'oldest' | 'random') => void;
   limitFilter?: string;
   onLimitFilterChange?: (limit: string) => void;
+
+  // Month mode
+  availableMonths?: string[];
+  monthFilter?: Set<string>;
+  isAllMonthsSelected?: boolean;
+  selectedMonthSummary?: string;
+  onToggleMonth?: (month: string | 'all') => void;
+
+  // Variant mode
+  availableVariants?: number[];
+  variantFilter?: Set<number>;
+  isAllVariantsSelected?: boolean;
+  selectedVariantSummary?: string;
+  onToggleVariant?: (variant: number | 'all') => void;
+
+  hasSelectedTopics?: boolean;
 }
 
 const McqTheoryToggle: React.FC<{
@@ -105,9 +122,24 @@ const FilterBar: React.FC<FilterBarProps> = ({
   onOrderFilterChange,
   limitFilter,
   onLimitFilterChange,
+  availableMonths,
+  monthFilter,
+  isAllMonthsSelected,
+  selectedMonthSummary,
+  onToggleMonth,
+  availableVariants,
+  variantFilter,
+  isAllVariantsSelected,
+  selectedVariantSummary,
+  onToggleVariant,
+  hasSelectedTopics,
 }) => {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const hasAdvancedFilters = Boolean(onToggleMonth || onToggleVariant);
+
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-3">
       <button className={btnPrimary} onClick={onLoad}>
         Load matching questions
       </button>
@@ -190,6 +222,69 @@ const FilterBar: React.FC<FilterBarProps> = ({
           strict={strict || false}
           onChange={onStrictChange}
         />
+      )}
+
+      {hasAdvancedFilters && (
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className={`${btnToggleBase} ${showAdvanced ? btnToggleActive : btnToggleInactive} rounded-lg flex items-center gap-1.5`}
+          title="Toggle advanced filters"
+        >
+          <Filter className="w-4 h-4" />
+          Advanced
+        </button>
+      )}
+      </div>
+
+      {showAdvanced && hasAdvancedFilters && (
+        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+          {!hasSelectedTopics ? (
+            <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+              Please choose a topic first to see available months and variants.
+            </div>
+          ) : (
+            <>
+              {onToggleMonth && availableMonths && availableMonths.length > 0 && (
+                <Dropdown
+                  multi
+                  showAllOption
+                  buttonLabel={selectedMonthSummary || 'Months'}
+                  allSelected={isAllMonthsSelected || false}
+                  onToggleAll={() => onToggleMonth('all')}
+                  options={availableMonths.map(m => ({ value: m, label: m }))}
+                  selected={monthFilter || new Set()}
+                  onToggle={m => onToggleMonth(m as string)}
+                  className="max-w-[220px]"
+                  title={
+                    (monthFilter && monthFilter.size > 0)
+                      ? `Filter matches by month (${availableMonths.filter(m => monthFilter.has(m)).join(', ')})`
+                      : 'Filter matches by month'
+                  }
+                />
+              )}
+
+              {onToggleVariant && availableVariants && availableVariants.length > 0 && (
+                <Dropdown
+                  multi
+                  showAllOption
+                  buttonLabel={selectedVariantSummary || 'Variants'}
+                  allSelected={isAllVariantsSelected || false}
+                  onToggleAll={() => onToggleVariant('all')}
+                  options={availableVariants.map(v => ({ value: v, label: `Variant ${v}` }))}
+                  selected={variantFilter || new Set()}
+                  onToggle={v => onToggleVariant(Number(v))}
+                  className="max-w-[220px]"
+                  title={
+                    (variantFilter && variantFilter.size > 0)
+                      ? `Filter matches by variant (${availableVariants.filter(v => variantFilter.has(v)).sort((a, b) => a - b).join(', ')})`
+                      : 'Filter matches by variant'
+                  }
+                />
+              )}
+            </>
+          )}
+        </div>
       )}
     </div>
   );

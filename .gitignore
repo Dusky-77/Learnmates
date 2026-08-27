@@ -54,3 +54,6 @@ Learnmates.git/
 .dev.vars
 .dev.vars.*
 #public/documents/igcse/
+.wrangler/state/v3/r2
+.opencode/better-prompt
+.cursor

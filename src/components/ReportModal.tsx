@@ -62,14 +62,22 @@ function getTopicsForSubject(level: string, board: string, subject: string) {
   const normBoard = board.toLowerCase();
   const normSubject = subject.toLowerCase();
   
-  const cfg = topicalConfigs.find(
+  let cfg = topicalConfigs.find(
     c =>
       c.level.toLowerCase() === normLevel &&
       c.board.toLowerCase() === normBoard &&
-      (c.subject.toLowerCase() === normSubject ||
-       c.subject.toLowerCase().includes(normSubject) ||
-       normSubject.includes(c.subject.toLowerCase()))
+      c.subject.toLowerCase() === normSubject
   );
+
+  if (!cfg) {
+    cfg = topicalConfigs.find(
+      c =>
+        c.level.toLowerCase() === normLevel &&
+        c.board.toLowerCase() === normBoard &&
+        (c.subject.toLowerCase().includes(normSubject) ||
+         normSubject.includes(c.subject.toLowerCase()))
+    );
+  }
 
   if (!cfg) return [];
 

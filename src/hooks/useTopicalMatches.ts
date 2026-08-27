@@ -9,6 +9,8 @@ import {
   sortQuestionsByRecency,
   sortQuestionsByOldest,
   shuffleArray,
+  getMonthFromFileName,
+  getVariantFromFileName,
 } from '../utils/topicalHelpers';
 import { deriveMarkSchemeUrl } from '../utils/quizLoader';
 import { resolveFromR2, getAssetAuthHeaders } from '../utils/r2Utils';
@@ -30,6 +32,8 @@ interface ComputeParams {
   strict?: boolean;
   orderFilter?: 'newest' | 'oldest' | 'random';
   limitFilter?: number | null;
+  monthFilter?: Set<string>;
+  variantFilter?: Set<number>;
 }
 
 const normalizeTopicMatchTerm = (value: string) => value.trim().toLowerCase();
@@ -98,6 +102,8 @@ export function useTopicalMatches() {
   const [availableFilters, setAvailableFilters] = useState({ hasMCQ: true, hasTheory: true });
   const [availablePapers, setAvailablePapers] = useState<Set<number>>(new Set());
   const [availableYears, setAvailableYears] = useState<Set<number>>(new Set());
+  const [availableMonths, setAvailableMonths] = useState<Set<string>>(new Set());
+  const [availableVariants, setAvailableVariants] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     abortControllerRef.current = new AbortController();
@@ -149,6 +155,8 @@ export function useTopicalMatches() {
     let hasTheory = false;
     const papersFound = new Set<number>();
     const yearsFound = new Set<number>();
+    const monthsFound = new Set<string>();
+    const variantsFound = new Set<number>();
 
     const baseUrlPrefix = ((import.meta as any).env?.BASE_URL as string) || '/';
 
@@ -174,6 +182,12 @@ export function useTopicalMatches() {
 
               const year = getYearFromFileName(entry.file_name);
               if (year !== null) yearsFound.add(year);
+
+              const month = getMonthFromFileName(entry.file_name);
+              if (month !== null) monthsFound.add(month);
+
+              const variant = getVariantFromFileName(entry.file_name);
+              if (variant !== null) variantsFound.add(variant);
             }
           });
         }
@@ -183,9 +197,11 @@ export function useTopicalMatches() {
     setAvailableFilters({ hasMCQ, hasTheory });
     setAvailablePapers(papersFound);
     setAvailableYears(yearsFound);
+    setAvailableMonths(monthsFound);
+    setAvailableVariants(variantsFound);
   };
 
-  const computeMatches = async ({ configs, checked, matches, mcqFilter, paperFilter, yearFilter, isPaperMode, strict = false, orderFilter = 'newest', limitFilter = null }: ComputeParams) => {
+  const computeMatches = async ({ configs, checked, matches, mcqFilter, paperFilter, yearFilter, isPaperMode, strict = false, orderFilter = 'newest', limitFilter = null, monthFilter = new Set(), variantFilter = new Set() }: ComputeParams) => {
     const selectedTopicsByUnit = buildSelectedTopicsByUnit(checked, configs);
     const baseUrlPrefix = ((import.meta as any).env?.BASE_URL as string) || '/';
 
@@ -299,6 +315,14 @@ export function useTopicalMatches() {
               const year = getYearFromFileName(entry.file_name);
               passFilter = yearFilter.size === 0 || (year !== null && yearFilter.has(year));
             }
+            if (passFilter && monthFilter.size > 0) {
+              const month = getMonthFromFileName(entry.file_name);
+              passFilter = month !== null && monthFilter.has(month);
+            }
+            if (passFilter && variantFilter.size > 0) {
+              const variant = getVariantFromFileName(entry.file_name);
+              passFilter = variant !== null && variantFilter.has(variant);
+            }
 
             if (passFilter) {
               const paperNumber = getPaperNumberFromFileName(entry.file_name);
@@ -362,9 +386,13 @@ export function useTopicalMatches() {
     availableFilters,
     availablePapers,
     availableYears,
+    availableMonths,
+    availableVariants,
     setAvailableFilters,
     setAvailablePapers,
     setAvailableYears,
+    setAvailableMonths,
+    setAvailableVariants,
     computeMatches,
     computeAvailableFilters,
     resetResults,

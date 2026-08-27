@@ -114,12 +114,30 @@ export const LockInProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       .order('last_active_at', { ascending: false });
       
     let shouldBeHost = false;
+    let shouldDemote = false;
+
     if (activeDevices) {
-      const hasHost = activeDevices.some(d => d.is_host && d.device_id !== id);
-      const isAlreadyHost = activeDevices.some(d => d.is_host && d.device_id === id);
-      if (!hasHost && !isAlreadyHost) {
-         shouldBeHost = true;
+      const hosts = activeDevices.filter(d => d.is_host);
+      const isAlreadyHost = activeDevices.some(d => d.device_id === id && d.is_host);
+      
+      if (hosts.length === 0) {
+        shouldBeHost = true;
+      } else if (hosts.length === 1) {
+        if (isAlreadyHost) {
+          shouldBeHost = true;
+        }
+      } else {
+        // Deterministic tie breaker for multiple hosts
+        hosts.sort((a, b) => a.device_id.localeCompare(b.device_id));
+        const winner = hosts[0];
+        if (winner.device_id === id) {
+          shouldBeHost = true;
+        } else if (isAlreadyHost) {
+          shouldDemote = true;
+        }
       }
+    } else {
+      shouldBeHost = true;
     }
 
     const { data } = await supabase
@@ -127,7 +145,8 @@ export const LockInProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       .update({ 
         last_active_at: now, 
         device_name: name,
-        ...(shouldBeHost ? { is_host: true } : {}) 
+        ...(shouldBeHost ? { is_host: true } : {}),
+        ...(shouldDemote ? { is_host: false } : {})
       })
       .eq('user_id', user.id)
       .eq('device_id', id)

@@ -61,7 +61,7 @@ export default function LockIn() {
         .from('user_devices')
         .update({ 
           status: role, 
-          lock_until: role === 'locked' ? lockUntil : null 
+          lock_until: lockUntil 
         })
         .eq('user_id', user.id)
         .eq('device_id', d.device_id);

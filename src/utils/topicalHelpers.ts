@@ -38,7 +38,7 @@ export const getDefaultPaperOptions = (level: string, board: string, subject: st
   
   if (level === 'a-level' && board === 'cambridge' &&
       ['Mathematics', 'math', 'maths'].some(candidate => normalizeSubject(candidate) === normalized)) {
-    return [1, 2, 4, 5];  // Cambridge A-Level Math papers P1-P6
+    return [1, 3, 4, 5];  // Cambridge A-Level Math papers P1-P6
   }
   
 
@@ -69,6 +69,29 @@ export const getYearFromFileName = (fileName: string | undefined | null): number
   const match = fileName.match(/\b(?:19|20)\d{2}\b/);
   if (match) {
     return parseInt(match[0], 10);
+  }
+  return null;
+};
+
+export const getMonthFromFileName = (fileName: string | undefined | null): string | null => {
+  if (!fileName) return null;
+  const firstThree = fileName.substring(0, 3).toLowerCase();
+  if (['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].includes(firstThree)) {
+    return firstThree.charAt(0).toUpperCase() + firstThree.slice(1);
+  }
+  const match = fileName.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i);
+  if (match) {
+    const month = match[1].toLowerCase();
+    return month.charAt(0).toUpperCase() + month.slice(1);
+  }
+  return null;
+};
+
+export const getVariantFromFileName = (fileName: string | undefined | null): number | null => {
+  if (!fileName) return null;
+  const match = fileName.match(/P[1-6](\d)/i);
+  if (match) {
+    return parseInt(match[1], 10);
   }
   return null;
 };

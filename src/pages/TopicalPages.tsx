@@ -92,7 +92,7 @@ const TopicalPages: React.FC = () => {
     if (!topicsStr) return new Set();
 
     const topicKeys = new Set<string>();
-    
+
     let keysArray: string[] = [];
     if (topicsStr.includes(';;')) {
       keysArray = topicsStr.split(';;');
@@ -111,7 +111,7 @@ const TopicalPages: React.FC = () => {
     keysArray.forEach(key => {
       if (!key) return;
       const parts = key.split('||');
-      
+
       let unit = '';
       let topic = '';
 
@@ -183,6 +183,23 @@ const TopicalPages: React.FC = () => {
     return strict === '1' || strict === 'true';
   }, [location.search]);
 
+  const getMonthFilterFromQuery = useCallback((): Set<string> => {
+    const str = new URLSearchParams(location.search).get('months');
+    if (!str || str === 'all') return new Set();
+    return new Set(str.split(','));
+  }, [location.search]);
+
+  const getVariantFilterFromQuery = useCallback((): Set<number> => {
+    const str = new URLSearchParams(location.search).get('variants');
+    if (!str || str === 'all') return new Set();
+    const variants = new Set<number>();
+    str.split(',').forEach(v => {
+      const n = parseInt(v, 10);
+      if (!isNaN(n)) variants.add(n);
+    });
+    return variants;
+  }, [location.search]);
+
   const updateQueryParams = (
     newChecked: Set<string>,
     newMcqFilter: 'all' | 'mcq' | 'theory',
@@ -190,7 +207,9 @@ const TopicalPages: React.FC = () => {
     newYearFilter?: Set<number>,
     newOrderFilter?: 'newest' | 'oldest' | 'random',
     newLimitFilter?: string,
-    newStrictFilter?: boolean
+    newStrictFilter?: boolean,
+    newMonthFilter?: Set<string>,
+    newVariantFilter?: Set<number>
   ) => {
     const params = new URLSearchParams();
     if (newChecked.size > 0) {
@@ -218,6 +237,12 @@ const TopicalPages: React.FC = () => {
     if (newStrictFilter) {
       params.set('strict', '1');
     }
+    if (newMonthFilter && newMonthFilter.size > 0) {
+      params.set('months', Array.from(newMonthFilter).join(','));
+    }
+    if (newVariantFilter && newVariantFilter.size > 0) {
+      params.set('variants', Array.from(newVariantFilter).join(','));
+    }
     const queryString = params.toString();
     const newUrl = `${topicalsPath(selectedLevel, selectedBoard, selectedSubject)}${queryString ? '?' + queryString : ''}`;
     navigate(newUrl, { replace: true });
@@ -237,6 +262,8 @@ const TopicalPages: React.FC = () => {
   const [orderFilter, setOrderFilterState] = useState<'newest' | 'oldest' | 'random'>(() => getOrderFilterFromQuery());
   const [limitFilter, setLimitFilterState] = useState<string>(() => getLimitFilterFromQuery());
   const [strictFilter, setStrictFilterState] = useState<boolean>(() => getStrictFilterFromQuery());
+  const [monthFilter, setMonthFilterState] = useState<Set<string>>(() => getMonthFilterFromQuery());
+  const [variantFilter, setVariantFilterState] = useState<Set<number>>(() => getVariantFilterFromQuery());
   // Collapses the topic tree into a compact summary strip once results have
   // been requested, so the matches viewer can grow into the freed space.
   const [pickerCollapsed, setPickerCollapsed] = useState(false);
@@ -255,9 +282,13 @@ const TopicalPages: React.FC = () => {
     availableFilters,
     availablePapers,
     availableYears,
+    availableMonths,
+    availableVariants,
     setAvailableFilters,
     setAvailablePapers,
     setAvailableYears,
+    setAvailableMonths,
+    setAvailableVariants,
     computeMatches,
     computeAvailableFilters,
     resetResults,
@@ -282,6 +313,8 @@ const TopicalPages: React.FC = () => {
     setOrderFilterState('newest');
     setLimitFilterState('');
     setStrictFilterState(false);
+    setMonthFilterState(new Set());
+    setVariantFilterState(new Set());
 
     if (selectedLevel && selectedBoard && selectedSubject) {
       navigate(topicalsPath(selectedLevel, selectedBoard, selectedSubject), { replace: true });
@@ -330,6 +363,16 @@ const TopicalPages: React.FC = () => {
     setStrictFilterState(prev => (prev !== strictFromQuery ? strictFromQuery : prev));
   }, [getStrictFilterFromQuery]);
 
+  useEffect(() => {
+    const fromQuery = getMonthFilterFromQuery();
+    setMonthFilterState(prev => prev.size !== fromQuery.size || ![...prev].every(m => fromQuery.has(m)) ? fromQuery : prev);
+  }, [getMonthFilterFromQuery]);
+
+  useEffect(() => {
+    const fromQuery = getVariantFilterFromQuery();
+    setVariantFilterState(prev => prev.size !== fromQuery.size || ![...prev].every(v => fromQuery.has(v)) ? fromQuery : prev);
+  }, [getVariantFilterFromQuery]);
+
   const isPaperMode = isPaperFilterSubject(selectedLevel, selectedBoard, selectedSubject);
   const showMcqTheoryFilter = !isEdexcelALevelPureMathSubject(selectedLevel, selectedBoard, selectedSubject);
   const showExtraPageOption = isEdexcelALevelPureMathSubject(selectedLevel, selectedBoard, selectedSubject);
@@ -347,6 +390,14 @@ const TopicalPages: React.FC = () => {
     : yearFilter.size === 0
       ? 'No year selected'
       : formatRangeSummary(availableYearNumbers.filter(year => yearFilter.has(year)));
+
+  const availableMonthsArr = Array.from(availableMonths).sort();
+  const isAllMonthsSelected = availableMonthsArr.length > 0 && availableMonthsArr.every(m => monthFilter.has(m));
+  const selectedMonthSummary = isAllMonthsSelected ? 'All sessions' : monthFilter.size === 0 ? 'No session selected' : availableMonthsArr.filter(m => monthFilter.has(m)).join(', ');
+
+  const availableVariantsArr = Array.from(availableVariants).sort();
+  const isAllVariantsSelected = availableVariantsArr.length > 0 && availableVariantsArr.every(v => variantFilter.has(v));
+  const selectedVariantSummary = isAllVariantsSelected ? 'All variants' : variantFilter.size === 0 ? 'No variant selected' : availableVariantsArr.filter(v => variantFilter.has(v)).join(', ');
 
   const setMcqFilter = (filter: 'all' | 'mcq' | 'theory') => {
     setLoadFeedback(null);
@@ -397,7 +448,37 @@ const TopicalPages: React.FC = () => {
   const setStrictFilter = (strict: boolean) => {
     setLoadFeedback(null);
     setStrictFilterState(strict);
-    updateQueryParams(checked, mcqFilter, paperFilter, yearFilter, orderFilter, limitFilter, strict);
+    updateQueryParams(checked, mcqFilter, paperFilter, yearFilter, orderFilter, limitFilter, strict, monthFilter, variantFilter);
+  };
+
+  const toggleMonthFilter = (month: string | 'all') => {
+    setLoadFeedback(null);
+    if (month === 'all') {
+      const nextSet = isAllMonthsSelected ? new Set<string>() : new Set<string>(availableMonthsArr);
+      setMonthFilterState(nextSet);
+      updateQueryParams(checked, mcqFilter, paperFilter, yearFilter, orderFilter, limitFilter, strictFilter, nextSet, variantFilter);
+      return;
+    }
+    const nextSet = new Set<string>(monthFilter);
+    if (nextSet.has(month)) nextSet.delete(month);
+    else nextSet.add(month);
+    setMonthFilterState(nextSet);
+    updateQueryParams(checked, mcqFilter, paperFilter, yearFilter, orderFilter, limitFilter, strictFilter, nextSet, variantFilter);
+  };
+
+  const toggleVariantFilter = (variant: number | 'all') => {
+    setLoadFeedback(null);
+    if (variant === 'all') {
+      const nextSet = isAllVariantsSelected ? new Set<number>() : new Set<number>(availableVariantsArr);
+      setVariantFilterState(nextSet);
+      updateQueryParams(checked, mcqFilter, paperFilter, yearFilter, orderFilter, limitFilter, strictFilter, monthFilter, nextSet);
+      return;
+    }
+    const nextSet = new Set<number>(variantFilter);
+    if (nextSet.has(variant)) nextSet.delete(variant);
+    else nextSet.add(variant);
+    setVariantFilterState(nextSet);
+    updateQueryParams(checked, mcqFilter, paperFilter, yearFilter, orderFilter, limitFilter, strictFilter, monthFilter, nextSet);
   };
 
   // ---------------------------------------------------------------------
@@ -532,7 +613,7 @@ const TopicalPages: React.FC = () => {
       }
     }
     const exportTopics = checked.size > 0 ? checked : (storedTopics || checked);
-    
+
     console.log('[Export] checked.size:', checked.size);
     console.log('[Export] storedTopics:', storedTopics);
     console.log('[Export] exportTopics.size:', exportTopics.size);
@@ -552,7 +633,7 @@ const TopicalPages: React.FC = () => {
         },
         onError: message => alert(message),
       },
-      { 
+      {
         extraPage: options?.extraPage ?? extraPageEnabled,
         headerPage: options?.headerPage ?? headerPageEnabled,
         mergeHeader: options?.mergeHeader ?? mergeHeaderEnabled,
@@ -612,7 +693,7 @@ const TopicalPages: React.FC = () => {
     const runLoad = async () => {
       const parsedLimit = parseInt(limitFilter, 10);
       const limitVal = !isNaN(parsedLimit) ? parsedLimit : null;
-      const results = await computeMatches({ configs, checked, matches, mcqFilter, paperFilter, yearFilter, isPaperMode, strict: strictFilter, orderFilter, limitFilter: limitVal });
+      const results = await computeMatches({ configs, checked, matches, mcqFilter, paperFilter, yearFilter, isPaperMode, strict: strictFilter, orderFilter, limitFilter: limitVal, monthFilter, variantFilter });
       setNeedLoad(false);
 
       if (results.length === 0) {
@@ -630,7 +711,7 @@ const TopicalPages: React.FC = () => {
 
     void runLoad();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [needLoad, checked, matches, mcqFilter, paperFilter, yearFilter, configs, isPaperMode, orderFilter, limitFilter, strictFilter]);
+  }, [needLoad, checked, matches, mcqFilter, paperFilter, yearFilter, configs, isPaperMode, orderFilter, limitFilter, strictFilter, monthFilter, variantFilter]);
 
   // ---------------------------------------------------------------------
   // Render
@@ -718,6 +799,17 @@ const TopicalPages: React.FC = () => {
                     onLimitFilterChange={setLimitFilter}
                     strict={strictFilter}
                     onStrictChange={setStrictFilter}
+                    availableMonths={availableMonthsArr}
+                    monthFilter={monthFilter}
+                    isAllMonthsSelected={isAllMonthsSelected}
+                    selectedMonthSummary={selectedMonthSummary}
+                    onToggleMonth={toggleMonthFilter}
+                    availableVariants={availableVariantsArr}
+                    variantFilter={variantFilter}
+                    isAllVariantsSelected={isAllVariantsSelected}
+                    selectedVariantSummary={selectedVariantSummary}
+                    onToggleVariant={toggleVariantFilter}
+                    hasSelectedTopics={hasAnySelectedTopics}
                   />
                 </div>
 
