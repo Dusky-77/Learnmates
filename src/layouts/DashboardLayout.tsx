@@ -18,7 +18,8 @@ import {
   Layers,
   LibraryBig,
   Coffee,
-  RotateCcw
+  RotateCcw,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDarkMode } from '../context/DarkModeContext';
@@ -33,8 +34,9 @@ interface DashboardLayoutProps {
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Curriculum', href: '/curriculum', icon: LibraryBig },
+  { name: 'Past Papers', href: '/pastpapers', icon: FileText },
   { name: 'Topicals', href: '/topicals', icon: Layers },
-  { name: 'Lock in', href: '/lock_in', icon: Lock, beta: true },
+  { name: 'Lock in', href: '/lock_in', icon: Lock },
   { name: 'Leaderboard', href: '#', icon: Trophy, disabled: true }
   ,
 ];
