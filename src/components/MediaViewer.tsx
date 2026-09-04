@@ -35,6 +35,8 @@ interface MediaViewerProps {
   hideToolbar?: boolean;
   // Optional external control of annotation mode (used when toolbar is hidden)
   forceAnnotationMode?: boolean;
+  // When true, hides the "Large View" maximize button
+  hideLargeView?: boolean;
 }
 
 interface PageRef {
@@ -67,7 +69,8 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
   onMcqLiveCheckToggle,
   disableR2 = false,
   hideToolbar = false,
-  forceAnnotationMode
+  forceAnnotationMode = false,
+  hideLargeView = false,
 }) => {
   const effectiveUrl = (markSchemeOpen && markSchemeUrl) ? markSchemeUrl : url;
   const effectiveType = (markSchemeOpen && markSchemeType) ? markSchemeType : type;
@@ -85,7 +88,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
 
   const [numPages, setNumPages] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const ZOOM_SCALE = 3.0;
+  const ZOOM_SCALE = 5.0;
   const pdfRef = useRef<PDFDocumentProxy | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const renderedPagesRef = useRef<Set<number>>(new Set());
@@ -539,6 +542,8 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
     if (effectiveType !== 'pdf') return;
     const signal = abortControllerRef.current?.signal;
 
+    let observer: IntersectionObserver | null = null;
+
     const renderAllPages = async () => {
       if (!pdfRef.current || !numPages) return;
       try {
@@ -556,66 +561,85 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
           savedAnnotationData = null;
         }
         const currentPropAnnotation = markSchemeOpen ? savedMarkSchemeAnnotation : savedAnnotation;
-        // Prefer the persisted annotation prop (it is authoritative). The freshly
-        // composited layer is only a fallback for strokes that have not been saved
-        // yet. A blank composite is still a truthy data URL and must never override
-        // a real saved annotation, otherwise toggling to the mark scheme and back
-        // would wipe the drawing (until annotation mode is re-enabled).
+        // Prefer the persisted annotation prop (it is authoritative). 
         const annotationToRestore = currentPropAnnotation || savedAnnotationData;
 
-        // Render page 1 first for immediate visual feedback
-        const firstPageRef_render = canvasRefsMap.current.get(1);
-        if (firstPageRef_render?.canvas) {
-          if (signal?.aborted) return;
-          const page = await pdfRef.current.getPage(1);
-          const viewport = page.getViewport({ scale: ZOOM_SCALE });
-          const context = firstPageRef_render.canvas.getContext('2d');
-          if (context) {
-            firstPageRef_render.canvas.width = viewport.width;
-            firstPageRef_render.canvas.height = viewport.height;
-            if (firstPageRef_render.annotationCanvas) {
-              firstPageRef_render.annotationCanvas.width = viewport.width;
-              firstPageRef_render.annotationCanvas.height = viewport.height;
+        const renderPage = async (pageNum: number) => {
+          if (signal?.aborted || !pdfRef.current) return;
+          const pageRef = canvasRefsMap.current.get(pageNum);
+          const canvas = pageRef?.canvas;
+          const annotationCanvas = pageRef?.annotationCanvas;
+          if (!canvas) return;
+          
+          try {
+            const page = await pdfRef.current.getPage(pageNum);
+            const viewport = page.getViewport({ scale: ZOOM_SCALE });
+            const context = canvas.getContext('2d');
+            if (!context) return;
+            
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            if (annotationCanvas) {
+              annotationCanvas.width = viewport.width;
+              annotationCanvas.height = viewport.height;
             }
+            
             const renderContext = {
               canvasContext: context,
               viewport: viewport,
             };
+            
             await page.render(renderContext).promise;
+            
+            // Remove the placeholder minHeight and set aspect ratio
+            canvas.style.minHeight = 'auto';
+            canvas.style.aspectRatio = `${viewport.width} / ${viewport.height}`;
+            
+            if (pageNum === 1) {
+              setLoading(false); // Show page 1 immediately
+            }
+            
+            // Restore annotations after this page is rendered so strokes on it appear
+            if (annotationToRestore) {
+              restoreAnnotationToPageCanvases(annotationToRestore);
+            }
+          } catch (e) {
+            console.error(`Failed to render page ${pageNum}:`, e);
           }
-          setLoading(false); // Show page 1 immediately
-        }
+        };
 
-        // Render remaining pages in background
-        for (let pageNum = 2; pageNum <= numPages; pageNum++) {
-          if (signal?.aborted) return;
-          // Yield to browser to keep UI responsive
-          await new Promise(resolve => setTimeout(resolve, 0));
-          
+        // Render page 1 first for immediate visual feedback
+        renderedPagesRef.current.add(1);
+        await renderPage(1);
+
+        // Setup IntersectionObserver for the rest of the pages
+        observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const pageNum = Number((entry.target as HTMLElement).dataset.page);
+              if (pageNum && !renderedPagesRef.current.has(pageNum)) {
+                renderedPagesRef.current.add(pageNum);
+                renderPage(pageNum);
+              }
+            }
+          });
+        }, { 
+          root: pagesContainerRef.current, 
+          // Load 1.5 screens ahead and behind to make scrolling seamless
+          rootMargin: '150% 0px 150% 0px' 
+        });
+
+        // Observe all canvases
+        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
           const pageRef = canvasRefsMap.current.get(pageNum);
-          const canvas = pageRef?.canvas;
-          const annotationCanvas = pageRef?.annotationCanvas;
-          if (!canvas) continue;
-          const page = await pdfRef.current.getPage(pageNum);
-          const viewport = page.getViewport({ scale: ZOOM_SCALE });
-          const context = canvas.getContext('2d');
-          if (!context) continue;
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          if (annotationCanvas) {
-            annotationCanvas.width = viewport.width;
-            annotationCanvas.height = viewport.height;
+          if (pageRef?.canvas) {
+             pageRef.canvas.dataset.page = String(pageNum);
+             if (pageNum > 1) {
+               // Give a placeholder minHeight to prevent all pages from intersecting at once initially
+               pageRef.canvas.style.minHeight = '80vh';
+             }
+             observer.observe(pageRef.canvas);
           }
-          const renderContext = {
-            canvasContext: context,
-            viewport: viewport,
-          };
-          await page.render(renderContext).promise;
-        }
-
-        // Restore annotation after rendering
-        if (annotationToRestore) {
-          restoreAnnotationToPageCanvases(annotationToRestore);
         }
 
         setError(null);
@@ -627,7 +651,14 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
         if (!signal?.aborted) setLoading(false);
       }
     };
+    
     renderAllPages();
+    
+    return () => {
+      if (observer) {
+        observer.disconnect();
+      }
+    };
   }, [numPages, effectiveType, effectiveUrl]);
 
   const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) => {
@@ -1430,7 +1461,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       
       const total = Math.min(pdf.numPages, 50);
       // Just use simple zoom scale for basic PDF rendering (fallback function)
-      const ZOOM_SCALE = 3.0;
+      const ZOOM_SCALE = 5.0;
 
       for (let p = 1; p <= total; p++) {
         try {
@@ -1558,7 +1589,7 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
   return (
     <div
       ref={containerRef}
-      className="flex flex-col min-h-0 overflow-visible bg-gray-100 dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-700"
+      className="flex flex-col min-h-0 overflow-visible h-full w-full bg-gray-100 dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-700"
     >
       {/* Toolbar */}
       {!hideToolbar && (
@@ -2120,16 +2151,18 @@ const MediaViewer: React.FC<MediaViewerProps> = ({
       {/* Content Container */}
       <div className="relative flex-1 min-h-0 w-full">
         {/* Large View button overlay — sticky so it stays put while the PDF scrolls */}
-        <div className="sticky top-0 z-20 flex justify-end pr-3 pointer-events-none" style={{ height: 0 }}>
-          <button
-            onClick={openZoomModal}
-            title="Large View"
-            aria-label="Open large view"
-            className="pointer-events-auto mt-3 flex items-center justify-center w-10 h-10 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
-          >
-            <Maximize2 className="w-5 h-5" />
-          </button>
-        </div>
+        {!hideLargeView && (
+          <div className="sticky top-0 z-20 flex justify-end pr-3 pointer-events-none" style={{ height: 0 }}>
+            <button
+              onClick={openZoomModal}
+              title="Large View"
+              aria-label="Open large view"
+              className="pointer-events-auto mt-3 flex items-center justify-center w-10 h-10 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
+            >
+              <Maximize2 className="w-5 h-5" />
+            </button>
+          </div>
+        )}
         <div
           ref={pagesContainerRef}
           data-type={markSchemeOpen ? 'marking_scheme' : 'question'}

@@ -8,6 +8,7 @@ import { deriveMarkSchemeUrl } from '../utils/quizLoader';
 import { QuestionViewTracker } from './QuestionViewTracker';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { fetchR2AsBlobUrl, resolveFromR2, getAssetAuthHeaders } from '../utils/r2Utils';
+import { generateMergedPDF, MergeItem } from '../utils/pdfMerger';
 
 export interface Question {
   id: string;
@@ -68,462 +69,6 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
   const [pageCount, setPageCount] = useState<number | null>(null);
   const [annotationMode, setAnnotationMode] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-
-  // helper: fetch with a short timeout (local files shouldn't take long)
-  const fetchWithTimeout = (url: string, timeout = 3000): Promise<Response> => {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('timeout')), timeout);
-      fetch(url)
-        .then(res => {
-          clearTimeout(timer);
-          resolve(res);
-        })
-        .catch(err => {
-          clearTimeout(timer);
-          reject(err);
-        });
-    });
-  };
-
-  const resolveAssetUrl = async (url: string): Promise<string> => {
-    if (!url) return url;
-    if (url.startsWith('blob:')) return url;
-
-    const resolvedUrl = await resolveFromR2(url);
-    return resolvedUrl || url;
-  };
-
-  // Shared download functions
-  const handleDownload = async (url: string, filename: string) => {
-    try {
-      const resolvedUrl = await resolveAssetUrl(url);
-      
-      // Check if this is an R2 asset
-      const isR2Asset = resolvedUrl.includes('assets.learnmates.org') || 
-                        resolvedUrl.includes('/questions/') || 
-                        resolvedUrl.includes('/topicals/');
-      
-      if (isR2Asset) {
-        // Use the same approach as MediaViewer - fetch as blob URL
-        const blobUrl = await fetchR2AsBlobUrl(resolvedUrl);
-        
-        if (blobUrl) {
-          // Download using blob URL (works for R2)
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          // Clean up
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-          return;
-        }
-      }
-      
-      // Fallback: Use direct download (might work for non-R2 assets)
-      const link = document.createElement('a');
-      link.href = resolvedUrl;
-      link.download = filename;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-    } catch (error) {
-      console.error('Error downloading file:', error);
-      // Ultimate fallback: open in new tab
-      try {
-        const resolvedUrl = await resolveAssetUrl(url);
-        window.open(resolvedUrl, '_blank');
-      } catch (fallbackError) {
-        console.error('Fallback download failed:', fallbackError);
-      }
-    }
-  };
-
-  const getFilenameFromUrl = (url: string, defaultName: string): string => {
-    try {
-      const urlPath = url.split('/').pop() || defaultName;
-      // Remove query parameters if any
-      let filename = urlPath.split('?')[0];
-      // Decode URL-encoded characters (e.g., %20 → space, %26 → &, %2C → ,)
-      filename = decodeURIComponent(filename);
-      return filename;
-    } catch {
-      return defaultName;
-    }
-  };
-
-  // Create a separator page with question number
-  const createSeparatorPage = async (pdf: PDFDocument, questionNumber: number, type: 'questions' | 'markschemes'): Promise<void> => {
-    const page = pdf.addPage([612, 792]); // US Letter size
-    const { width, height } = page.getSize();
-    
-    // Draw background
-    page.drawRectangle({
-      x: 0,
-      y: 0,
-      width: width,
-      height: height,
-      color: rgb(0.95, 0.95, 0.95), // Light gray background
-    });
-    
-    // Draw border
-    page.drawRectangle({
-      x: 50,
-      y: 50,
-      width: width - 100,
-      height: height - 100,
-      borderColor: rgb(0.2, 0.2, 0.2),
-      borderWidth: 3,
-    });
-    
-    // Draw question number text (large and centered)
-    const fontSize = 72;
-    const text = `${type === 'questions' ? 'Question' : 'Mark Scheme'} ${questionNumber}`;
-    
-    // Embed font
-    const font = await pdf.embedFont(StandardFonts.HelveticaBold);
-    const textWidth = font.widthOfTextAtSize(text, fontSize);
-    const textHeight = fontSize;
-    
-    page.drawText(text, {
-      x: (width - textWidth) / 2,
-      y: height / 2 + textHeight / 2,
-      size: fontSize,
-      color: rgb(0, 0, 0),
-      font: font,
-    });
-  };
-
-  // Convert image to PDF page
-  const addImageToPdf = async (
-    pdf: PDFDocument,
-    imageUrl: string,
-    questionNumber: number
-  ): Promise<void> => {
-    try {
-      const resolvedUrl = await resolveAssetUrl(imageUrl);
-      const absoluteUrl = resolvedUrl.startsWith('http') || resolvedUrl.startsWith('blob:')
-        ? resolvedUrl
-        : new URL(resolvedUrl, window.location.origin).href;
-      
-      console.log(`[PDF Merge] Fetching image: ${absoluteUrl}`);
-      let response: Response | null = null;
-      try {
-        response = await fetchWithTimeout(absoluteUrl, 3000);
-      } catch {
-        response = null;
-      }
-      
-      if (!response || !response.ok) {
-        console.error(`[PDF Merge] Failed to fetch image: ${response ? response.statusText : 'no response'}`);
-        return;
-      }
-      
-      const arrayBuffer = await response.arrayBuffer();
-      let image;
-      const contentType = response.headers.get('content-type') || '';
-      
-      console.log(`[PDF Merge] Image content type: ${contentType}`);
-      
-      if (contentType.includes('png')) {
-        image = await pdf.embedPng(arrayBuffer);
-        console.log(`[PDF Merge] Successfully embedded as PNG`);
-      } else if (contentType.includes('jpeg') || contentType.includes('jpg')) {
-        image = await pdf.embedJpg(arrayBuffer);
-        console.log(`[PDF Merge] Successfully embedded as JPG`);
-      } else {
-        // Try PNG first, then JPG
-        try {
-          image = await pdf.embedPng(arrayBuffer);
-          console.log(`[PDF Merge] Successfully embedded as PNG (auto-detect)`);
-        } catch {
-          try {
-            image = await pdf.embedJpg(arrayBuffer);
-            console.log(`[PDF Merge] Successfully embedded as JPG (auto-detect)`);
-          } catch (e2) {
-            console.error(`[PDF Merge] Failed to embed image as PNG or JPG:`, e2);
-            return;
-          }
-        }
-      }
-      
-      // Create a page that fits the image (standard letter size)
-      const pageWidth = 612; // US Letter width
-      const pageHeight = 792; // US Letter height
-      const imageDims = image.scale(1);
-      
-      console.log(`[PDF Merge] Image dimensions: ${imageDims.width} x ${imageDims.height}`);
-      
-      // Calculate scale to fit image on page (leave space for question number)
-      const maxImageHeight = pageHeight - 60; // Leave 60px for text and margins
-      const maxImageWidth = pageWidth - 40; // Leave 20px margin on each side
-      const scaleX = maxImageWidth / imageDims.width;
-      const scaleY = maxImageHeight / imageDims.height;
-      const scale = Math.min(scaleX, scaleY, 1); // Don't upscale
-      
-      const scaledWidth = imageDims.width * scale;
-      const scaledHeight = imageDims.height * scale;
-      
-      console.log(`[PDF Merge] Scaled dimensions: ${scaledWidth} x ${scaledHeight} (scale: ${scale})`);
-      
-      const page = pdf.addPage([pageWidth, pageHeight]);
-      
-      // Add question number text at the top (larger and more prominent)
-      const textSize = 24;
-      const textY = pageHeight - 40;
-      const font = await pdf.embedFont(StandardFonts.HelveticaBold);
-      page.drawText(`Question ${questionNumber}`, {
-        x: 30,
-        y: textY,
-        size: textSize,
-        color: rgb(0, 0, 0),
-        font: font,
-      });
-      
-      // Draw the image centered below the text
-      const imageX = (pageWidth - scaledWidth) / 2;
-      const imageY = pageHeight - 50 - scaledHeight;
-      
-      console.log(`[PDF Merge] Drawing image at (${imageX}, ${imageY}) with size ${scaledWidth} x ${scaledHeight}`);
-      
-      page.drawImage(image, {
-        x: imageX,
-        y: imageY,
-        width: scaledWidth,
-        height: scaledHeight,
-      });
-      
-      console.log(`[PDF Merge] Successfully added image page for question ${questionNumber}`);
-    } catch (error) {
-      console.error(`[PDF Merge] Error adding image ${imageUrl}:`, error);
-    }
-  };
-// Add this helper function to get arrayBuffer directly from R2
-  const fetchR2AsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> => {
-    try {
-    // First, try to get the direct R2 URL
-    const r2Url = await resolveFromR2(url);
-    if (!r2Url) {
-      console.warn(`[R2] Could not resolve URL: ${url}`);
-      return null;
-    }
-
-    console.log(`[R2] Fetching: ${r2Url}`);
-    
-    // Fetch directly from R2
-    const response = await fetch(r2Url, {
-      mode: 'cors',
-      headers: {
-        'Accept': 'application/pdf,image/*',
-        ...getAssetAuthHeaders(),
-      },
-    });
-
-    if (!response.ok) {
-      console.warn(`[R2] Fetch failed: ${response.status} ${response.statusText}`);
-      return null;
-    }
-
-    const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('text/html')) {
-      console.warn(`[R2] Received HTML instead of file`);
-      return null;
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    console.log(`[R2] Successfully fetched ${arrayBuffer.byteLength} bytes`);
-    return arrayBuffer;
-  } catch (error) {
-    console.error(`[R2] Error fetching:`, error);
-    return null;
-  }
-};
-
-
-
-  // Merge PDFs and images with question numbers and separators
-  const mergePDFsAndImages = async (
-    questions: Question[],
-    type: 'questions' | 'markschemes'
-  ): Promise<Blob> => {
-    const mergedPdf = await PDFDocument.create();
-    
-    console.log(`[PDF Merge] Starting merge for ${questions.length} questions`);
-    
-    for (let i = 0; i < questions.length; i++) {
-      const question = questions[i];
-      const questionNumber = parseInt(question.id.replace('q', '')) || (i + 1);
-      const fileUrl = type === 'questions' ? question.questionContent : question.markScheme;
-      const fileType = type === 'questions' ? question.questionContentType : question.markSchemeType;
-      
-      if (!fileUrl) {
-        console.warn(`[PDF Merge] Skipping question ${questionNumber}: no file URL`);
-        continue;
-      }
-      
-      try {
-        const resolvedUrl = await resolveAssetUrl(fileUrl);
-        const absoluteUrl = resolvedUrl.startsWith('http') || resolvedUrl.startsWith('blob:')
-          ? resolvedUrl
-          : new URL(resolvedUrl, window.location.origin).href;
-        
-        console.log(`[PDF Merge] Processing question ${questionNumber}: ${fileType} from ${absoluteUrl}`);
-        
-        let arrayBuffer: ArrayBuffer | null = null;
-        
-        // Check if this is an R2 asset
-        const isR2Asset = absoluteUrl.includes('assets.learnmates.org') || 
-                          absoluteUrl.includes('/questions/') || 
-                          absoluteUrl.includes('/topicals/');
-        
-        if (isR2Asset && !absoluteUrl.startsWith('https://assets.learnmates.org')) {
-          console.error(`[PDF Merge] Question ${questionNumber}: expected R2 URL but got same-origin fallback (${absoluteUrl}) — likely a resolveFromR2 failure. Skipping.`);
-          continue;
-        }
-
-        if (isR2Asset) {
-          // Try to fetch directly from R2 first
-          arrayBuffer = await fetchR2AsArrayBuffer(absoluteUrl);
-
-          if (!arrayBuffer) {
-            // Fallback to blob URL approach used by MediaViewer
-            const blobUrl = await fetchR2AsBlobUrl(absoluteUrl);
-            if (blobUrl) {
-              try {
-                const response = await fetch(blobUrl);
-                arrayBuffer = await response.arrayBuffer();
-              } catch (err) {
-                console.warn(`[PDF Merge] Failed to fetch blob URL for question ${questionNumber}:`, err);
-                // Try direct fetch as fallback
-                try {
-                  const response = await fetch(absoluteUrl);
-                  if (response.ok) {
-                    arrayBuffer = await response.arrayBuffer();
-                  }
-                } catch (fallbackErr) {
-                  console.warn(`[PDF Merge] Fallback fetch also failed for question ${questionNumber}:`, fallbackErr);
-                }
-              } finally {
-                URL.revokeObjectURL(blobUrl);
-              }
-            }
-          }
-        } else {
-          // Non-R2 asset - direct fetch
-          try {
-            const response = await fetchWithTimeout(absoluteUrl, 20000);
-            if (response && response.ok) {
-              arrayBuffer = await response.arrayBuffer();
-            }
-          } catch (err) {
-            console.warn(`[PDF Merge] Fetch failed for question ${questionNumber}: ${(err as Error).message}`);
-          }
-        }
-
-        if (!arrayBuffer || arrayBuffer.byteLength === 0) {
-          console.warn(`[PDF Merge] No data received for question ${questionNumber}`);
-          continue;
-        }
-
-        console.log(`[PDF Merge] Received ${arrayBuffer.byteLength} bytes for question ${questionNumber}`);
-
-        // Check if it's actually a PDF
-        const isPDF = arrayBuffer.byteLength > 4 && 
-                      new Uint8Array(arrayBuffer.slice(0, 4))[0] === 0x25 && // '%'
-                      new Uint8Array(arrayBuffer.slice(0, 4))[1] === 0x50 && // 'P'
-                      new Uint8Array(arrayBuffer.slice(0, 4))[2] === 0x44 && // 'D'
-                      new Uint8Array(arrayBuffer.slice(0, 4))[3] === 0x46;   // 'F'
-
-        if (isPDF) {
-          // Add separator page before PDF
-          await createSeparatorPage(mergedPdf, questionNumber, type);
-          
-          try {
-            const pdf = await PDFDocument.load(arrayBuffer);
-            const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-            
-            // Embed font once for all pages
-            const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
-            const headerText = `${type === 'questions' ? 'Question' : 'Mark Scheme'} ${questionNumber}`;
-            const headerFontSize = 14;
-            const headerHeight = 35;
-            
-            pages.forEach((page, pageIndex) => {
-              const { width, height } = page.getSize();
-              
-              // Draw header background
-              page.drawRectangle({
-                x: 0,
-                y: height - headerHeight,
-                width: width,
-                height: headerHeight,
-                color: rgb(0.85, 0.85, 0.85),
-              });
-              
-              page.drawRectangle({
-                x: 0,
-                y: height - headerHeight,
-                width: width,
-                height: headerHeight,
-                borderColor: rgb(0.5, 0.5, 0.5),
-                borderWidth: 1,
-              });
-              
-              const textY = height - headerHeight + (headerHeight / 2) - (headerFontSize / 3);
-              page.drawText(headerText, {
-                x: 20,
-                y: textY,
-                size: headerFontSize,
-                color: rgb(0, 0, 0),
-                font: font,
-              });
-              
-              if (pages.length > 1) {
-                const pageNumText = `Page ${pageIndex + 1} of ${pages.length}`;
-                const pageNumWidth = font.widthOfTextAtSize(pageNumText, headerFontSize);
-                page.drawText(pageNumText, {
-                  x: width - pageNumWidth - 20,
-                  y: textY,
-                  size: headerFontSize,
-                  color: rgb(0, 0, 0),
-                  font: font,
-                });
-              }
-              
-              mergedPdf.addPage(page);
-            });
-            
-            console.log(`[PDF Merge] Added ${pages.length} pages from PDF for question ${questionNumber}`);
-          } catch (pdfError) {
-            console.error(`[PDF Merge] Failed to load PDF for question ${questionNumber}:`, pdfError);
-            continue;
-          }
-        } else {
-          // Treat as image - create a blob URL from the arrayBuffer
-          const blob = new Blob([arrayBuffer]);
-          const imageUrl = URL.createObjectURL(blob);
-          try {
-            await addImageToPdf(mergedPdf, imageUrl, questionNumber);
-          } catch (imageError) {
-            console.error(`[PDF Merge] Failed to add image for question ${questionNumber}:`, imageError);
-          } finally {
-            URL.revokeObjectURL(imageUrl);
-          }
-        }
-      } catch (error) {
-        console.error(`[PDF Merge] Error processing question ${questionNumber}:`, error);
-        // Continue with other files even if one fails
-      }
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    console.log(`[PDF Merge] Final PDF has ${mergedPdf.getPageCount()} pages`);
-    const pdfBytes = await mergedPdf.save();
-    return new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
-  };
 
   // Download merged PDFs for a quiz
   const handleDownloadMergedPDFs = async (
@@ -589,7 +134,13 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
       loadingNotification.appendChild(textContainer);
       document.body.appendChild(loadingNotification);
 
-      const mergedBlob = await mergePDFsAndImages(validQuestions, type);
+      const items: MergeItem[] = validQuestions.map(q => ({
+        id: q.id,
+        url: type === 'questions' ? q.questionContent : q.markScheme,
+        type: type === 'questions' ? q.questionContentType : q.markSchemeType
+      }));
+
+      const mergedBlob = await generateMergedPDF(items, type === 'questions' ? 'Question' : 'Mark Scheme');
       
       // Remove loading notification
       document.body.removeChild(loadingNotification);
@@ -1025,10 +576,15 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             {currentQ.questionContent && (
               <button
-                onClick={() => handleDownload(
-                  currentQ.questionContent!,
-                  getFilenameFromUrl(currentQ.questionContent!, `Question_Paper.${currentQ.questionContentType === 'pdf' ? 'pdf' : 'png'}`)
-                )}
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = currentQ.questionContent!;
+                  link.download = `Question_Paper.${currentQ.questionContentType === 'pdf' ? 'pdf' : 'png'}`;
+                  link.target = '_blank';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
                 className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[200px] justify-center"
                 title="Download question paper"
               >
@@ -1038,10 +594,15 @@ const TopicalQuiz: React.FC<QuizComponentProps> = (props) => {
             )}
             {currentQ.markScheme && (
               <button
-                onClick={() => handleDownload(
-                  currentQ.markScheme!,
-                  getFilenameFromUrl(currentQ.markScheme!, `Mark_Scheme.${currentQ.markSchemeType === 'pdf' ? 'pdf' : 'png'}`)
-                )}
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = currentQ.markScheme!;
+                  link.download = `Mark_Scheme.${currentQ.markSchemeType === 'pdf' ? 'pdf' : 'png'}`;
+                  link.target = '_blank';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
                 className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-700 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 dark:hover:from-orange-700 dark:hover:to-orange-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[200px] justify-center"
                 title="Download mark scheme"
               >

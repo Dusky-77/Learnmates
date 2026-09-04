@@ -16,6 +16,8 @@ import CurriculumPage from './pages/CurriculumPage';
 import TopicPage from './pages/TopicPage';
 import CurriculumPdfViewerPage from './pages/CurriculumPdfViewerPage';
 import TopicalPages from './pages/TopicalPages';
+import Pastpapers from './pages/Pastpapers';
+import PaperViewer from './pages/PaperViewer';
 import { UserProvider } from './context/UserContext';
 import { DarkModeProvider } from './context/DarkModeContext';
 import { EngagementProvider } from './context/EngagementContext';
@@ -66,6 +68,9 @@ function AppContent() {
           <Route path="/curriculum/:type/:board/:subject/:title" element={<TopicPage />} />
           <Route path="/topicals" element={<TopicalPages />} />
           <Route path="/topicals/:level/:board/:subject" element={<TopicalPages />} />
+          <Route path="/pastpapers" element={<Pastpapers />} />
+          <Route path="/pastpapers/:level/:board/:subject" element={<Pastpapers />} />
+          <Route path="/pastpapers/:level/:board/:subject/:year/:paperKey/:unit" element={<PaperViewer />} />
         </Route>
         </Route>
       </Routes>

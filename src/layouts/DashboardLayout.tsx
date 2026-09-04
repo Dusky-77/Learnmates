@@ -18,7 +18,8 @@ import {
   Layers,
   LibraryBig,
   Coffee,
-  RotateCcw
+  RotateCcw,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useDarkMode } from '../context/DarkModeContext';
@@ -33,8 +34,9 @@ interface DashboardLayoutProps {
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Curriculum', href: '/curriculum', icon: LibraryBig },
+  { name: 'Past Papers', href: '/pastpapers', icon: FileText },
   { name: 'Topicals', href: '/topicals', icon: Layers },
-  { name: 'Lock in', href: '/lock_in', icon: Lock, beta: true },
+  { name: 'Lock in', href: '/lock_in', icon: Lock },
   { name: 'Leaderboard', href: '#', icon: Trophy, disabled: true }
   ,
 ];
@@ -588,7 +590,7 @@ function LockInHeader({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => v
           <button
             type="button"
             className="rounded-lg p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            aria-label="Notifications"
+            aria-label="Notifications "
           >
             <Bell className="h-6 w-6 text-gray-600 dark:text-gray-300" />
           </button>

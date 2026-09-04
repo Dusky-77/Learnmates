@@ -45,10 +45,11 @@ const Header: React.FC = () => {
     { name: 'Home', href: '/' },
     { name: 'Dashboard', href: '/dashboard', authOnly: true },
     { name: 'Curriculum', href: '/curriculum' },
+    { name: 'Past Papers', href: '/pastpapers' },
+    { name: 'Topicals generator', href: '/topicals' },
     { name: 'Contribute', href: '/contribute' },
     { name: 'Donate', href: '/donate' },
     { name: 'About', href: '/about' },
-    { name: 'Topicals generator', href: '/topicals' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
