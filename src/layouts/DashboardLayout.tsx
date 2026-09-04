@@ -590,7 +590,7 @@ function LockInHeader({ setSidebarOpen }: { setSidebarOpen: (open: boolean) => v
           <button
             type="button"
             className="rounded-lg p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            aria-label="Notifications"
+            aria-label="Notifications "
           >
             <Bell className="h-6 w-6 text-gray-600 dark:text-gray-300" />
           </button>
